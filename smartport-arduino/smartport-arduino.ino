@@ -71,158 +71,88 @@ int series_count = 0;
 byte rec_byte = 0;
 byte send_byte = 0;
 
-byte enabled_controllers = 0b00001111; // 0 = Enabled, 1 = Disabled
+int p1_control, p2_control, p3_control, p4_control;
+int enabled_controllers;
 
-byte p1_control = 0;  // 0 = Normal, 1 = SP Controlled
-byte p2_control = 0;  // 0 = Normal, 1 = SP Controlled
-byte p3_control = 0;  // 0 = Normal, 1 = SP Controlled
-byte p4_control = 0;  // 0 = Normal, 1 = SP Controlled
+int* control_map[] = {
+  &p1_control,   // PHYSICAL_CONTROLLER_1
+  &p2_control,   // PHYSICAL_CONTROLLER_2
+  &p3_control,   // PHYSICAL_CONTROLLER_3
+  &p4_control    // PHYSICAL_CONTROLLER_4
+};
 
-byte p1_select = 0x0F;
-byte p2_select = 0x0F;
-byte p3_select = 0x0F;
-byte p4_select = 0x0F;
+uint8_t controller_masks[] = {
+  0b00000001,    // PHYSICAL_CONTROLLER_1
+  0b00000010,    // PHYSICAL_CONTROLLER_2
+  0b00000100,    // PHYSICAL_CONTROLLER_3
+  0b00001000     // PHYSICAL_CONTROLLER_4
+};
 
-byte v1_select = 0x0F;
-byte v2_select = 0x0F;
-byte v3_select = 0x0F;
-byte v4_select = 0x0F;
+int p1_select, p2_select, p3_select, p4_select;
+int v1_select, v2_select, v3_select, v4_select;
 
-byte sel_button = 0;  // V4|V3|V2|V1|P4|P3|P2|P1
-byte lt = 0;
-byte share = 0;
-byte is16SEL = 0;
-byte up = 0;
-byte down = 0;
-byte right = 0;
-byte left = 0;
-byte a = 0;
-byte b = 0;
-byte x = 0;
-byte y = 0;
-byte rt = 0;
+int* controller_map[] = {
+  &p1_select, &p2_select, &p3_select, &p4_select,
+  &v1_select, &v2_select, &v3_select, &v4_select
+};
 
-byte priority_byte = 0;
+int sel_button, lt, share, is16SEL;
+int up, down, right, left;
+int a, b, x, y, rt;
+int priority_byte;
+
+int* button_map[] = {
+  &sel_button,   // SELECT_BUTTON
+  &lt,            // LEFT_TRIGGER
+  &share,        // SHARE_SWITCH
+  &is16SEL,      // IS16SEL_CONTROLLER
+  &up,           // DPAD_UP
+  &down,         // DPAD_DOWN
+  &right,        // DPAD_RIGHT
+  &left,         // DPAD_LEFT
+  &a,            // A_BUTTON
+  &b,            // B_BUTTON
+  &x,            // X_BUTTON
+  &y,            // Y_BUTTON
+  &rt            // RIGHT_TRIGGER
+};
 
 //---------------------------------------------------------------------------------------------
 // THIS SECTION IS FOR SMART PORT USER CALLABLE FUNCTIONS - USE CAUTION WHEN MAKING CHANGES
 //---------------------------------------------------------------------------------------------
 
 void edit_select(int controller, int selection) {
-  if (controller == PHYSICAL_CONTROLLER_1) {
-    p1_select = selection;
-  } else if (controller == PHYSICAL_CONTROLLER_2) {
-    p2_select = selection;
-  } else if (controller == PHYSICAL_CONTROLLER_3) {
-    p3_select = selection;
-  } else if (controller == PHYSICAL_CONTROLLER_4) {
-    p4_select = selection;
-  } else if (controller == VIRTUAL_CONTROLLER_1) {
-    v1_select = selection;
-  } else if (controller == VIRTUAL_CONTROLLER_2) {
-    v2_select = selection;
-  } else if (controller == VIRTUAL_CONTROLLER_3) {
-    v3_select = selection;
-  } else if (controller == VIRTUAL_CONTROLLER_4) {
-    v4_select = selection;
+  if (controller >= 0 && controller < 8) {
+    *controller_map[controller] = selection;
   }
 }
 
 void press_button(int controller, int button) {
-  if (button == SELECT_BUTTON) {
-    sel_button |= (1 << controller);
-  } else if (button == LEFT_TRIGGER) {
-    lt |= (1 << controller);
-  } else if (button == SHARE_SWITCH) {
-    share |= (1 << controller);
-  } else if (button == IS16SEL_CONTROLLER) {
-    is16SEL |= (1 << controller);
-  } else if (button == DPAD_UP) {
-    up |= (1 << controller);
-  } else if (button == DPAD_DOWN) {
-    down |= (1 << controller);
-  } else if (button == DPAD_RIGHT) {
-    right |= (1 << controller);
-  } else if (button == DPAD_LEFT) {
-    left |= (1 << controller);
-  } else if (button == A_BUTTON) {
-    a |= (1 << controller);
-  } else if (button == B_BUTTON) {
-    b |= (1 << controller);
-  } else if (button == X_BUTTON) {
-    x |= (1 << controller);
-  } else if (button == Y_BUTTON) {
-    y |= (1 << controller);
-  } else if (button == RIGHT_TRIGGER) {
-    rt |= (1 << controller);
-  } else {
-    return;
+  if (button >= 0 && button < (sizeof(button_map) / sizeof(button_map[0]))) {
+    *button_map[button] |= (1 << controller);
+    priority_byte |= (1 << controller);
   }
-  priority_byte |= (1 << controller);
 }
 
 void release_button(int controller, int button) {
-  if (button == SELECT_BUTTON) {
-    sel_button &= (~(1 << controller));
-  } else if (button == LEFT_TRIGGER) {
-    lt &= (~(1 << controller));
-  } else if (button == SHARE_SWITCH) {
-    share &= (~(1 << controller));
-  } else if (button == IS16SEL_CONTROLLER) {
-    is16SEL &= (~(1 << controller));
-  } else if (button == DPAD_UP) {
-    up &= (~(1 << controller));
-  } else if (button == DPAD_DOWN) {
-    down &= (~(1 << controller));
-  } else if (button == DPAD_RIGHT) {
-    right &= (~(1 << controller));
-  } else if (button == DPAD_LEFT) {
-    left &= (~(1 << controller));
-  } else if (button == A_BUTTON) {
-    a &= (~(1 << controller));
-  } else if (button == B_BUTTON) {
-    b &= (~(1 << controller));
-  } else if (button == X_BUTTON) {
-    x &= (~(1 << controller));
-  } else if (button == Y_BUTTON) {
-    y &= (~(1 << controller));
-  } else if (button == RIGHT_TRIGGER) {
-    rt &= (~(1 << controller));
-  } else {
-    return;
+  // Make sure button index is valid
+  if (button >= 0 && button < (sizeof(button_map) / sizeof(button_map[0]))) {
+    *button_map[button] &= ~(1 << controller);   // clear bit
+    priority_byte |= (1 << controller);          // same as before
   }
-  priority_byte |= (1 << controller);
 }
 
 void enable_physical_controller(int controller) {
-  if (controller == PHYSICAL_CONTROLLER_1) {
-    p1_control = 1;
-    enabled_controllers &= 0b11111110;
-  } else if (controller == PHYSICAL_CONTROLLER_2) {
-    p2_control = 1;
-    enabled_controllers &= 0b11111101;
-  } else if (controller == PHYSICAL_CONTROLLER_3) {
-    p3_control = 1;
-    enabled_controllers &= 0b11111011;
-  } else if (controller == PHYSICAL_CONTROLLER_4) {
-    p4_control = 1;
-    enabled_controllers &= 0b11110111;
+  if (controller >= 0 && controller < 4) {
+    *control_map[controller] = 1;
+    enabled_controllers &= ~controller_masks[controller]; // clear that bit
   }
 }
 
 void disable_physical_controller(int controller) {
-  if (controller == PHYSICAL_CONTROLLER_1) {
-    p1_control = 0;
-    enabled_controllers |= 0b00000001;
-  } else if (controller == PHYSICAL_CONTROLLER_2) {
-    p2_control = 0;
-    enabled_controllers |= 0b00000010;
-  } else if (controller == PHYSICAL_CONTROLLER_3) {
-    p3_control = 0;
-    enabled_controllers |= 0b00000100;
-  } else if (controller == PHYSICAL_CONTROLLER_4) {
-    p4_control = 0;
-    enabled_controllers |= 0b00001000;
+  if (controller >= 0 && controller < 4) {
+    *control_map[controller] = 0;
+    enabled_controllers |= controller_masks[controller];  // set that bit
   }
 }
 
