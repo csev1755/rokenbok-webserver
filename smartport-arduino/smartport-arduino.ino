@@ -95,29 +95,28 @@ void press_button(int controller, int button) {
 }
 
 void release_button(int controller, int button) {
-  // Make sure button index is valid
   if (button >= 0 && button < (sizeof(button_map) / sizeof(button_map[0]))) {
-    *button_map[button] &= ~(1 << controller);   // clear bit
-    priority_byte |= (1 << controller);          // same as before
+    *button_map[button] &= ~(1 << controller);
+    priority_byte |= (1 << controller);
   }
 }
 
 void enable_physical_controller(int controller) {
   if (controller >= 0 && controller < 4) {
     *control_map[controller] = 1;
-    enabled_controllers &= ~controller_masks[controller]; // clear that bit
+    enabled_controllers &= ~controller_masks[controller];
   }
 }
 
 void disable_physical_controller(int controller) {
   if (controller >= 0 && controller < 4) {
     *control_map[controller] = 0;
-    enabled_controllers |= controller_masks[controller];  // set that bit
+    enabled_controllers |= controller_masks[controller];
   }
 }
 
 void begin_smart_port(int slave_ready_pin) {
-  pinMode(MISO, OUTPUT);  // have to send on master in, *slave out*
+  pinMode(MISO, OUTPUT);
   pinMode(MOSI, INPUT);
   pinMode(SCK, INPUT);
   pinMode(slave_ready_pin, OUTPUT);
