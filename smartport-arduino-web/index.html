@@ -113,8 +113,6 @@ async function sendCommand(action) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ controller: parseInt(controller), button: parseInt(button) })
     });
-    const text = await response.text();
-    alert(text);
 }
 
 async function editSelection() {
@@ -126,8 +124,6 @@ async function editSelection() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ controller: parseInt(controller), selection: parseInt(selection) })
     });
-    const text = await response.text();
-    alert(text);
 }
 
 async function toggleController(action) {
@@ -138,8 +134,6 @@ async function toggleController(action) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ controller: parseInt(controller) })
     });
-    const text = await response.text();
-    alert(text);
 }
 </script>
 </body>
