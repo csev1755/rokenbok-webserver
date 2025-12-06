@@ -8,7 +8,7 @@
 // THIS SECTION IS FOR SMART PORT DEFINES - USE CAUTION WHEN MAKING CHANGES
 //---------------------------------------------------------------------------------------------
 
-#define slaveReadyPin 8
+#define slaveReadyPin 9
 
 #define enable_attrib_byte   0x0D
 #define disable_attrib_byte  0x00
