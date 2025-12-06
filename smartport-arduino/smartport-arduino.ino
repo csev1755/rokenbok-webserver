@@ -99,7 +99,7 @@ void setup() {
   TCCR1B |= (1 << CS11);    // 64 prescaler 
   TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
 
-  digitalWrite(slaveReadyPin, HIGH); // Ready for the first byte.
+  digitalWrite(slaveReadyPin, LOW); // Ready for the first byte.
   Serial.begin(115200); 
 }
 
