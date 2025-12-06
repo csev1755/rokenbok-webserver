@@ -338,5 +338,5 @@ ISR(TIMER1_OVF_vect) {
   SPCR |= _BV(SPIE); // Enable SPI Interrupt
 
   smart_port_status = false;
-  digitalWrite(8, LOW);
+  digitalWrite(slaveReadyPin, LOW);
 }
