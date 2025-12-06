@@ -19,6 +19,12 @@
 #define EDIT_TPADS_SERIES   2
 #define EDIT_SELECT_SERIES  3
 
+#define CMD_PRESS   0
+#define CMD_RELEASE 1
+#define CMD_EDIT    2
+#define CMD_ENABLE  3
+#define CMD_DISABLE 4
+
 //---------------------------------------------------------------------------------------------
 // THIS SECTION IS FOR SMART PORT VARIABLES - USE CAUTION WHEN MAKING CHANGES
 //---------------------------------------------------------------------------------------------
@@ -104,48 +110,34 @@ void setup() {
 }
 
 void receive_command(uint8_t *cmd, size_t len) {
-  if (len < 3) return;
-
-  uint8_t command    = cmd[0];
+  uint8_t command = cmd[0];
   uint8_t controller = cmd[1];
-  uint8_t value      = cmd[2];
+  uint8_t value = cmd[2];
+  uint8_t ctrl_bit = (1 << controller);
 
   switch (command) {
-    case 0: // PRESS
-      if (value < (sizeof(button_map) / sizeof(button_map[0]))) {
-        *button_map[value] |= (1 << controller);
-        priority_byte |= (1 << controller);
-      }
+    case CMD_PRESS:
+      *button_map[value] |= ctrl_bit;
+      priority_byte |= ctrl_bit;
       break;
 
-    case 1: // RELEASE
-      if (value < (sizeof(button_map) / sizeof(button_map[0]))) {
-        *button_map[value] &= ~(1 << controller);
-        priority_byte |= (1 << controller);
-      }
+    case CMD_RELEASE:
+      *button_map[value] &= ~ctrl_bit;
+      priority_byte |= ctrl_bit;
       break;
 
-    case 2: // EDIT
-      if (controller < 8) {
-        *controller_map[controller] = value;
-      }
+    case CMD_EDIT:
+      *controller_map[controller] = value;
       break;
 
-    case 3: // ENABLE
-      if (controller < 4) {
-        *control_map[controller] = 1;
-        enabled_controllers &= ~controller_masks[controller];
-      }
+    case CMD_ENABLE:
+      *control_map[controller] = 1;
+      enabled_controllers &= ~controller_masks[controller];
       break;
 
-    case 4: // DISABLE
-      if (controller < 4) {
-        *control_map[controller] = 0;
-        enabled_controllers |= controller_masks[controller];
-      }
-      break;
-
-    default:
+    case CMD_DISABLE:
+      *control_map[controller] = 0;
+      enabled_controllers |= controller_masks[controller];
       break;
   }
 }
