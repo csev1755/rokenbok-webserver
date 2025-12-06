@@ -23,16 +23,16 @@
 // THIS SECTION IS FOR SMART PORT VARIABLES - USE CAUTION WHEN MAKING CHANGES
 //---------------------------------------------------------------------------------------------
 
-bool smart_port_status = false;
+volatile bool smart_port_status = false;
 
-uint8_t current_series = 0;
-uint8_t series_count = 0;
+volatile uint8_t current_series = 0;
+volatile uint8_t series_count = 0;
 
-byte rec_byte = 0;
-byte send_byte = 0;
+volatile uint8_t rec_byte = 0;
+volatile uint8_t send_byte = 0;
 
-uint8_t p1_control, p2_control, p3_control, p4_control;
-uint8_t enabled_controllers;
+volatile uint8_t p1_control, p2_control, p3_control, p4_control;
+volatile uint8_t enabled_controllers;
 
 uint8_t* control_map[] = {
   &p1_control,
@@ -48,18 +48,18 @@ uint8_t controller_masks[] = {
   0b00001000
 };
 
-uint8_t p1_select, p2_select, p3_select, p4_select;
-uint8_t v1_select, v2_select, v3_select, v4_select;
+volatile uint8_t p1_select, p2_select, p3_select, p4_select;
+volatile uint8_t v1_select, v2_select, v3_select, v4_select;
 
 uint8_t* controller_map[] = {
   &p1_select, &p2_select, &p3_select, &p4_select,
   &v1_select, &v2_select, &v3_select, &v4_select
 };
 
-uint8_t sel_button, lt, share, is16SEL;
-uint8_t up, down, right, left;
-uint8_t a, b, x, y, rt;
-uint8_t priority_byte;
+volatile uint8_t sel_button, lt, share, is16SEL;
+volatile uint8_t up, down, right, left;
+volatile uint8_t a, b, x, y, rt;
+volatile uint8_t priority_byte;
 
 uint8_t* button_map[] = {
   &sel_button,
