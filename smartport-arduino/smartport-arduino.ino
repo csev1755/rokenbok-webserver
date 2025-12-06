@@ -57,8 +57,6 @@
 // THIS SECTION IS FOR SMART PORT VARIABLES - USE CAUTION WHEN MAKING CHANGES
 //---------------------------------------------------------------------------------------------
 
-volatile bool smart_port_status = false;
-
 volatile uint8_t current_series = 0;
 volatile uint8_t series_count = 0;
 
@@ -353,6 +351,5 @@ ISR(TIMER1_OVF_vect) {
   SPCR |= _BV(SPE);  // Enable SPI (Slave Mode)
   SPCR |= _BV(SPIE); // Enable SPI Interrupt
 
-  smart_port_status = false;
   digitalWrite(SLAVE_READY_PIN, LOW);
 }
