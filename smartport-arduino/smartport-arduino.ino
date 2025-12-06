@@ -191,21 +191,20 @@ ISR (SPI_STC_vect) {
 
     case NO_SERIES:
       switch (rec_byte) {
-        case 0xC6:
+        case PRESYNC:
           current_series = SYNC_SERIES;
           series_count = 1;
           send_byte = SLAVE_SYNC;
           break;
 
-        case 0xC3:
+        case EDIT_TPADS:
           current_series = EDIT_TPADS_SERIES;
           series_count = 1;
           send_byte = VERIFY_EDIT;
           TCNT1 = 0; // Reset timer.
-          digitalWrite(8, HIGH);
           break;
 
-        case 0xC4:
+        case EDIT_SELECT:
           current_series = EDIT_SELECT_SERIES;
           series_count = 1;
           send_byte = VERIFY_EDIT;
@@ -228,15 +227,10 @@ ISR (SPI_STC_vect) {
           break;
 
         case 2:
-          current_series = NO_SERIES;
-          series_count = 0;
+          series_count = 3;
           send_byte = NO_SEL_TIMEOUT;
-
-          TCNT1 = 0; // Reset timer.
-          digitalWrite(8, HIGH);
-          smart_port_status = true;
           break;
-
+          
         default:
           current_series = NO_SERIES;
           series_count = 0;
