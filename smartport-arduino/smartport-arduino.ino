@@ -8,16 +8,44 @@
 // THIS SECTION IS FOR SMART PORT DEFINES - USE CAUTION WHEN MAKING CHANGES
 //---------------------------------------------------------------------------------------------
 
-#define slaveReadyPin 9
+#define SLAVE_READY_PIN 9
 
-#define enable_attrib_byte   0x0D
-#define disable_attrib_byte  0x00
-#define send_no_sel_to       0x00
+#define ENABLE_ATTRIB_BYTE   0x0D
+#define DISABLE_ATTRIB_BYTE  0x00
+#define NO_SEL_TIMEOUT       0x00
 
-#define NO_SERIES           0
-#define SYNC_SERIES         1
-#define EDIT_TPADS_SERIES   2
-#define EDIT_SELECT_SERIES  3
+#define NULL_CMD 0x00
+#define BCAST_TPADS 0xc0
+#define BCAST_SELECT 0xC1
+#define BCAST_END 0xC2
+#define EDIT_TPADS 0xC3
+#define EDIT_SELECT 0xC4
+#define EDIT_END 0xC5
+#define PRESYNC 0xC6
+#define MASTER_SYNC 0xC7
+#define READ_ATTRIB 0xC8
+#define MASTER_NO_INS 0xC9
+#define MASTER_ASK_INS 0xCA
+#define READ_REPLY 0xCB
+#define READ_NO_SEL_TIMEOUT 0xCC
+#define NO_RADIO_PKT 0xCD
+#define HAVE_RADIO_PKT 0xCE
+
+#define NULL_CMD 0x00
+#define VERIFY_EDIT 0x80
+#define SLAVE_SYNC 0x81
+#define SLAVE_NO_INS 0x82
+#define SLAVE_WAIT_INS 0x83
+#define PACKET_INJECT_ATTRIB_BYTE 0x2D // Packet Injection
+#define ENABLE_ATTRIB_BYTE 0x0D // No Packet Injection
+#define DISABLE_ATTRIB_BYTE 0x00
+#define NO_SEL_TIMEOUT 0x00 // 1 = Controller Never Times Out, 0 = Normal V4|V3|V2|V1|P4|P3|P2|P1
+
+#define NO_SERIES 0
+#define SYNC_SERIES 1
+#define EDIT_TPADS_SERIES 2
+#define EDIT_SELECT_SERIES 3
+#define PKT_INJECT_SERIES 4
 
 #define CMD_PRESS   0
 #define CMD_RELEASE 1
@@ -91,7 +119,7 @@ void setup() {
   pinMode(MISO, OUTPUT);
   pinMode(MOSI, INPUT);
   pinMode(SCK, INPUT);
-  pinMode(slaveReadyPin, OUTPUT);
+  pinMode(SLAVE_READY_PIN, OUTPUT);
 
   SPCR |= _BV(SPE);  // Enable SPI (Slave Mode)
   SPCR |= _BV(SPIE); // Enable SPI Interrupt
@@ -103,9 +131,9 @@ void setup() {
   TCNT1 = 0;
   TCCR1B |= (1 << CS10);    // 64 prescaler 
   TCCR1B |= (1 << CS11);    // 64 prescaler 
-  TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
+  //TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
 
-  digitalWrite(slaveReadyPin, LOW); // Ready for the first byte.
+  digitalWrite(SLAVE_READY_PIN, LOW); // Ready for the first byte.
   Serial.begin(115200); 
 }
 
@@ -155,7 +183,7 @@ void loop() {
 //---------------------------------------------------------------------------------------------
 
 ISR (SPI_STC_vect) {
-  digitalWrite(slaveReadyPin, HIGH); // We are NOT ready for a new byte.
+  digitalWrite(SLAVE_READY_PIN, HIGH); // We are NOT ready for a new byte.
 
   rec_byte = SPDR;
 
@@ -166,25 +194,27 @@ ISR (SPI_STC_vect) {
         case 0xC6:
           current_series = SYNC_SERIES;
           series_count = 1;
-          send_byte = 0x81;
+          send_byte = SLAVE_SYNC;
           break;
 
         case 0xC3:
           current_series = EDIT_TPADS_SERIES;
           series_count = 1;
-          send_byte = 0x80;
+          send_byte = VERIFY_EDIT;
+          TCNT1 = 0; // Reset timer.
+          digitalWrite(8, HIGH);
           break;
 
         case 0xC4:
           current_series = EDIT_SELECT_SERIES;
           series_count = 1;
-          send_byte = 0x80;
+          send_byte = VERIFY_EDIT;
           break;
 
         default:
           current_series = NO_SERIES;
           series_count = 0;
-          send_byte = 0x00;
+          send_byte = NULL_CMD;
           break;
       }
       break;
@@ -194,13 +224,13 @@ ISR (SPI_STC_vect) {
       switch (series_count) {
         case 1:
           series_count = 2;
-          send_byte = enable_attrib_byte;
+          send_byte = ENABLE_ATTRIB_BYTE;
           break;
 
         case 2:
           current_series = NO_SERIES;
           series_count = 0;
-          send_byte = send_no_sel_to;
+          send_byte = NO_SEL_TIMEOUT;
 
           TCNT1 = 0; // Reset timer.
           digitalWrite(8, HIGH);
@@ -210,7 +240,7 @@ ISR (SPI_STC_vect) {
         default:
           current_series = NO_SERIES;
           series_count = 0;
-          send_byte = 0x00;
+          send_byte = NULL_CMD;
           break;
       }
       break;
@@ -241,13 +271,13 @@ ISR (SPI_STC_vect) {
           current_series = NO_SERIES;
           series_count = 0;
           send_byte = rec_byte | priority_byte;
-          priority_byte = 0x00;
+          priority_byte = NULL_CMD;
           break;
 
         default:
           current_series = NO_SERIES;
           series_count = 0;
-          send_byte = 0x00;
+          send_byte = NULL_CMD;
           break;
       }
       break;
@@ -298,13 +328,13 @@ ISR (SPI_STC_vect) {
         case 9:
           current_series = NO_SERIES;
           series_count = 0;
-          send_byte = 0x00;
+          send_byte = NULL_CMD;
           break;
 
         default:
           current_series = NO_SERIES;
           series_count = 0;
-          send_byte = 0x00;
+          send_byte = NULL_CMD;
           break;
       }
       break;
@@ -313,13 +343,13 @@ ISR (SPI_STC_vect) {
     default:
       current_series = NO_SERIES;
       series_count = 0;
-      send_byte = 0x00;
+      send_byte = NULL_CMD;
       break;
   }
 
   SPDR = send_byte;
 
-  digitalWrite(slaveReadyPin, LOW); // We are ready for a new byte.
+  digitalWrite(SLAVE_READY_PIN, LOW); // We are ready for a new byte.
 }
 
 ISR(TIMER1_OVF_vect) {
@@ -330,5 +360,5 @@ ISR(TIMER1_OVF_vect) {
   SPCR |= _BV(SPIE); // Enable SPI Interrupt
 
   smart_port_status = false;
-  digitalWrite(slaveReadyPin, LOW);
+  digitalWrite(SLAVE_READY_PIN, LOW);
 }
