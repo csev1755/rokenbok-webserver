@@ -90,4 +90,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     command_deck = CommandDeck(serial_device=args.serial_device)
+    app.run(host=args.ip, port=args.port)
     socketio.run(app)
