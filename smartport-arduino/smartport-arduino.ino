@@ -4,9 +4,7 @@
  * ROKENBOK DISCORD: https://discord.gg/pmbbAsq
  */
 
-//---------------------------------------------------------------------------------------------
-// THIS SECTION IS FOR SMART PORT DEFINES - USE CAUTION WHEN MAKING CHANGES
-//---------------------------------------------------------------------------------------------
+// DEFINE MAGIC BYTES
 
 #define SLAVE_READY_PIN 9
 
@@ -54,9 +52,7 @@
 #define CMD_DISABLE 4
 #define CMD_RESET   5
 
-//---------------------------------------------------------------------------------------------
-// THIS SECTION IS FOR SMART PORT VARIABLES - USE CAUTION WHEN MAKING CHANGES
-//---------------------------------------------------------------------------------------------
+// DEFINE VARIABLES
 
 volatile uint8_t current_series = 0;
 volatile uint8_t series_count = 0;
@@ -94,6 +90,13 @@ volatile uint8_t up, down, right, left;
 volatile uint8_t a, b, x, y, rt;
 volatile uint8_t priority_byte;
 
+volatile uint8_t command;
+volatile uint8_t controller;
+volatile uint8_t value;
+volatile uint8_t ctrl_bit;
+
+uint8_t rec_cmd[3];
+
 uint8_t* button_map[] = {
   &sel_button,
   &lt,
@@ -110,9 +113,7 @@ uint8_t* button_map[] = {
   &rt
 };
 
-//---------------------------------------------------------------------------------------------
-// RECEIVE COMMANDS VIA SERIAL
-//---------------------------------------------------------------------------------------------
+// SMARTPORT FUNCTIONS
 
 void setup() {
   pinMode(MISO, OUTPUT);
@@ -129,18 +130,24 @@ void setup() {
 
   TCNT1 = 0;
   TCCR1B |= (1 << CS10);    // 64 prescaler 
-  TCCR1B |= (1 << CS11);    // 64 prescaler 
+  TCCR1B |= (1 << CS11);    // 64 prescaler
   TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
 
-  digitalWrite(SLAVE_READY_PIN, LOW); // Ready for the first byte.
   Serial.begin(115200); 
 }
 
+void loop() {
+  if (Serial.available() >= 3) {
+    Serial.readBytes(rec_cmd, 3); // Read bytes
+    receive_command(rec_cmd, 3); // Interpret command
+  }
+}
+
 void receive_command(uint8_t *cmd, size_t len) {
-  uint8_t command = cmd[0];
-  uint8_t controller = cmd[1];
-  uint8_t value = cmd[2];
-  uint8_t ctrl_bit = (1 << controller);
+  command = cmd[0];
+  controller = cmd[1];
+  value = cmd[2];
+  ctrl_bit = (1 << controller);
 
   switch (command) {
     case CMD_PRESS:
@@ -173,33 +180,7 @@ void receive_command(uint8_t *cmd, size_t len) {
   }
 }
 
-void loop() {
-  if (Serial.available() >= 3) {
-    uint8_t cmd[3];
-    Serial.readBytes(cmd, 3);
-    receive_command(cmd, 3);
-  }
-}
-
-void reset_smartport() {
-  SPDR = 0x00;
-  current_series = 0;
-  series_count = 0;
-  SPCR = 0;
-  SPCR |= _BV(SPE);  // Enable SPI (Slave Mode)
-  SPCR |= _BV(SPIE); // Enable SPI Interrupt
-  digitalWrite(SLAVE_READY_PIN, LOW);
-}
-
-//---------------------------------------------------------------------------------------------
-// THIS SECTION IS FOR SMART PORT INTERRUPTS - USE CAUTION WHEN MAKING CHANGES
-//---------------------------------------------------------------------------------------------
-
-ISR (SPI_STC_vect) {
-  digitalWrite(SLAVE_READY_PIN, HIGH); // We are NOT ready for a new byte.
-
-  rec_byte = SPDR;
-
+volatile uint8_t rok_respond(uint8_t rec_byte) {
   switch (current_series) {
 
     case NO_SERIES:
@@ -354,9 +335,23 @@ ISR (SPI_STC_vect) {
       break;
   }
 
-  SPDR = send_byte;
+  return send_byte;
+}
 
-  digitalWrite(SLAVE_READY_PIN, LOW); // We are ready for a new byte.
+void reset_smartport() {
+  SPDR = 0x00;
+  current_series = 0;
+  series_count = 0;
+  SPCR = 0;
+  SPCR |= _BV(SPE);  // Enable SPI (Slave Mode)
+  SPCR |= _BV(SPIE); // Enable SPI Interrupt
+}
+
+ISR (SPI_STC_vect) {
+  digitalWrite(SLAVE_READY_PIN, HIGH); // NOT READY
+  rec_byte = SPDR; // RECEIVE BYTE
+  SPDR = rok_respond(rec_byte); // SEND BYTE
+  digitalWrite(SLAVE_READY_PIN, LOW); // READY
 }
 
 ISR(TIMER1_OVF_vect) {
