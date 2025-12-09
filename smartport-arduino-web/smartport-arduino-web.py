@@ -10,11 +10,19 @@ app = Flask(__name__, static_folder='static')
 socketio = SocketIO(app)
 
 class CommandDeck:
-    def __init__(self, serial_device):
-        self.smartport = serial.Serial(serial_device, 115200, timeout=1)
+    def __init__(self, serial_device=None):
+        self.smartport = None
+        if serial_device is not None:
+            self.smartport = serial.Serial(serial_device, 115200, timeout=1)
+            print(f"Connected to SmartPort device at {serial_device}")
+        else:
+            print("No SmartPort device specified, will only print commands for debugging")
 
     def send_command(self, action, controller, value):
-        self.smartport.write(bytes([action, controller, value]))
+        if self.smartport is not None:
+            self.smartport.write(bytes([action, controller, value]))
+        else:
+            print(f"DEBUG - Action: {action} Controller: {controller} Value: {value}")
 
 testing_controller = 4 # VIRTUAL_CONTROLLER_1
 
@@ -94,14 +102,14 @@ signal.signal(signal.SIGINT, handle_exit)
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Starts the Arduino SmartPort web controller')
     
-    parser.add_argument('serial_device', help='The serial device name of your Arduino')
+    parser.add_argument('-d', '--device', help='The serial device name of your Arduino', default=None)
     parser.add_argument('-i', '--ip', help='What IP the server will listen on', default='')
     parser.add_argument('-p', '--port', help='What port the server will listen on', default=5000)
-    parser.add_argument('-u', '--upnp', help='Enable or disable UPnP for auto port forwarding', default='enable')
+    parser.add_argument('-u', '--upnp', help='Enable UPnP for auto port forwarding', default='')
     
     args = parser.parse_args()
     
-    command_deck = CommandDeck(serial_device=args.serial_device)
+    command_deck = CommandDeck(serial_device=args.device)
 
     if args.upnp == "enable":
         print("Trying to open port via UPnP")
