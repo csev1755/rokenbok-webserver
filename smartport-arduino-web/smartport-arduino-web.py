@@ -72,7 +72,6 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--ip', help='What IP the server will listen on', default='')
     parser.add_argument('-p', '--port', help='What port the server will listen on', default=5000)
     parser.add_argument('-u', '--upnp', help='Enable UPnP for auto port forwarding', default='')
-    parser.add_argument('-c', '--controller', help='Override controller used by webserver', default=4)
 
     args = parser.parse_args()
     
