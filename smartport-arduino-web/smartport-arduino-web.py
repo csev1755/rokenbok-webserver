@@ -11,6 +11,7 @@ socketio = SocketIO(app)
 
 @socketio.on('gamepad')
 def handle_gamepad(data):
+    controller = command_deck.Controller(command_deck, data['controller'])
     controller.send_input(data)
 
 @app.route('/')
@@ -24,29 +25,34 @@ def script():
 @app.route('/press', methods=['POST'])
 def press():
     data = request.json
-    command_deck.send_command(command_deck.Command.PRESS, data['controller'], data['button'])
+    controller = command_deck.Controller(command_deck, data['controller'])
+    controller.release(data['button'])
     return "OK"
 
 @app.route('/release', methods=['POST'])
 def release():
     data = request.json
-    command_deck.send_command(command_deck.Command.RELEASE, data['controller'], data['button'])
+    controller = command_deck.Controller(command_deck, data['controller'])
+    controller.press(data['button'])
     return "OK"
 
 @app.route('/edit', methods=['POST'])
 def edit():
     data = request.json
-    command_deck.send_command(command_deck.Command.EDIT, data['controller'], data['selection'])
+    controller = command_deck.Controller(command_deck, data['controller'])
+    controller.select(data['selection'])
     return "OK"
 
 @app.route('/enable', methods=['POST'])
 def enable():
-    command_deck.send_command(command_deck.Command.ENABLE, request.json['controller'])
+    controller = command_deck.Controller(command_deck, request.json['controller'])
+    controller.enable()
     return "OK"
 
 @app.route('/disable', methods=['POST'])
 def disable():
-    command_deck.send_command(command_deck.Command.DISABLE, request.json['controller'])
+    controller = command_deck.Controller(command_deck, request.json['controller'])
+    controller.disable()
     return "OK"
 
 @app.route('/reset', methods=['POST'])
@@ -74,7 +80,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     command_deck = CommandDeck(serial_device=args.device)
-    controller = command_deck.Controller(command_deck, 4, 6)
 
     if args.upnp == "enable":
         print("Trying to open port via UPnP")

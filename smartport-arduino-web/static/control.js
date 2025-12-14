@@ -10,7 +10,9 @@ function update() {
         
         for (let i = 0; i < buttons.length; i++) {
             if (buttons[i] !== lastButtonState[i]) {
+                gamepadIndex = document.getElementById('gamepad-index').value
                 const data = {
+                    controller: parseInt(gamepadIndex),
                     button: i,
                     pressed: buttons[i]
                 };

@@ -18,17 +18,17 @@ class CommandDeck:
         DISABLE = 4
         RESET = 5
 
-    def send_command(self, command: Command, controller, value=0):
+    def send_command(self, command: Command, controller=None, value=0):
         if self.smartport is not None:
-            self.smartport.write(bytes([command.value, controller, value]))
+            self.smartport.write(bytes([command.value, controller.index, value]))
         else:
-            print(f"DEBUG - Action: {command.value} Controller: {controller} Value: {value}")
+            print(f"DEBUG - Action: {command.value} Controller: {controller.index if controller else 0} Value: {value}")
 
     class Controller:
-        def __init__(self, command_deck, index, selection): 
+        def __init__(self, command_deck, index, vehicle=None): 
             self.command = command_deck
             self.index = index
-            self.selection = selection
+            self.selection = vehicle
             self.button_map = {
                 0:  self.Command.A,
                 1:  self.Command.B,
@@ -41,11 +41,6 @@ class CommandDeck:
                 14: self.Command.DPAD_LEFT,
                 15: self.Command.DPAD_RIGHT
             }
-            self.command.send_command(
-                self.command.Command.EDIT,
-                self.index,
-                self.selection
-                )
 
         class Command(Enum):
             SELECT = 0
@@ -62,8 +57,24 @@ class CommandDeck:
             Y = 11
             RIGHT_TRIGGER = 12
 
+        def press(self, button: Command):
+            self.command.send_command(self.command.Command.PRESS, self, button)
+        
+        def release(self, button: Command):
+            self.command.send_command(self.command.Command.RELEASE, self, button)
+
+        def select(self, vehicle):
+            self.selection = vehicle
+            self.command.send_command(self.command.Command.EDIT, self, self.selection)
+
+        def disable(self):
+            self.command.send_command(self.command.Command.DISABLE, self)
+        
+        def enable(self):
+            self.command.send_command(self.command.Command.ENABLE, self)
+
         def send_input(self, input):
             if input['button'] in self.button_map:
                 command = self.command.Command.PRESS if input['pressed'] else self.command.Command.RELEASE
                 button = self.button_map[input['button']]
-                self.command.send_command(command, self.index, button.value)
+                self.command.send_command(command, self, button.value)
