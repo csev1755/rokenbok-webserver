@@ -12,13 +12,13 @@
 <body>
 <h1>Smart Port Controller</h1>
 <div>
-  <button onclick="resetPort()">Reset</button>
+  <button onclick="sendCommand('reset')">Reset</button>
 </div>
 
 <h2>Press / Release Buttons</h2>
 <div>
   <label>Controller:
-    <select id="controller">
+    <select id="button_controller">
       <option value="0">PHYSICAL_CONTROLLER_1</option>
       <option value="1">PHYSICAL_CONTROLLER_2</option>
       <option value="2">PHYSICAL_CONTROLLER_3</option>
@@ -31,7 +31,7 @@
   </label>
 
   <label>Button:
-    <select id="button">
+    <select id="button_button">
       <option value="0">SELECT_BUTTON</option>
       <option value="1">LEFT_TRIGGER</option>
       <option value="2">SHARE_SWITCH</option>
@@ -48,14 +48,14 @@
     </select>
   </label>
 
-  <button onclick="sendCommand('press')">Press</button>
-  <button onclick="sendCommand('release')">Release</button>
+  <button onclick="sendCommand('press', button_controller.value, button_button.value)">Press</button>
+  <button onclick="sendCommand('release', button_controller.value, button_button.value)">Release</button>
 </div>
 
 <h2>Edit Selection</h2>
 <div>
   <label>Controller:
-    <select id="edit-controller">
+    <select id="edit_controller">
       <option value="0">PHYSICAL_CONTROLLER_1</option>
       <option value="1">PHYSICAL_CONTROLLER_2</option>
       <option value="2">PHYSICAL_CONTROLLER_3</option>
@@ -68,7 +68,7 @@
   </label>
 
   <label>Selection:
-    <select id="selection">
+    <select id="edit_selection">
       <option value="0">SELECT_KEY_1</option>
       <option value="1">SELECT_KEY_2</option>
       <option value="2">SELECT_KEY_3</option>
@@ -88,27 +88,27 @@
     </select>
   </label>
 
-  <button onclick="editSelection()">Set</button>
+  <button onclick="sendCommand('edit', edit_controller.value, edit_selection.value)">Set</button>
 </div>
 
 <h2>Enable / Disable Controller</h2>
 <div>
   <label>Controller:
-    <select id="enable-controller">
+    <select id="enable_disable_controller">
       <option value="0">PHYSICAL_CONTROLLER_1</option>
       <option value="1">PHYSICAL_CONTROLLER_2</option>
       <option value="2">PHYSICAL_CONTROLLER_3</option>
       <option value="3">PHYSICAL_CONTROLLER_4</option>
     </select>
   </label>
-  <button onclick="toggleController('enable')">Enable</button>
-  <button onclick="toggleController('disable')">Disable</button>
+  <button onclick="sendCommand('enable', enable_disable_controller.value)">Enable</button>
+  <button onclick="sendCommand('disable', enable_disable_controller.value)">Disable</button>
 </div>
 
 <h1>Gamepad Input</h1>
 <div>
   <label>Controller:
-    <select id="gamepad-index">
+    <select id="gamepad_index">
       <option value="0">PHYSICAL_CONTROLLER_1</option>
       <option value="1">PHYSICAL_CONTROLLER_2</option>
       <option value="2">PHYSICAL_CONTROLLER_3</option>

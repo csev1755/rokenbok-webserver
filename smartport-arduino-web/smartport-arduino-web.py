@@ -9,11 +9,6 @@ from smartport_arduino import CommandDeck
 app = Flask(__name__, static_folder='static')
 socketio = SocketIO(app)
 
-@socketio.on('gamepad')
-def handle_gamepad(data):
-    controller = command_deck.Controller(command_deck, data['controller'])
-    controller.send_input(data)
-
 @app.route('/')
 def index():
     return send_from_directory('static', 'index.html')
@@ -24,23 +19,20 @@ def script():
 
 @app.route('/press', methods=['POST'])
 def press():
-    data = request.json
-    controller = command_deck.Controller(command_deck, data['controller'])
-    controller.release(data['button'])
+    controller = command_deck.Controller(command_deck, request.json['controller'])
+    controller.release(request.json['value'])
     return "OK"
 
 @app.route('/release', methods=['POST'])
 def release():
-    data = request.json
-    controller = command_deck.Controller(command_deck, data['controller'])
-    controller.press(data['button'])
+    controller = command_deck.Controller(command_deck, request.json['controller'])
+    controller.press(request.json['value'])
     return "OK"
 
 @app.route('/edit', methods=['POST'])
 def edit():
-    data = request.json
-    controller = command_deck.Controller(command_deck, data['controller'])
-    controller.select(data['selection'])
+    controller = command_deck.Controller(command_deck, request.json['controller'])
+    controller.select(request.json['value'])
     return "OK"
 
 @app.route('/enable', methods=['POST'])
@@ -59,6 +51,11 @@ def disable():
 def reset():
     command_deck.send_command(command_deck.Command.RESET)
     return "OK"
+
+@socketio.on('gamepad')
+def handle_gamepad(data):
+    controller = command_deck.Controller(command_deck, data['controller'])
+    controller.send_input(data)
 
 def handle_exit(signal, frame):
     print("Program interrupted, performing cleanup...")

@@ -10,7 +10,7 @@ function update() {
         
         for (let i = 0; i < buttons.length; i++) {
             if (buttons[i] !== lastButtonState[i]) {
-                gamepadIndex = document.getElementById('gamepad-index').value
+                gamepadIndex = document.getElementById('gamepad_index').value
                 const data = {
                     controller: parseInt(gamepadIndex),
                     button: i,
@@ -29,40 +29,10 @@ socket.on('connect', () => {
     update();
 });
 
-async function sendCommand(action) {
-    const controller = document.getElementById('controller').value;
-    const button = document.getElementById('button').value;
-
+async function sendCommand(action, controller = 0, value = 0) {
     await fetch(`/${action}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ controller: parseInt(controller), button: parseInt(button) })
-    });
-}
-
-async function editSelection() {
-    const controller = document.getElementById('edit-controller').value;
-    const selection = document.getElementById('selection').value;
-
-    await fetch('/edit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ controller: parseInt(controller), selection: parseInt(selection) })
-    });
-}
-
-async function toggleController(action) {
-    const controller = document.getElementById('enable-controller').value;
-
-    await fetch(`/${action}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ controller: parseInt(controller) })
-    });
-}
-
-async function resetPort() {
-    await fetch(`/reset`, {
-        method: 'POST',
+        body: JSON.stringify({ controller: parseInt(controller), value: parseInt(value) })
     });
 }
