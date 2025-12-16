@@ -75,7 +75,7 @@ class SmartPortArduino:
 
         if serial_device is not None:
             self.arduino = serial.Serial(serial_device, 115200, timeout=1)
-            print(f"Connected to Arduino via serial at {serial_device}")
+            print(f"Connected to SmartPort Arduino via serial at {serial_device}")
 
     def send_command(self, command, controller=0, value=0):
         """Sends a command to the SmartPort device.
@@ -91,7 +91,7 @@ class SmartPortArduino:
         """
 
         byte1 = command.value
-        byte2 = controller.value if controller else 0
+        byte2 = controller.index.value if controller else 0
         byte3 = value.value if value else 0
 
         self.arduino.write(bytes([byte1, byte2, byte3]))

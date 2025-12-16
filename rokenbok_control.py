@@ -21,12 +21,12 @@ class CommandDeck:
             A message indicating whether a connection to a device was established 
             or if it is in debugging mode without a device.
         """
+        self.debug = kwargs['debug']
         self.device = None
         self.controllers = {}
         
-        if "smartport-arduino" in kwargs:
-            self.device = SmartPortArduino(kwargs['smartport-arduino'])
-            print(f"Connected to SmartPort Arduino device at {kwargs['smartport-arduino']}")
+        if kwargs['device_name'] == "smartport-arduino":
+            self.device = SmartPortArduino(kwargs['serial_device'])
         else:
             print("Invalid device or no device specified, will only print commands for debugging")
     
@@ -155,7 +155,7 @@ class CommandDeck:
         Sends:
             A command to the connected device or prints the command in debugging mode if no device is connected.
         """
-        if self.device:
+        if self.device is not None:
             self.device.send_command(command, controller, value)
-        else:
+        if self.debug:
             print(f"DEBUG - {command} - {controller.index.name if controller is not None else None} - {value}")

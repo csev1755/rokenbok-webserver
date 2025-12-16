@@ -69,14 +69,16 @@ signal.signal(signal.SIGINT, handle_exit)
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Starts the Arduino SmartPort web controller')
     
-    parser.add_argument('-d', '--device', help='The serial device name of your Arduino', default=None)
+    parser.add_argument('-d', '--device', help='The type of Rokenbok control device', default=None)
+    parser.add_argument('-s', '--serial', help='The serial device name of the control device', default=None)
     parser.add_argument('-i', '--ip', help='What IP the server will listen on', default='')
     parser.add_argument('-p', '--port', help='What port the server will listen on', default=5000)
     parser.add_argument('-u', '--upnp', help='Enable UPnP for auto port forwarding', default='')
+    parser.add_argument('-b', '--debug', help='Enable debug output', default='')
 
     args = parser.parse_args()
     
-    command_deck = CommandDeck(serial_device=args.device)
+    command_deck = CommandDeck(device_name=args.device, serial_device=args.serial, debug=args.debug)
 
     if args.upnp == "enable":
         print("Trying to open port via UPnP")
