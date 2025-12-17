@@ -24,13 +24,14 @@ class CommandDeck:
         self.debug = kwargs['debug']
         self.device = None
         self.controllers = {}
+        self.selection_count = 16
         
         if kwargs['device_name'] == "smartport-arduino":
             self.device = SmartPortArduino(kwargs['serial_device'])
         else:
             print("Invalid device or no device specified, will only print commands for debugging")
     
-    def get_controller(self, index: Rokenbok.ControllerIdentifier, vehicle: Rokenbok.VehicleKey=None):
+    def get_controller(self, index: Rokenbok.ControllerIdentifier):
         """Gets or creates a controller instance.
 
         Args:
@@ -41,7 +42,7 @@ class CommandDeck:
             Controller: The controller instance
         """
         if index not in self.controllers:
-            self.controllers[index] = self.Controller(self, index, vehicle)
+            self.controllers[index] = self.Controller(self, index)
         return self.controllers[index]
     
     class Controller:
@@ -54,7 +55,7 @@ class CommandDeck:
             button_map (dict): A mapping from button integer values to controller command enums.
         """
 
-        def __init__(self, command_deck, index: Rokenbok.ControllerIdentifier=None, vehicle: Rokenbok.VehicleKey=None): 
+        def __init__(self, command_deck, index: Rokenbok.ControllerIdentifier=None): 
             """Initializes a controller instance.
 
             Args:
@@ -64,7 +65,7 @@ class CommandDeck:
             """
             self.deck = command_deck
             self.index = index
-            self.selection = vehicle
+            self.selection = Rokenbok.VehicleKey.NO_SELECTION
 
             # Mapping from a JavaScript gamepad device to Rokenbok controller buttons
             self.button_map = {
@@ -77,7 +78,9 @@ class CommandDeck:
                 12: Rokenbok.ControllerCommand.DPAD_UP,
                 13: Rokenbok.ControllerCommand.DPAD_DOWN,
                 14: Rokenbok.ControllerCommand.DPAD_LEFT,
-                15: Rokenbok.ControllerCommand.DPAD_RIGHT
+                15: Rokenbok.ControllerCommand.DPAD_RIGHT,
+                9:  Rokenbok.ControllerCommand.SELECT_UP,
+                8:  Rokenbok.ControllerCommand.SELECT_DOWN
             }
 
         def press(self, button: Rokenbok.ControllerCommand):
@@ -140,9 +143,17 @@ class CommandDeck:
                 A command to the `CommandDeck` to either press or release a button.
             """
             if input['button'] in self.button_map:
-                command = Rokenbok.DeviceCommand.PRESS if input['pressed'] else Rokenbok.DeviceCommand.RELEASE
                 button = self.button_map[input['button']]
-                self.deck.send_command(command, self, Rokenbok.ControllerCommand(button.value))
+
+                if button in (Rokenbok.ControllerCommand.SELECT_UP, Rokenbok.ControllerCommand.SELECT_DOWN):
+                    if input['pressed']:
+                        delta = 1 if button == Rokenbok.ControllerCommand.SELECT_UP else -1
+                        next_selection = (self.selection.value + delta) % self.deck.selection_count
+                        self.select(Rokenbok.VehicleKey(next_selection))
+                
+                else:
+                    command = Rokenbok.DeviceCommand.PRESS if input['pressed'] else Rokenbok.DeviceCommand.RELEASE
+                    self.deck.send_command(command, self, self.button_map[input['button']])
 
     def send_command(self, command, controller=None, value=None):
         """Sends a command to the connected device.

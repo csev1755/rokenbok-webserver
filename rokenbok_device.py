@@ -26,6 +26,8 @@ class Commands:
         X = 10
         Y = 11
         RIGHT_TRIGGER = 12
+        SELECT_UP = 13
+        SELECT_DOWN = 14
 
     class ControllerIdentifier(Enum):
         """Enum representing identifiers for physical and virtual controllers."""
