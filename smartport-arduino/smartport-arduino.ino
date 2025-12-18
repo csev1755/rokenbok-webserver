@@ -23,6 +23,11 @@
 // GPIO Pinout
 #define SLAVE_READY_PIN 8
 
+#define CMD_ENABLED_CONTROLLERS  0x01
+#define CMD_SELECT               0x02
+#define CMD_SP_UP                0x03
+#define CMD_SP_DN                0x04
+
 // Smart Port Byte Codes Sent By Master
 #define NULL_CMD 0x00
 #define BCAST_TPADS 0xc0
@@ -146,7 +151,7 @@ bool contains(uint8_t array[], size_t size, uint8_t value)
 /// @return void
 void setup(void)
 {
-  // Serial.begin(115200);
+  Serial.begin(115200);
 
   // Configure Smart Port GPIO
   pinMode(MISO, OUTPUT);
@@ -180,7 +185,41 @@ void setup(void)
 /// @return void
 void loop(void)
 {
+  while (Serial.available() >= 2)
+  {
+    uint8_t cmd = Serial.read();
+
+    switch (cmd)
+    {
+      case CMD_ENABLED_CONTROLLERS:
+      {
+        uint8_t value = Serial.read();
+        enabled_controllers = value;
+        break;
+      }
+
+      case CMD_SELECT:
+      {
+        // Needs 2 more bytes
+        while (Serial.available() < 2);
+        uint8_t index = Serial.read();  // 0–11
+        uint8_t value = Serial.read();  // select value
+
+        if (index < 12)
+          selects[index] = value;
+        break;
+      }
+
+      case CMD_SP_UP:
+      {
+        uint8_t value = Serial.read();
+        sp_up = value;
+        break;
+      }
+    }
+  }
 }
+
 
 //   _____  _____ _____        //
 //  |_   _|/ ____|  __ \       //
