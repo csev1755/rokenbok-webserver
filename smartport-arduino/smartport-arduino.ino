@@ -21,7 +21,7 @@
 //  |_____/|______|_|    |_____|_| \_|______|_____/   //
 
 // GPIO Pinout
-#define SLAVE_READY_PIN 8
+#define SLAVE_READY_PIN 9
 
 #define CMD_ENABLED_CONTROLLERS  0x01
 #define CMD_SELECT               0x02
