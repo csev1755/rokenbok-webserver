@@ -188,6 +188,7 @@ void loop(void)
     {
       case CMD_ENABLED_CONTROLLERS:
       {
+        // Only one byte needed for this command
         uint8_t value = Serial.read();
         enabled_controllers = value;
         break;
@@ -195,10 +196,10 @@ void loop(void)
 
       case CMD_SELECT:
       {
-        // Needs 2 more bytes
+        // Read the next two bytes
         while (Serial.available() < 2);
-        uint8_t index = Serial.read();  // 0–11
-        uint8_t value = Serial.read();  // select value
+        uint8_t index = Serial.read();
+        uint8_t value = Serial.read();
 
         if (index < 12)
           selects[index] = value;
@@ -207,10 +208,9 @@ void loop(void)
 
       case CMD_SP_BUTTON:
       {
-        // Wait for the 9 bytes to arrive
+        // Read each button state in order
         while (Serial.available() < 9);
         
-        // Read the 9 bytes in order
         sp_a     = Serial.read();
         sp_b     = Serial.read();
         sp_x     = Serial.read();
