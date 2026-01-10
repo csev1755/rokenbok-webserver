@@ -18,24 +18,6 @@ def index():
 def script():
     return send_from_directory('static', 'control.js')
 
-@app.route('/press', methods=['POST'])
-def press():
-    controller = command_deck.get_controller(Rokenbok.ControllerIdentifier(request.json['controller']))
-    controller.press(Rokenbok.ControllerCommand(request.json['value']))
-    return "OK"
-
-@app.route('/release', methods=['POST'])
-def release():
-    controller = command_deck.get_controller(Rokenbok.ControllerIdentifier(request.json['controller']))
-    controller.release(Rokenbok.ControllerCommand(request.json['value']))
-    return "OK"
-
-@app.route('/edit', methods=['POST'])
-def edit():
-    controller = command_deck.get_controller(Rokenbok.ControllerIdentifier(request.json['controller']))
-    controller.select(Rokenbok.VehicleKey(request.json['value']))
-    return "OK"
-
 @app.route('/enable', methods=['POST'])
 def enable():
     controller = command_deck.get_controller(Rokenbok.ControllerIdentifier(request.json['controller']))
