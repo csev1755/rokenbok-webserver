@@ -66,6 +66,7 @@ class CommandDeck:
             self.deck = command_deck
             self.index = index
             self.selection = Rokenbok.VehicleKey.NO_SELECTION
+            self.enable()
 
             # Mapping from a JavaScript gamepad device to Rokenbok controller buttons
             self.button_map = {
