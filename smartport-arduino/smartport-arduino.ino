@@ -23,9 +23,58 @@
 // GPIO Pinout
 #define SLAVE_READY_PIN 9
 
-#define CMD_ENABLED_CONTROLLERS  0x01
-#define CMD_SELECT               0x02
-#define CMD_SP_BUTTON            0x03
+// Device Commands (Byte 1)
+#define DEVICE_CMD_PRESS   0
+#define DEVICE_CMD_RELEASE 1
+#define DEVICE_CMD_EDIT    2
+#define DEVICE_CMD_ENABLE  3
+#define DEVICE_CMD_DISABLE 4
+#define DEVICE_CMD_RESET   5
+
+// Controller Commands (Byte 3 when used with PRESS/RELEASE)
+#define CTRL_SELECT        0
+#define CTRL_LEFT_TRIGGER  1
+#define CTRL_SHARE_SWITCH  2
+#define CTRL_IS_16_SEL     3
+#define CTRL_DPAD_UP       4
+#define CTRL_DPAD_DOWN     5
+#define CTRL_DPAD_RIGHT    6
+#define CTRL_DPAD_LEFT     7
+#define CTRL_A             8
+#define CTRL_B             9
+#define CTRL_X             10
+#define CTRL_Y             11
+#define CTRL_RIGHT_TRIGGER 12
+#define CTRL_SELECT_UP     13
+#define CTRL_SELECT_DOWN   14
+
+// Controller Identifiers (Byte 2)
+#define PHYSICAL_CONTROLLER_1 0
+#define PHYSICAL_CONTROLLER_2 1
+#define PHYSICAL_CONTROLLER_3 2
+#define PHYSICAL_CONTROLLER_4 3
+#define VIRTUAL_CONTROLLER_1  4
+#define VIRTUAL_CONTROLLER_2  5
+#define VIRTUAL_CONTROLLER_3  6
+#define VIRTUAL_CONTROLLER_4  7
+
+// Vehicle Keys (Byte 3 when used with EDIT)
+#define SELECT_KEY_1    0
+#define SELECT_KEY_2    1
+#define SELECT_KEY_3    2
+#define SELECT_KEY_4    3
+#define SELECT_KEY_5    4
+#define SELECT_KEY_6    5
+#define SELECT_KEY_7    6
+#define SELECT_KEY_8    7
+#define SELECT_KEY_9    8
+#define SELECT_KEY_10   9
+#define SELECT_KEY_11   10
+#define SELECT_KEY_12   11
+#define SELECT_KEY_13   12
+#define SELECT_KEY_14   13
+#define SELECT_KEY_15   14
+#define NO_SELECTION    15
 
 // Smart Port Byte Codes Sent By Master
 #define NULL_CMD 0x00
@@ -139,6 +188,31 @@ bool contains(uint8_t array[], size_t size, uint8_t value)
   return false;
 }
 
+/// @brief Convert controller index to bitwise position for V4|V3|V2|V1|P4|P3|P2|P1
+uint8_t controller_to_bitwise(uint8_t controller_index)
+{
+  // Map: V1=0, V2=1, V3=2, V4=3, P1=4, P2=5, P3=6, P4=7
+  // To:  P1=0, P2=1, P3=2, P4=3, V1=4, V2=5, V3=6, V4=7
+  return (controller_index + 4) % 8;
+}
+
+/// @brief Set a button state for a specific controller
+void set_button_state(uint8_t* button_var, uint8_t controller_index, bool pressed)
+{
+  uint8_t bitwise_index = controller_to_bitwise(controller_index);
+  
+  if (pressed)
+  {
+    *button_var |= (1 << bitwise_index);
+  }
+  else
+  {
+    *button_var &= ~(1 << bitwise_index);
+  }
+  
+  sp_priority_byte |= (1 << bitwise_index);
+}
+
 //    _____ ______ _______ _    _ _____        __   _      ____   ____  _____    //
 //   / ____|  ____|__   __| |  | |  __ \      / /  | |    / __ \ / __ \|  __ \   //
 //  | (___ | |__     | |  | |  | | |__) |    / /   | |   | |  | | |  | | |__) |  //
@@ -180,46 +254,157 @@ void setup(void)
 /// @return void
 void loop(void)
 {
-  while (Serial.available() >= 2)
+  // Wait for 3 bytes to be available
+  if (Serial.available() >= 3)
   {
     uint8_t cmd = Serial.read();
+    uint8_t controller = Serial.read();
+    uint8_t value = Serial.read();
+
+    // Validate controller index
+    if (controller > 7)
+    {
+      return; // Invalid controller
+    }
 
     switch (cmd)
     {
-      case CMD_ENABLED_CONTROLLERS:
+      case DEVICE_CMD_PRESS:
       {
-        // Only one byte needed for this command
-        uint8_t value = Serial.read();
-        enabled_controllers = value;
+        // Press a button on the specified controller
+        switch (value)
+        {
+          case CTRL_DPAD_UP:
+            set_button_state(&sp_up, controller, true);
+            break;
+          case CTRL_DPAD_DOWN:
+            set_button_state(&sp_down, controller, true);
+            break;
+          case CTRL_DPAD_LEFT:
+            set_button_state(&sp_left, controller, true);
+            break;
+          case CTRL_DPAD_RIGHT:
+            set_button_state(&sp_right, controller, true);
+            break;
+          case CTRL_A:
+            set_button_state(&sp_a, controller, true);
+            break;
+          case CTRL_B:
+            set_button_state(&sp_b, controller, true);
+            break;
+          case CTRL_X:
+            set_button_state(&sp_x, controller, true);
+            break;
+          case CTRL_Y:
+            set_button_state(&sp_y, controller, true);
+            break;
+          case CTRL_RIGHT_TRIGGER:
+            set_button_state(&sp_rt, controller, true);
+            break;
+        }
         break;
       }
 
-      case CMD_SELECT:
+      case DEVICE_CMD_RELEASE:
       {
-        // Read the next two bytes
-        while (Serial.available() < 2);
-        uint8_t index = Serial.read();
-        uint8_t value = Serial.read();
-
-        if (index < 12)
-          selects[index] = value;
+        // Release a button on the specified controller
+        switch (value)
+        {
+          case CTRL_DPAD_UP:
+            set_button_state(&sp_up, controller, false);
+            break;
+          case CTRL_DPAD_DOWN:
+            set_button_state(&sp_down, controller, false);
+            break;
+          case CTRL_DPAD_LEFT:
+            set_button_state(&sp_left, controller, false);
+            break;
+          case CTRL_DPAD_RIGHT:
+            set_button_state(&sp_right, controller, false);
+            break;
+          case CTRL_A:
+            set_button_state(&sp_a, controller, false);
+            break;
+          case CTRL_B:
+            set_button_state(&sp_b, controller, false);
+            break;
+          case CTRL_X:
+            set_button_state(&sp_x, controller, false);
+            break;
+          case CTRL_Y:
+            set_button_state(&sp_y, controller, false);
+            break;
+          case CTRL_RIGHT_TRIGGER:
+            set_button_state(&sp_rt, controller, false);
+            break;
+        }
         break;
       }
 
-      case CMD_SP_BUTTON:
+      case DEVICE_CMD_EDIT:
       {
-        // Read each button state in order
-        while (Serial.available() < 9);
+        // Edit the vehicle selection for the specified controller
+        if (value <= NO_SELECTION)
+        {
+          selects[controller] = value;
+        }
+        break;
+      }
+
+      case DEVICE_CMD_ENABLE:
+      {
+        // Enable control for the specified controller
+        enable_control[controller] = true;
+        uint8_t bitwise_index = controller_to_bitwise(controller);
+        enabled_controllers &= ~(1 << bitwise_index);
+        break;
+      }
+
+      case DEVICE_CMD_DISABLE:
+      {
+        // Disable control for the specified controller
+        enable_control[controller] = false;
+        uint8_t bitwise_index = controller_to_bitwise(controller);
+        enabled_controllers |= (1 << bitwise_index);
         
-        sp_a     = Serial.read();
-        sp_b     = Serial.read();
-        sp_x     = Serial.read();
-        sp_y     = Serial.read();
-        sp_up    = Serial.read();
-        sp_down  = Serial.read();
-        sp_right = Serial.read();
-        sp_left  = Serial.read();
-        sp_rt    = Serial.read();
+        // Clear all button states for this controller
+        set_button_state(&sp_up, controller, false);
+        set_button_state(&sp_down, controller, false);
+        set_button_state(&sp_left, controller, false);
+        set_button_state(&sp_right, controller, false);
+        set_button_state(&sp_a, controller, false);
+        set_button_state(&sp_b, controller, false);
+        set_button_state(&sp_x, controller, false);
+        set_button_state(&sp_y, controller, false);
+        set_button_state(&sp_rt, controller, false);
+        
+        selects[controller] = NO_SELECTION;
+        break;
+      }
+
+      case DEVICE_CMD_RESET:
+      {
+        // Reset all controllers
+        for (int i = 0; i < 8; i++)
+        {
+          selects[i] = 0x0F;
+          enable_control[i] = false;
+        }
+
+        enabled_controllers = 0b11111111;
+        sp_a = 0x00;
+        sp_b = 0x00;
+        sp_x = 0x00;
+        sp_y = 0x00;
+        sp_up = 0x00;
+        sp_down = 0x00;
+        sp_right = 0x00;
+        sp_left = 0x00;
+        sp_rt = 0x00;
+        sp_priority_byte = 0x00;
+
+        spi_current_series = 0;
+        spi_series_count = 0;
         break;
       }
     }
