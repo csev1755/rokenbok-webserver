@@ -1,4 +1,5 @@
-const output = document.getElementById('output');
+const input = document.getElementById('input');
+const players = document.getElementById('players');
 const socket = io();
 
 const KEYBOARD_GAMEPAD_MAP = {
@@ -24,7 +25,7 @@ function controllerIndex() {
 function emit(controller, button, pressed) {
     const data = { controller, button, pressed };
     socket.emit('controller', data);
-    output.textContent = JSON.stringify(data, null, 2);
+    input.textContent = JSON.stringify(data, null, 2);
 }
 
 function updateGamepad() {
@@ -64,4 +65,8 @@ function update() {
 
 socket.on('connect', () => {
     update();
+});
+
+socket.on("players", data => {
+    players.textContent = JSON.stringify(data, null, 2);
 });

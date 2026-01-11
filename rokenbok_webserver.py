@@ -66,7 +66,19 @@ class CommandDeck:
         if index not in self.controllers:
             self.controllers[index] = self.Controller(self, index)
         return self.controllers[index]
-    
+
+    def get_players(self):
+        """
+        Returns all controllers and their selections.
+        """
+        return [
+            {
+                "controller": controller.index.name,
+                "selection": controller.selection.name,
+            }
+            for controller in self.controllers.values()
+        ]
+
     class Controller:
         """Represents a controller connected to the Command Deck.
 
@@ -177,6 +189,8 @@ class CommandDeck:
                 else:
                     command = Rokenbok.DeviceCommand.PRESS if input['pressed'] else Rokenbok.DeviceCommand.RELEASE
                     self.deck.send_command(command, self, self.button_map[input['button']])
+
+            socketio.emit("players", {"players": self.deck.get_players()})
 
     def send_command(self, command, controller=None, value=None):
         """Sends a command to the connected device.
