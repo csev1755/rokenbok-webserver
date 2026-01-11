@@ -11,25 +11,7 @@
 </head>
 <body>
 <h1>Rokenbok WebServer</h1>
-<!-- <div>
-  <button onclick="sendCommand('reset')">Reset</button>
-</div> -->
 
-<!-- <h2>Enable / Disable Controller</h2>
-<div>
-  <label>Controller:
-    <select id="enable_disable_controller">
-      <option value="0">PHYSICAL_CONTROLLER_1</option>
-      <option value="1">PHYSICAL_CONTROLLER_2</option>
-      <option value="2">PHYSICAL_CONTROLLER_3</option>
-      <option value="3">PHYSICAL_CONTROLLER_4</option>
-    </select>
-  </label>
-  <button onclick="sendCommand('enable', enable_disable_controller.value)">Enable</button>
-  <button onclick="sendCommand('disable', enable_disable_controller.value)">Disable</button>
-</div> -->
-
-<!-- <h2>Controller Input</h2> -->
 <div>
   <label>Input Device:
     <select id="input_device">
@@ -53,6 +35,7 @@
     </select>
   </label>
 </div>
+
 <pre id="output"></pre>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
 <script src="/control.js"></script>

@@ -65,11 +65,3 @@ function update() {
 socket.on('connect', () => {
     update();
 });
-
-// async function sendCommand(action, controller = 0, value = 0) {
-//     await fetch(`/${action}`, {
-//         method: 'POST',
-//         headers: { 'Content-Type': 'application/json' },
-//         body: JSON.stringify({ controller: parseInt(controller), value: parseInt(value) })
-//     });
-// }
