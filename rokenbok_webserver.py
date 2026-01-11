@@ -100,7 +100,6 @@ class CommandDeck:
             self.deck = command_deck
             self.index = index
             self.selection = Rokenbok.VehicleKey.NO_SELECTION
-            self.enable()
 
             # Mapping from a JavaScript gamepad device to Rokenbok controller buttons
             self.button_map = {
@@ -191,6 +190,7 @@ class CommandDeck:
                     self.deck.send_command(command, self, self.button_map[input['button']])
 
             socketio.emit("players", {"players": self.deck.get_players()})
+            self.enable()
 
     def send_command(self, command, controller=None, value=None):
         """Sends a command to the connected device.
