@@ -168,28 +168,6 @@ class CommandDeck:
                 8:  Rokenbok.ControllerCommand.SELECT_DOWN
             }
 
-        def press(self, button: Rokenbok.ControllerCommand):
-            """Presses a button on the controller.
-
-            Args:
-                button (ControllerCommand)
-
-            Sends:
-                A command to the `CommandDeck` to perform a press action on the specified button.
-            """
-            self.deck.send_command(Rokenbok.DeviceCommand.PRESS, self, button)
-        
-        def release(self, button: Rokenbok.ControllerCommand):
-            """Releases a button on the controller.
-
-            Args:
-                button (ControllerCommand)
-
-            Sends:
-                A command to the `CommandDeck` to perform a release action on the specified button.
-            """
-            self.deck.send_command(Rokenbok.DeviceCommand.RELEASE, self, button)
-
         def select(self, vehicle: Rokenbok.VehicleKey):
             """Changes the controller's selection.
 
