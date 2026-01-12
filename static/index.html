@@ -7,13 +7,14 @@
   body { font-family: Arial, sans-serif; padding: 20px; }
   select, button { margin: 5px; padding: 5px; }
   h2 { margin-top: 20px; }
+  .player { padding: 12px; }
 </style>
 </head>
 <body>
 <h1>Rokenbok WebServer</h1>
 
 <div>
-  <label>Input Device:
+  <label><strong>Input Device:</strong>
     <select id="input_device">
       <option value="gamepad">GAMEPAD</option>
       <option value="keyboard">KEYBOARD</option>
@@ -21,9 +22,32 @@
   </label>
 </div>
 
-<pre id="input"></pre>
-<pre id="players"></pre>
+<template id="input-template">
+    <div class="input-row">
+        <strong>Button:</strong> <span data-button></span>
+    </div>
+    <div class="input-row">
+        <strong>State:</strong> <span data-state></span>
+    </div>
+</template>
+
+<div id="input"></div>
+
+<h2>Players</h2>
+
+<template id="player-template">
+    <div class="player">
+        <div><strong>Slot:</strong> <span data-slot></span></div>
+        <div><strong>Controller:</strong> <span data-controller></span></div>
+        <div><strong>Player ID:</strong> <span data-player-id></span></div>
+        <div><strong>Selection:</strong> <span data-selection></span></div>
+    </div>
+</template>
+
+<div id="players"></div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
 <script src="/control.js"></script>
+
 </body>
 </html>

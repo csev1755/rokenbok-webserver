@@ -1,6 +1,10 @@
-const input = document.getElementById('input');
-const players = document.getElementById('players');
 const socket = io();
+
+const inputElement = document.getElementById('input');
+const inputTemplate = document.getElementById('input-template');
+
+const playersElement = document.getElementById('players');
+const playerTemplate = document.getElementById('player-template');
 
 const KEYBOARD_GAMEPAD_MAP = {
     KeyQ: 8,
@@ -11,57 +15,81 @@ const KEYBOARD_GAMEPAD_MAP = {
     KeyD: 15,
 };
 
-let lastButtonState = [];
-let keyboardState = {};
+let lastGamepadButtons = [];
+const keyboardState = {};
 
-function selectedDevice() {
+function getSelectedDevice() {
     return document.getElementById('input_device').value;
 }
 
-function emit(button, pressed) {
-    const data = { button, pressed };
-    socket.emit('controller', data);
-    input.textContent = JSON.stringify(data, null, 2);
+function renderInput(button, pressed) {
+    const fragment = inputTemplate.content.cloneNode(true);
+    fragment.querySelector('[data-button]').textContent = button;
+    fragment.querySelector('[data-state]').textContent = pressed ? 'Pressed' : 'Released';
+    inputElement.replaceChildren(fragment);
 }
 
-function updateGamepad() {
-    if (selectedDevice() !== 'gamepad') return;
-    const gp = navigator.getGamepads()[0];
-    if (!gp) return;
-    const buttons = gp.buttons.map(b => b.pressed);
+function renderPlayers(players) {
+    playersElement.replaceChildren();
 
-    for (let i = 0; i < buttons.length; i++) {
-        if (buttons[i] !== lastButtonState[i]) {
-            emit(i, buttons[i]);
+    players.forEach((player, index) => {
+        const fragment = playerTemplate.content.cloneNode(true);
+
+        fragment.querySelector('[data-slot]').textContent = index + 1;
+        fragment.querySelector('[data-controller]').textContent = player.controller;
+        fragment.querySelector('[data-player-id]').textContent = player.player_id ?? '—';
+        fragment.querySelector('[data-selection]').textContent = player.selection;
+        
+        playersElement.appendChild(fragment);
+    });
+}
+
+function emitControllerEvent(button, pressed) {
+    renderInput(button, pressed);
+    socket.emit('controller', { button, pressed });
+}
+
+function pollGamepad() {
+    if (getSelectedDevice() !== 'gamepad') return;
+
+    const gamepad = navigator.getGamepads()[0];
+    if (!gamepad) return;
+
+    const buttons = gamepad.buttons.map(b => b.pressed);
+
+    buttons.forEach((pressed, index) => {
+        if (pressed !== lastGamepadButtons[index]) {
+            emitControllerEvent(index, pressed);
         }
-    }
-    lastButtonState = buttons;
+    });
+
+    lastGamepadButtons = buttons;
 }
 
-window.addEventListener('keydown', (e) => {
-    if (selectedDevice() !== 'keyboard') return;
+window.addEventListener('keydown', e => {
+    if (getSelectedDevice() !== 'keyboard') return;
     if (!(e.code in KEYBOARD_GAMEPAD_MAP)) return;
     if (keyboardState[e.code]) return;
+
     keyboardState[e.code] = true;
-    emit(KEYBOARD_GAMEPAD_MAP[e.code], true);
+    emitControllerEvent(KEYBOARD_GAMEPAD_MAP[e.code], true);
 });
 
-window.addEventListener('keyup', (e) => {
-    if (selectedDevice() !== 'keyboard') return;
+window.addEventListener('keyup', e => {
+    if (getSelectedDevice() !== 'keyboard') return;
     if (!(e.code in KEYBOARD_GAMEPAD_MAP)) return;
+
     keyboardState[e.code] = false;
-    emit(KEYBOARD_GAMEPAD_MAP[e.code], false);
+    emitControllerEvent(KEYBOARD_GAMEPAD_MAP[e.code], false);
 });
 
-function update() {
-    updateGamepad();
-    requestAnimationFrame(update);
+function loop() {
+    pollGamepad();
+    requestAnimationFrame(loop);
 }
 
-socket.on('connect', () => {
-    update();
-});
+socket.on('connect', loop);
 
-socket.on("players", data => {
-    players.textContent = JSON.stringify(data, null, 2);
+socket.on('players', data => {
+    renderPlayers(data.players);
 });
