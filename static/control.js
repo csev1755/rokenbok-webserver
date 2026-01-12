@@ -18,6 +18,10 @@ const KEYBOARD_GAMEPAD_MAP = {
 let lastGamepadButtons = [];
 const keyboardState = {};
 
+function getPlayerName() {
+    return document.getElementById('player_name').value;
+}
+
 function getSelectedDevice() {
     return document.getElementById('input_device').value;
 }
@@ -36,8 +40,9 @@ function renderPlayers(players) {
         const fragment = playerTemplate.content.cloneNode(true);
 
         fragment.querySelector('[data-slot]').textContent = index + 1;
+        fragment.querySelector('[data-player-name]').textContent = player.player_name;
         fragment.querySelector('[data-controller]').textContent = player.controller;
-        fragment.querySelector('[data-player-id]').textContent = player.player_id ?? '—';
+        fragment.querySelector('[data-player-id]').textContent = player.player_id;
         fragment.querySelector('[data-selection]').textContent = player.selection;
         
         playersElement.appendChild(fragment);
@@ -46,7 +51,8 @@ function renderPlayers(players) {
 
 function emitControllerEvent(button, pressed) {
     renderInput(button, pressed);
-    socket.emit('controller', { button, pressed });
+    const player_name = getPlayerName();
+    socket.emit('controller', { button, pressed, player_name });
 }
 
 function pollGamepad() {

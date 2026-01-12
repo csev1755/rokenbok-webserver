@@ -14,6 +14,13 @@
 <h1>Rokenbok WebServer</h1>
 
 <div>
+  <label>
+    <strong>Player Name:</strong>
+    <input type="text" id="player_name">
+  </label>
+</div>
+
+<div>
   <label><strong>Input Device:</strong>
     <select id="input_device">
       <option value="gamepad">GAMEPAD</option>
@@ -37,6 +44,7 @@
 
 <template id="player-template">
     <div class="player">
+        <div><strong>Player Name:</strong> <span data-player-name></span></div>
         <div><strong>Slot:</strong> <span data-slot></span></div>
         <div><strong>Controller:</strong> <span data-controller></span></div>
         <div><strong>Player ID:</strong> <span data-player-id></span></div>

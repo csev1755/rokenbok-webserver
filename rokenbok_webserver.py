@@ -29,7 +29,9 @@ def handle_disconnect():
 @socketio.on("controller")
 def handle_controller(data):
     controller = command_deck.get_controller(request.sid)
-    controller.send_input(data) if controller else None
+    if controller:
+        controller.player_name = data['player_name']
+        controller.send_input(data)
 
 class CommandDeck:
     """Represents a Command Deck and provides methods to communicate with it.
@@ -94,6 +96,7 @@ class CommandDeck:
         for controller in self.controllers.values():
             if controller.player_id == player_id:
                 controller.player_id = None
+                controller.player_name = None
                 controller.disable()
                 return controller
         return None
@@ -120,6 +123,7 @@ class CommandDeck:
         """
         return [
             {
+                "player_name": controller.player_name,
                 "controller": controller.index.name,
                 "player_id": controller.player_id,
                 "selection": controller.selection.name,
@@ -150,6 +154,7 @@ class CommandDeck:
             self.deck = command_deck
             self.index = index
             self.selection = Rokenbok.VehicleKey.NO_SELECTION
+            self.player_name = None
             self.player_id = None
 
             # Mapping from a JavaScript gamepad device to Rokenbok controller buttons
