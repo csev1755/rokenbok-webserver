@@ -18,88 +18,139 @@ def index():
 def script():
     return send_from_directory('static', 'control.js')
 
-@socketio.on('controller')
+@socketio.on("connect")
+def handle_connect():
+    command_deck.assign_controller(request.sid)
+
+@socketio.on("disconnect")
+def handle_disconnect():
+    command_deck.release_controller(request.sid)
+
+@socketio.on("controller")
 def handle_controller(data):
-    controller = command_deck.get_controller(Rokenbok.ControllerIdentifier(data['controller']))
-    controller.send_input(data)
+    controller = command_deck.get_controller(request.sid)
+    controller.send_input(data) if controller else None
 
 class CommandDeck:
     """Represents a Command Deck and provides methods to communicate with it.
 
     Attributes:
-        device: A device used to control Rokenbok
-        controllers: A dictionary of controller instances keyed by index
+        debug (bool): Enables debug output when True.
+        device: The underlying hardware device interface, if configured.
+        controllers (dict): Mapping of controller identifiers to Controller instances.
+        selection_count (int): Number of selectable vehicles.
     """
-    
+
     def __init__(self, **kwargs):
-        """Initializes the `CommandDeck` class and establishes communication with
-            a control device.
+        """
+        Initializes the CommandDeck and connects to a specified hardware device.
 
-        Args:
-            type (str, optional): The type control device to connect to.
-                If not provided, only the commands will be printed for debugging.
-
-        Prints:
-            A message indicating whether a connection to a device was established 
-            or if it is in debugging mode without a device.
+        Keyword Args:
+            device_name (str): Identifier for the control device type.
+            serial_device (str): Serial port path for the control device.
+            debug (bool): Enables debug output.
         """
         self.debug = kwargs['debug']
         self.device = None
-        self.controllers = {}
-        self.selection_count = 16
-        
+
         if kwargs['device_name'] == "smartport-arduino":
             self.device = SmartPortArduino(kwargs['serial_device'])
         else:
             print("Invalid device or no device specified, will only print commands for debugging")
-    
-    def get_controller(self, index: Rokenbok.ControllerIdentifier):
-        """Gets or creates a controller instance.
+
+        self.controllers: dict[Rokenbok.ControllerIdentifier, CommandDeck.Controller] = {}
+        self.selection_count = 16
+
+        for cid in Rokenbok.ControllerIdentifier:
+            self.controllers[cid] = self.Controller(self, cid)
+
+    def assign_controller(self, player_id):
+        """
+        Assigns an available controller to a client session.
 
         Args:
-            index (ControllerIdentifier): The controller identifier
-            vehicle (VehicleKey, optional): Initial vehicle selection
+            player_id (str): Socket.IO session identifier.
 
         Returns:
-            Controller: The controller instance
+            Controller or None: The assigned controller, or None if none are available.
         """
-        if index not in self.controllers:
-            self.controllers[index] = self.Controller(self, index)
-        return self.controllers[index]
+        for controller in self.controllers.values():
+            if controller.player_id is None:
+                controller.player_id = player_id
+                controller.enable()
+                return controller
+        return None
+
+    def release_controller(self, player_id):
+        """
+        Releases the controller associated with a client session.
+
+        Args:
+            player_id (str): Socket.IO session identifier.
+
+        Returns:
+            Controller or None: The released controller, or None if not found.
+        """
+        for controller in self.controllers.values():
+            if controller.player_id == player_id:
+                controller.player_id = None
+                controller.disable()
+                return controller
+        return None
+
+    def get_controller(self, player_id):
+        """
+        Retrieves the controller associated with a client session.
+
+        Args:
+            player_id (str): Socket.IO session identifier.
+
+        Returns:
+            Controller or None: The matching controller, or None if not found.
+        """
+        for controller in self.controllers.values():
+            if controller.player_id == player_id:
+                return controller
+        return None
 
     def get_players(self):
         """
-        Returns all controllers and their selections.
+        Returns:
+            list[dict]: A list of player metadata dictionaries.
         """
         return [
             {
                 "controller": controller.index.name,
+                "player_id": controller.player_id,
                 "selection": controller.selection.name,
             }
             for controller in self.controllers.values()
         ]
 
     class Controller:
-        """Represents a controller connected to the Command Deck.
+        """
+        A single logical controller assigned to a client.
 
         Attributes:
-            command (CommandDeck): The parent `CommandDeck` instance for communication.
-            index (int): The controller number.
-            selection (int, optional): A vehicle or selection tied to the controller.
-            button_map (dict): A mapping from button integer values to controller command enums.
+            deck (CommandDeck): Parent command deck instance.
+            index (ControllerIdentifier): Controller identifier.
+            selection (VehicleKey): Current vehicle selection.
+            player_id (str): Socket.IO session identifier.
+            button_map (dict): Mapping of gamepad buttons to controller commands.
         """
 
-        def __init__(self, command_deck, index: Rokenbok.ControllerIdentifier=None): 
-            """Initializes a controller instance.
+        def __init__(self, command_deck, index: Rokenbok.ControllerIdentifier):
+            """
+            Initializes a controller instance.
 
             Args:
-                command_deck (CommandDeck)
-                index (ControllerIdentifier, optional)
-                vehicle (VehicleKey, optional)
+                command_deck (CommandDeck): Parent command deck.
+                index (ControllerIdentifier): Controller identifier.
             """
             self.deck = command_deck
             self.index = index
             self.selection = Rokenbok.VehicleKey.NO_SELECTION
+            self.player_id = None
 
             # Mapping from a JavaScript gamepad device to Rokenbok controller buttons
             self.button_map = {
@@ -190,7 +241,6 @@ class CommandDeck:
                     self.deck.send_command(command, self, self.button_map[input['button']])
 
             socketio.emit("players", {"players": self.deck.get_players()})
-            self.enable()
 
     def send_command(self, command, controller=None, value=None):
         """Sends a command to the connected device.
@@ -234,4 +284,4 @@ if __name__ == '__main__':
         print("Trying to open port via UPnP")
         upnp_mapper = UPnPPortMapper(args.port, args.port, args.ip, "SmartPort Web Server")
 
-    socketio.run(app.run(host=args.ip, port=args.port))
+    socketio.run(app, host=args.ip, port=args.port)
