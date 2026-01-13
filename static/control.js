@@ -116,7 +116,7 @@ window.addEventListener('keyup', e => {
     );
 
     keyboardState[e.code] = false;
-    renderInput(e.code, control.name, false);
+    renderInput(e.code, false);
     emitControllerEvent(control.button, false);
 });
 
