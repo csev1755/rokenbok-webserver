@@ -140,7 +140,6 @@ class CommandDeck:
             index (ControllerIdentifier): Controller identifier.
             selection (VehicleKey): Current vehicle selection.
             player_id (str): Socket.IO session identifier.
-            button_map (dict): Mapping of gamepad buttons to controller commands.
         """
 
         def __init__(self, command_deck, index: Rokenbok.ControllerIdentifier):
@@ -156,22 +155,6 @@ class CommandDeck:
             self.selection = Rokenbok.VehicleKey.NO_SELECTION
             self.player_name = None
             self.player_id = None
-
-            # Mapping from a JavaScript gamepad device to Rokenbok controller buttons
-            self.button_map = {
-                0:  Rokenbok.ControllerCommand.A,
-                1:  Rokenbok.ControllerCommand.B,
-                3:  Rokenbok.ControllerCommand.X,
-                2:  Rokenbok.ControllerCommand.Y,
-                4:  Rokenbok.ControllerCommand.LEFT_TRIGGER,
-                5:  Rokenbok.ControllerCommand.RIGHT_TRIGGER,
-                12: Rokenbok.ControllerCommand.DPAD_UP,
-                13: Rokenbok.ControllerCommand.DPAD_DOWN,
-                14: Rokenbok.ControllerCommand.DPAD_LEFT,
-                15: Rokenbok.ControllerCommand.DPAD_RIGHT,
-                9:  Rokenbok.ControllerCommand.SELECT_UP,
-                8:  Rokenbok.ControllerCommand.SELECT_DOWN
-            }
 
         def select(self, vehicle: Rokenbok.VehicleKey):
             """Changes the controller's selection.
@@ -210,18 +193,17 @@ class CommandDeck:
             Sends:
                 A command to the `CommandDeck` to either press or release a button.
             """
-            if input['button'] in self.button_map:
-                button = self.button_map[input['button']]
+            button = Rokenbok.ControllerCommand(input['button'])
 
-                if button in (Rokenbok.ControllerCommand.SELECT_UP, Rokenbok.ControllerCommand.SELECT_DOWN):
-                    if input['pressed']:
-                        delta = 1 if button == Rokenbok.ControllerCommand.SELECT_UP else -1
-                        next_selection = (self.selection.value + delta) % self.deck.selection_count
-                        self.select(Rokenbok.VehicleKey(next_selection))
-                
-                else:
-                    command = Rokenbok.DeviceCommand.PRESS if input['pressed'] else Rokenbok.DeviceCommand.RELEASE
-                    self.deck.send_command(command, self, self.button_map[input['button']])
+            if button in (Rokenbok.ControllerCommand.SELECT_UP, Rokenbok.ControllerCommand.SELECT_DOWN):
+                if input['pressed']:
+                    delta = 1 if button == Rokenbok.ControllerCommand.SELECT_UP else -1
+                    next_selection = (self.selection.value + delta) % self.deck.selection_count
+                    self.select(Rokenbok.VehicleKey(next_selection))
+            
+            else:
+                command = Rokenbok.DeviceCommand.PRESS if input['pressed'] else Rokenbok.DeviceCommand.RELEASE
+                self.deck.send_command(command, self, button)
 
             socketio.emit("players", {"players": self.deck.get_players()})
 

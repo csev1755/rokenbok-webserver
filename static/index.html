@@ -20,6 +20,15 @@
   </label>
 </div>
 
+<template id="input-template">
+    <div class="input-row">
+        <strong>Input:</strong> <span data-button></span>
+    </div>  
+    <div class="input-row">
+        <strong>State:</strong> <span data-state></span>
+    </div>
+</template>
+
 <div>
   <label><strong>Input Device:</strong>
     <select id="input_device">
@@ -29,16 +38,11 @@
   </label>
 </div>
 
-<template id="input-template">
-    <div class="input-row">
-        <strong>Button:</strong> <span data-button></span>
-    </div>
-    <div class="input-row">
-        <strong>State:</strong> <span data-state></span>
-    </div>
-</template>
-
 <div id="input"></div>
+
+<table class="mapping-table">
+  <tbody id="mapping-body"></tbody>
+</table>
 
 <h2>Players</h2>
 
