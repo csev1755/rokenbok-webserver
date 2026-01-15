@@ -1,4 +1,5 @@
 import argparse
+import logging
 import signal
 import sys
 from flask import Flask, request, send_from_directory
@@ -7,6 +8,7 @@ from rokenbok_device import Commands as Rokenbok
 from rokenbok_device import SmartPortArduino
 from upnp import UPnPPortMapper
 
+log = logging.getLogger('werkzeug')
 app = Flask(__name__, static_folder='static')
 socketio = SocketIO(app)
 
@@ -58,7 +60,7 @@ class CommandDeck:
         if kwargs['device_name'] == "smartport-arduino":
             self.device = SmartPortArduino(kwargs['serial_device'])
         else:
-            print("Invalid device or no device specified, will only print commands for debugging")
+            print("Invalid device or no device specified")
 
         self.controllers: dict[Rokenbok.ControllerIdentifier, CommandDeck.Controller] = {}
         self.selection_count = 16
@@ -239,11 +241,14 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--ip', help='What IP the server will listen on', default='')
     parser.add_argument('-p', '--port', help='What port the server will listen on', default=5000)
     parser.add_argument('-u', '--upnp', help='Enable UPnP for auto port forwarding', default='')
-    parser.add_argument('-b', '--debug', help='Enable debug output', default='')
+    parser.add_argument('-v', '--verbose', help='Enable verbose output', action='store_true')
 
     args = parser.parse_args()
+
+    if not args.verbose:
+        log.setLevel(logging.ERROR)
     
-    command_deck = CommandDeck(device_name=args.device, serial_device=args.serial, debug=args.debug)
+    command_deck = CommandDeck(device_name=args.device, serial_device=args.serial, debug=args.verbose)
 
     if args.upnp == "enable":
         print("Trying to open port via UPnP")
