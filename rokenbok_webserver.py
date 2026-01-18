@@ -1,5 +1,6 @@
-import argparse
+import configparser
 import logging
+import os
 import signal
 import sys
 from flask import Flask, request, send_from_directory
@@ -8,8 +9,15 @@ from rokenbok_device import Commands as Rokenbok
 from rokenbok_device import SmartPortArduino
 from upnp import UPnPPortMapper
 
+if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    app_dir = os.path.abspath(os.path.dirname(sys.executable))
+else:
+    app_dir = "."
+
 log = logging.getLogger('werkzeug')
 app = Flask(__name__, static_folder='static')
+config = configparser.ConfigParser()
+config_file = f"{app_dir}/rokenbok_webserver.ini"
 socketio = SocketIO(app)
 
 @app.route('/')
@@ -227,31 +235,49 @@ class CommandDeck:
 
 def handle_exit(signal, frame):
     print("Program interrupted, performing cleanup...")
-    if args.upnp == "enable":
+    if config['webserver'].getboolean('upnp'):
         upnp_mapper.remove_port_mapping()
     sys.exit(0)
 
 signal.signal(signal.SIGINT, handle_exit)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Starts the Arduino SmartPort web controller')
+
+    if not os.path.exists(config_file):
+        print(f"Creating new config file: {config_file}")
+
+        config['webserver'] = {
+            'listen_ip': '0.0.0.0',
+            'listen_port': '5000',
+            'upnp': 'false',
+            'verbose_logging': 'false'
+        }
+
+        config['smartport_arduino'] = {
+            'enabled': 'false',
+            'serial_port': ''
+        }
+
+        with open(f'{app_dir}/rokenbok_webserver.ini', 'w') as configfile:
+            config.write(configfile)
     
-    parser.add_argument('-d', '--device', help='The type of Rokenbok control device', default=None)
-    parser.add_argument('-s', '--serial', help='The serial device name of the control device', default=None)
-    parser.add_argument('-i', '--ip', help='What IP the server will listen on', default='')
-    parser.add_argument('-p', '--port', help='What port the server will listen on', default=5000)
-    parser.add_argument('-u', '--upnp', help='Enable UPnP for auto port forwarding', default='')
-    parser.add_argument('-v', '--verbose', help='Enable verbose output', action='store_true')
+    config.read(config_file)
 
-    args = parser.parse_args()
-
-    if not args.verbose:
+    if not config['webserver'].getboolean('verbose_logging'):
+        verbose_logs = False
         log.setLevel(logging.ERROR)
+    else:
+        verbose_logs = True
     
-    command_deck = CommandDeck(device_name=args.device, serial_device=args.serial, debug=args.verbose)
+    if config['smartport_arduino'].getboolean('enabled'):
+        device_name = "smartport-arduino"
+    else:
+        device_name = None
+    
+    command_deck = CommandDeck(device_name=device_name, serial_device=config['smartport_arduino']['serial_port'], debug=verbose_logs)
 
-    if args.upnp == "enable":
+    if config['webserver'].getboolean('upnp'):
         print("Trying to open port via UPnP")
-        upnp_mapper = UPnPPortMapper(args.port, args.port, args.ip, "SmartPort Web Server")
+        upnp_mapper = UPnPPortMapper(config['webserver']['listen_port'], config['webserver']['listen_port'], config['webserver']['listen_ip'], "SmartPort Web Server")
 
-    socketio.run(app, host=args.ip, port=args.port)
+    socketio.run(app, host=config['webserver']['listen_ip'], port=config['webserver']['listen_port'])
