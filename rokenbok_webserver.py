@@ -3,7 +3,7 @@ import logging
 import os
 import signal
 import sys
-from flask import Flask, request, send_from_directory
+from flask import Flask, request, send_from_directory, render_template
 from flask_socketio import SocketIO
 from rokenbok_device import Commands as Rokenbok
 from rokenbok_device import SmartPortArduino
@@ -14,15 +14,17 @@ if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
 else:
     app_dir = "."
 
+web_dir = "web"
+
 log = logging.getLogger()
-app = Flask(__name__, static_folder='web')
+app = Flask(__name__, static_folder=web_dir, template_folder=web_dir)
 config = configparser.ConfigParser()
 config_file = f"{app_dir}/rokenbok_webserver.ini"
 socketio = SocketIO(app)
 
 @app.route('/')
 def index():
-    return send_from_directory('web', 'player.html')
+    return render_template('player.html', video_stream=config['webserver']['video_stream'])
 
 @app.route('/player.js')
 def script():
@@ -262,7 +264,8 @@ if __name__ == '__main__':
             'listen_port': '5000',
             'upnp': 'false',
             'log_level': 'WARNING',
-            'flask_logs': 'false'
+            'flask_logs': 'false',
+            'video_stream': ''
         }
 
         config['smartport_arduino'] = {

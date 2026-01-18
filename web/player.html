@@ -18,6 +18,7 @@
     height: 100%;
   }
 
+  {% if video_stream|length %}
   iframe.stream {
     position: absolute;
     inset: 0;
@@ -25,6 +26,7 @@
     height: 100%;
     border: none;
   }
+  {% endif %}
 
   .overlay {
     position: absolute;
@@ -71,7 +73,9 @@
 </head>
 <body>
 <div class="stream-container">
-  <iframe class="stream", src="http://localhost:1984/api/stream.mjpeg?src=webcam"></iframe>
+  {% if video_stream|length %}
+  <iframe class="stream" src="{{ video_stream }}"></iframe>
+  {% endif %}
   <div class="overlay">
     <div class="ui-panel">
       <div>
