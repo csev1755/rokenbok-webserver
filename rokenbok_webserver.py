@@ -31,10 +31,12 @@ def script():
 @socketio.on("connect")
 def handle_connect():
     command_deck.assign_controller(request.sid)
+    socketio.emit("players", {"players": command_deck.get_players()})
 
 @socketio.on("disconnect")
 def handle_disconnect():
     command_deck.release_controller(request.sid)
+    socketio.emit("players", {"players": command_deck.get_players()})
 
 @socketio.on("controller")
 def handle_controller(data):
@@ -134,18 +136,19 @@ class CommandDeck:
         players = []
 
         for controller in self.controllers.values():
-            vehicle_name = (
-                None if controller.selection == Rokenbok.VehicleKey.NO_SELECTION
-                else config["vehicle_names"][str(controller.selection.value + 1)]
-            )
-
-            players.append({
-                "player_name": controller.player_name,
-                "controller": controller.index.name,
-                "player_id": controller.player_id,
-                "selection": controller.selection.name,
-                "selection_name": vehicle_name
-            })
+            if controller.player_id is not None:
+                if controller.selection is not Rokenbok.VehicleKey.NO_SELECTION:
+                    selection = controller.selection.value + 1
+                    vehicle_name = config["vehicle_names"][str(selection)]
+                else:
+                    selection = "None"
+                    vehicle_name = ""
+    
+                players.append({
+                    "player_name": controller.player_name,
+                    "selection": selection,
+                    "selection_name": vehicle_name
+                })
 
         return players
 

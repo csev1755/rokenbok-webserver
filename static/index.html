@@ -8,16 +8,41 @@
   select, button { margin: 5px; padding: 5px; }
   h2 { margin-top: 20px; }
   .player { padding: 12px; }
+  .layout { display: grid; grid-template-columns: auto 1fr; gap: 20px; }
+  #players { display: grid; grid-template-columns: auto auto; gap: 10px; }
+
 </style>
 </head>
 <body>
-<h1>Rokenbok WebServer</h1>
 
-<div>
-  <label>
-    <strong>Player Name:</strong>
-    <input type="text" id="player_name">
-  </label>
+<div class="layout">
+
+  <div class="left-column">
+    <h1>Rokenbok WebServer</h1>
+    <div>
+      <label>
+        <strong>Player Name:</strong>
+        <input type="text" id="player_name">
+      </label>
+    </div>
+    <div>
+      <label><strong>Input Device:</strong>
+        <select id="input_device">
+          <option value="gamepad">GAMEPAD</option>
+          <option value="keyboard">KEYBOARD</option>
+        </select>
+      </label>
+    </div>
+    <div id="input"></div>
+    <table class="mapping-table">
+      <tbody id="mapping-body"></tbody>
+    </table>
+  </div>
+
+  <div class="right-column">
+    <div id="players"></div>
+  </div>
+
 </div>
 
 <template id="input-template">
@@ -29,35 +54,13 @@
     </div>
 </template>
 
-<div>
-  <label><strong>Input Device:</strong>
-    <select id="input_device">
-      <option value="gamepad">GAMEPAD</option>
-      <option value="keyboard">KEYBOARD</option>
-    </select>
-  </label>
-</div>
-
-<div id="input"></div>
-
-<table class="mapping-table">
-  <tbody id="mapping-body"></tbody>
-</table>
-
-<h2>Players</h2>
-
 <template id="player-template">
     <div class="player">
         <div><strong>Player Name:</strong> <span data-player-name></span></div>
-        <div><strong>Vehicle Name:</strong> <span data-vehicle-name></span></div>
-        <div><strong>Slot:</strong> <span data-slot></span></div>
-        <div><strong>Controller:</strong> <span data-controller></span></div>
-        <div><strong>Player ID:</strong> <span data-player-id></span></div>
         <div><strong>Selection:</strong> <span data-selection></span></div>
+        <div><strong>Vehicle Name:</strong> <span data-vehicle-name></span></div>
     </div>
 </template>
-
-<div id="players"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
 <script src="/control.js"></script>

@@ -61,10 +61,7 @@ function renderPlayers(players) {
     players.forEach((player, index) => {
         const fragment = playerTemplate.content.cloneNode(true);
 
-        fragment.querySelector('[data-slot]').textContent = index + 1;
         fragment.querySelector('[data-player-name]').textContent = player.player_name;
-        fragment.querySelector('[data-controller]').textContent = player.controller;
-        fragment.querySelector('[data-player-id]').textContent = player.player_id;
         fragment.querySelector('[data-selection]').textContent = player.selection;
         fragment.querySelector('[data-vehicle-name]').textContent = player.selection_name;
         
