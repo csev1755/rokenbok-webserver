@@ -14,7 +14,7 @@ if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
 else:
     app_dir = "."
 
-log = logging.getLogger('werkzeug')
+log = logging.getLogger()
 app = Flask(__name__, static_folder='static')
 config = configparser.ConfigParser()
 config_file = f"{app_dir}/rokenbok_webserver.ini"
@@ -47,7 +47,6 @@ class CommandDeck:
     """Represents a Command Deck and provides methods to communicate with it.
 
     Attributes:
-        debug (bool): Enables debug output when True.
         device: The underlying hardware device interface, if configured.
         controllers (dict): Mapping of controller identifiers to Controller instances.
         selection_count (int): Number of selectable vehicles.
@@ -60,15 +59,13 @@ class CommandDeck:
         Keyword Args:
             device_name (str): Identifier for the control device type.
             serial_device (str): Serial port path for the control device.
-            debug (bool): Enables debug output.
         """
-        self.debug = kwargs['debug']
         self.device = None
 
         if kwargs['device_name'] == "smartport-arduino":
             self.device = SmartPortArduino(kwargs['serial_device'])
         else:
-            print("Invalid device or no device specified")
+            app.logger.warning("Invalid device or no device specified")
 
         self.controllers: dict[Rokenbok.ControllerIdentifier, CommandDeck.Controller] = {}
         self.selection_count = 16
@@ -89,8 +86,10 @@ class CommandDeck:
         for controller in self.controllers.values():
             if controller.player_id is None:
                 controller.player_id = player_id
+                app.logger.info(f"Assigned {controller.index} to {player_id}")
                 controller.enable()
                 return controller
+        app.logger.warning(f"No controller available for {player_id}")
         return None
 
     def release_controller(self, player_id):
@@ -107,6 +106,7 @@ class CommandDeck:
             if controller.player_id == player_id:
                 controller.player_id = None
                 controller.player_name = None
+                app.logger.info(f"Released {controller.index} from {player_id}")
                 controller.disable()
                 return controller
         return None
@@ -234,12 +234,12 @@ class CommandDeck:
             value (optional): An optional value associated with the command.
 
         Sends:
-            A command to the connected device or prints the command in debugging mode if no device is connected.
+            A command to the connected device.
         """
         if self.device is not None:
             self.device.send_command(command, controller, value)
-        if self.debug:
-            print(f"DEBUG - {command} - {controller.index.name if controller is not None else None} - {value}")
+        
+        app.logger.debug(f"{command} - {controller.index.name if controller is not None else None} - {value}")
 
 def handle_exit(signal, frame):
     print("Program interrupted, performing cleanup...")
@@ -258,7 +258,8 @@ if __name__ == '__main__':
             'listen_ip': '0.0.0.0',
             'listen_port': '5000',
             'upnp': 'false',
-            'verbose_logging': 'false'
+            'log_level': 'WARNING',
+            'flask_logs': 'false'
         }
 
         config['smartport_arduino'] = {
@@ -289,18 +290,16 @@ if __name__ == '__main__':
     
     config.read(config_file)
 
-    if not config['webserver'].getboolean('verbose_logging'):
-        verbose_logs = False
-        log.setLevel(logging.ERROR)
-    else:
-        verbose_logs = True
+    log.setLevel(config['webserver']['log_level'])
+    if not config['webserver'].getboolean('flask_logs'):
+        logging.getLogger('werkzeug').setLevel(logging.ERROR)
     
     if config['smartport_arduino'].getboolean('enabled'):
         device_name = "smartport-arduino"
     else:
         device_name = None
     
-    command_deck = CommandDeck(device_name=device_name, serial_device=config['smartport_arduino']['serial_port'], debug=verbose_logs)
+    command_deck = CommandDeck(device_name=device_name, serial_device=config['smartport_arduino']['serial_port'])
 
     if config['webserver'].getboolean('upnp'):
         print("Trying to open port via UPnP")
