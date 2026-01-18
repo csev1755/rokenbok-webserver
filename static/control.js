@@ -23,6 +23,31 @@ const CONTROLS = [
 
 const mappingBody = document.getElementById('mapping-body');
 
+const panel = document.querySelector('.ui-panel');
+
+let isDragging = false;
+let offsetX = 0;
+let offsetY = 0;
+
+panel.addEventListener('mousedown', (e) => {
+    if (e.target.closest('input, select, button, textarea')) return;
+    isDragging = true;
+    offsetX = e.clientX - panel.offsetLeft;
+    offsetY = e.clientY - panel.offsetTop;
+    document.body.style.userSelect = 'none';
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    panel.style.left = `${e.clientX - offsetX}px`;
+    panel.style.top  = `${e.clientY - offsetY}px`;
+});
+
+document.addEventListener('mouseup', () => {
+    isDragging = false;
+    document.body.style.userSelect = '';
+});
+
 CONTROLS.forEach(control => {
     const row = document.createElement('tr');
     row.innerHTML = `
