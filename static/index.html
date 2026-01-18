@@ -25,19 +25,20 @@
         <input type="text" id="player_name">
       </label>
     </div>
-    <div>
-      <label><strong>Input Device:</strong>
+    <details id="input-section">
+      <summary>
+        <strong>Input Device:</strong>
         <select id="input_device">
           <option value="gamepad">GAMEPAD</option>
           <option value="keyboard">KEYBOARD</option>
         </select>
-      </label>
-    </div>
+      </summary>
     <div id="input"></div>
     <table class="mapping-table">
       <tbody id="mapping-body"></tbody>
     </table>
   </div>
+    </details>
 
   <div class="right-column">
     <div id="players"></div>
