@@ -15,18 +15,18 @@ else:
     app_dir = "."
 
 log = logging.getLogger()
-app = Flask(__name__, static_folder='static')
+app = Flask(__name__, static_folder='web')
 config = configparser.ConfigParser()
 config_file = f"{app_dir}/rokenbok_webserver.ini"
 socketio = SocketIO(app)
 
 @app.route('/')
 def index():
-    return send_from_directory('static', 'index.html')
+    return send_from_directory('web', 'player.html')
 
-@app.route('/control.js')
+@app.route('/player.js')
 def script():
-    return send_from_directory('static', 'control.js')
+    return send_from_directory('web', 'player.js')
 
 @socketio.on("connect")
 def handle_connect():

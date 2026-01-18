@@ -5,7 +5,7 @@ a = Analysis(
     ['rokenbok_webserver.py'],
     pathex=[],
     binaries=[],
-    datas=[('static', 'static')],
+    datas=[('web', 'web')],
     hiddenimports=['engineio.async_drivers.threading'],
     hookspath=[],
     hooksconfig={},
