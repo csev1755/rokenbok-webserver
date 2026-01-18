@@ -4,63 +4,121 @@
 <meta charset="UTF-8">
 <title>Rokenbok WebServer</title>
 <style>
-  body { font-family: Arial, sans-serif; padding: 20px; }
-  select, button { margin: 5px; padding: 5px; }
-  h2 { margin-top: 20px; }
-  .player { padding: 12px; }
-  .layout { display: grid; grid-template-columns: auto 1fr; gap: 20px; }
-  #players { display: grid; grid-template-columns: auto auto; gap: 10px; }
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    font-family: Arial, sans-serif;
+    background: black;
+  }
 
+  .stream-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  iframe.stream {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .ui-panel {
+    pointer-events: auto;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 360px;
+    max-height: 90%;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  select, button, input {
+    margin: 5px 0;
+    padding: 5px;
+    width: 100%;
+  }
+
+  h1 {
+    margin-top: 0;
+  }
+
+  .player {
+    padding: 8px;
+  }
+
+  #players {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
 </style>
 </head>
 <body>
+<div class="stream-container">
+  <iframe class="stream", src="http://localhost:1984/api/stream.mjpeg?src=webcam"></iframe>
+  <div class="overlay">
+    <div class="ui-panel">
+      <div>
+        <label>
+          <strong>Player Name:</strong>
+          <input type="text" id="player_name">
+        </label>
+      </div>
+      <details id="input-section">
+        <summary>
+          <strong>Input Device</strong>
+        </summary>
 
-<div class="layout">
-
-  <div class="left-column">
-    <h1>Rokenbok WebServer</h1>
-    <div>
-      <label>
-        <strong>Player Name:</strong>
-        <input type="text" id="player_name">
-      </label>
+        <label>
+          <select id="input_device">
+            <option value="gamepad">GAMEPAD</option>
+            <option value="keyboard">KEYBOARD</option>
+          </select>
+        </label>
+        <div id="input"></div>
+        <table class="mapping-table">
+          <tbody id="mapping-body"></tbody>
+        </table>
+      </details>
+      <details open id="players-section">
+        <summary>
+          <strong>Players</strong>
+        </summary>
+        <div id="players"></div>
+      </details>
     </div>
-    <details id="input-section">
-      <summary>
-        <strong>Input Device:</strong>
-        <select id="input_device">
-          <option value="gamepad">GAMEPAD</option>
-          <option value="keyboard">KEYBOARD</option>
-        </select>
-      </summary>
-    <div id="input"></div>
-    <table class="mapping-table">
-      <tbody id="mapping-body"></tbody>
-    </table>
   </div>
-    </details>
-
-  <div class="right-column">
-    <div id="players"></div>
-  </div>
-
 </div>
 
 <template id="input-template">
-    <div class="input-row">
-        <strong>Input:</strong> <span data-button></span>
-    </div>  
-    <div class="input-row">
-        <strong>State:</strong> <span data-state></span>
-    </div>
+  <div class="input-row">
+    <strong>Input:</strong> <span data-button></span>
+  </div>
+  <div class="input-row">
+    <strong>State:</strong> <span data-state></span>
+  </div>
 </template>
 
 <template id="player-template">
-    <div class="player">
-        <div><strong>Player Name:</strong> <span data-player-name></span></div>
-        <div><strong>Selection:</strong> <span data-selection></span></div>
-        <div><strong>Vehicle Name:</strong> <span data-vehicle-name></span></div>
-    </div>
+  <div class="player">
+    <div><strong>Player Name:</strong> <span data-player-name></span></div>
+    <div><strong>Selection:</strong> <span data-selection></span></div>
+    <div><strong>Vehicle Name:</strong> <span data-vehicle-name></span></div>
+  </div>
 </template>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
