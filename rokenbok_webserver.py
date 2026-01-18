@@ -131,15 +131,23 @@ class CommandDeck:
         Returns:
             list[dict]: A list of player metadata dictionaries.
         """
-        return [
-            {
+        players = []
+
+        for controller in self.controllers.values():
+            vehicle_name = (
+                None if controller.selection == Rokenbok.VehicleKey.NO_SELECTION
+                else config["vehicle_names"][str(controller.selection.value + 1)]
+            )
+
+            players.append({
                 "player_name": controller.player_name,
                 "controller": controller.index.name,
                 "player_id": controller.player_id,
                 "selection": controller.selection.name,
-            }
-            for controller in self.controllers.values()
-        ]
+                "selection_name": vehicle_name
+            })
+
+        return players
 
     class Controller:
         """
@@ -256,6 +264,24 @@ if __name__ == '__main__':
         config['smartport_arduino'] = {
             'enabled': 'false',
             'serial_port': ''
+        }
+
+        config['vehicle_names'] = {
+            '1': '',
+            '2': '',
+            '3': '',
+            '4': '',
+            '5': '',
+            '6': '',
+            '7': '',
+            '8': '',
+            '9': '',
+            '10': '',
+            '11': '',
+            '12': '',
+            '13': '',
+            '14': '',
+            '15': ''
         }
 
         with open(f'{app_dir}/rokenbok_webserver.ini', 'w') as configfile:

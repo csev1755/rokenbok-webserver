@@ -66,6 +66,7 @@ function renderPlayers(players) {
         fragment.querySelector('[data-controller]').textContent = player.controller;
         fragment.querySelector('[data-player-id]').textContent = player.player_id;
         fragment.querySelector('[data-selection]').textContent = player.selection;
+        fragment.querySelector('[data-vehicle-name]').textContent = player.selection_name;
         
         playersElement.appendChild(fragment);
     });
