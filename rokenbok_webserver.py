@@ -19,12 +19,13 @@ web_dir = "web"
 log = logging.getLogger()
 app = Flask(__name__, static_folder=web_dir, template_folder=web_dir)
 config = configparser.ConfigParser()
+config.optionxform = str
 config_file = f"{app_dir}/rokenbok_webserver.ini"
 socketio = SocketIO(app)
 
 @app.route('/')
 def index():
-    return render_template('player.html', video_stream=config['webserver']['video_stream'])
+    return render_template('player.html', enable_video=config['webserver'].getboolean('enable_video'), video_streams=config['video_streams'])
 
 @app.route('/player.js')
 def script():
@@ -265,7 +266,7 @@ if __name__ == '__main__':
             'upnp': 'false',
             'log_level': 'WARNING',
             'flask_logs': 'false',
-            'video_stream': ''
+            'enable_video': 'false'
         }
 
         config['smartport_arduino'] = {
@@ -289,6 +290,11 @@ if __name__ == '__main__':
             '13': '',
             '14': '',
             '15': ''
+        }
+
+        config['video_streams'] = {
+            'Camera 1': '',
+            'Camera 2': ''
         }
 
         with open(f'{app_dir}/rokenbok_webserver.ini', 'w') as configfile:

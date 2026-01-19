@@ -29,6 +29,12 @@ let isDragging = false;
 let offsetX = 0;
 let offsetY = 0;
 
+const videoStream = document.getElementById("stream-iframe");
+
+function updateStream(stream) {
+    videoStream.src = stream;
+}
+
 panel.addEventListener('mousedown', (e) => {
     if (e.target.closest('input, select, button, textarea')) return;
     isDragging = true;
@@ -141,6 +147,11 @@ window.addEventListener('keyup', e => {
     keyboardState[e.code] = false;
     renderInput(e.code, false);
     emitControllerEvent(control.button, false);
+});
+
+document.addEventListener("DOMContentLoaded", function() {
+    const selectedStream = document.getElementById("stream-selector").value;
+    updateStream(selectedStream);
 });
 
 function loop() {

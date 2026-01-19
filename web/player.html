@@ -18,7 +18,7 @@
     height: 100%;
   }
 
-  {% if video_stream|length %}
+  {% if enable_video %}
   iframe.stream {
     position: absolute;
     inset: 0;
@@ -72,11 +72,25 @@
 </head>
 <body>
 <div class="stream-container">
-  {% if video_stream|length %}
-  <iframe class="stream" src="{{ video_stream }}"></iframe>
+  {% if enable_video %}
+  <iframe class="stream" id="stream-iframe"></iframe>
   {% endif %}
   <div class="overlay">
     <div class="ui-panel">
+      {% if enable_video %}
+      <div>
+        <label>
+          <strong>Camera:</strong>
+        </label>
+        <label>
+          <select id="stream-selector" onchange="updateStream(this.value)">
+            {% for name, url in video_streams.items() %}
+              <option value="{{ url }}">{{ name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+      {% endif %}
       <div>
         <label>
           <strong>Player Name:</strong>
