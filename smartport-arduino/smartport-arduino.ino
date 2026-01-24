@@ -4,54 +4,54 @@
 
 #define SLAVE_READY_PIN 9
 
-#define DEVICE_CMD_PRESS   0
+#define DEVICE_CMD_PRESS 0
 #define DEVICE_CMD_RELEASE 1
-#define DEVICE_CMD_EDIT    2
-#define DEVICE_CMD_ENABLE  3
+#define DEVICE_CMD_EDIT 2
+#define DEVICE_CMD_ENABLE 3
 #define DEVICE_CMD_DISABLE 4
-#define DEVICE_CMD_RESET   5
+#define DEVICE_CMD_RESET 5
 
-#define CTRL_SELECT        0
-#define CTRL_LEFT_TRIGGER  1
-#define CTRL_SHARE_SWITCH  2
-#define CTRL_IS_16_SEL     3
-#define CTRL_DPAD_UP       4
-#define CTRL_DPAD_DOWN     5
-#define CTRL_DPAD_RIGHT    6
-#define CTRL_DPAD_LEFT     7
-#define CTRL_A             8
-#define CTRL_B             9
-#define CTRL_X             10
-#define CTRL_Y             11
+#define CTRL_SELECT 0
+#define CTRL_LEFT_TRIGGER 1
+#define CTRL_SHARE_SWITCH 2
+#define CTRL_IS_16_SEL 3
+#define CTRL_DPAD_UP 4
+#define CTRL_DPAD_DOWN 5
+#define CTRL_DPAD_RIGHT 6
+#define CTRL_DPAD_LEFT 7
+#define CTRL_A 8
+#define CTRL_B 9
+#define CTRL_X 10
+#define CTRL_Y 11
 #define CTRL_RIGHT_TRIGGER 12
-#define CTRL_SELECT_UP     13
-#define CTRL_SELECT_DOWN   14
+#define CTRL_SELECT_UP 13
+#define CTRL_SELECT_DOWN 14
 
 #define PHYSICAL_CONTROLLER_1 0
 #define PHYSICAL_CONTROLLER_2 1
 #define PHYSICAL_CONTROLLER_3 2
 #define PHYSICAL_CONTROLLER_4 3
-#define VIRTUAL_CONTROLLER_1  4
-#define VIRTUAL_CONTROLLER_2  5
-#define VIRTUAL_CONTROLLER_3  6
-#define VIRTUAL_CONTROLLER_4  7
+#define VIRTUAL_CONTROLLER_1 4
+#define VIRTUAL_CONTROLLER_2 5
+#define VIRTUAL_CONTROLLER_3 6
+#define VIRTUAL_CONTROLLER_4 7
 
-#define SELECT_KEY_1    0
-#define SELECT_KEY_2    1
-#define SELECT_KEY_3    2
-#define SELECT_KEY_4    3
-#define SELECT_KEY_5    4
-#define SELECT_KEY_6    5
-#define SELECT_KEY_7    6
-#define SELECT_KEY_8    7
-#define SELECT_KEY_9    8
-#define SELECT_KEY_10   9
-#define SELECT_KEY_11   10
-#define SELECT_KEY_12   11
-#define SELECT_KEY_13   12
-#define SELECT_KEY_14   13
-#define SELECT_KEY_15   14
-#define NO_SELECTION    15
+#define SELECT_KEY_1 0
+#define SELECT_KEY_2 1
+#define SELECT_KEY_3 2
+#define SELECT_KEY_4 3
+#define SELECT_KEY_5 4
+#define SELECT_KEY_6 5
+#define SELECT_KEY_7 6
+#define SELECT_KEY_8 7
+#define SELECT_KEY_9 8
+#define SELECT_KEY_10 9
+#define SELECT_KEY_11 10
+#define SELECT_KEY_12 11
+#define SELECT_KEY_13 12
+#define SELECT_KEY_14 13
+#define SELECT_KEY_15 14
+#define NO_SELECTION 15
 
 // Smart Port Byte Codes Sent By Master
 #define NULL_CMD 0x00
@@ -77,10 +77,10 @@
 #define SLAVE_SYNC 0x81
 #define SLAVE_NO_INS 0x82
 #define SLAVE_WAIT_INS 0x83
-#define DISABLE_ATTRIB_BYTE 0x00       // Smart Port Control Disabled
-#define ENABLE_ATTRIB_BYTE 0x0D        // Smart Port Control Enabled, Packet Injection Disabled
-#define PACKET_INJECT_ATTRIB_BYTE 0x2D // Smart Port Control Enabled, Packet Injection Enabled
-#define NO_SEL_TIMEOUT 0x00            // 1 = Controller Never Times Out, 0 = Normal V4|V3|V2|V1|P4|P3|P2|P1
+#define DISABLE_ATTRIB_BYTE 0x00        // Smart Port Control Disabled
+#define ENABLE_ATTRIB_BYTE 0x0D         // Smart Port Control Enabled, Packet Injection Disabled
+#define PACKET_INJECT_ATTRIB_BYTE 0x2D  // Smart Port Control Enabled, Packet Injection Enabled
+#define NO_SEL_TIMEOUT 0x00             // 1 = Controller Never Times Out, 0 = Normal V4|V3|V2|V1|P4|P3|P2|P1
 
 // Series Logic Codes
 #define NO_SERIES 0
@@ -90,21 +90,21 @@
 #define PKT_INJECT_SERIES 4
 
 // Rokenbok Control Logic Variables
-uint8_t timeouts[12] = {false, false, false, false, false, false, false, false, false, false, false, false};       // V1, V2, V3, V4, P1, P2, P3, P4, D1, D2, D3, D4
-uint8_t enable_control[12] = {false, false, false, false, false, false, false, false, false, false, false, false}; // V1, V2, V3, V4, P1, P2, P3, P4, D1, D2, D3, D4 // FALSE = Normal, TRUE = SP Controlled
-uint8_t control_keys[12] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};               // V1, V2, V3, V4, P1, P2, P3, P4, D1, D2, D3, D4
-uint8_t next_control_key = 2;                                                                                      // 0 = Unused, 1 = Physical Controller Plugged In
+uint8_t timeouts[12] = {false, false, false, false, false, false, false, false, false, false, false, false};        // V1, V2, V3, V4, P1, P2, P3, P4, D1, D2, D3, D4
+uint8_t enable_control[12] = {false, false, false, false, false, false, false, false, false, false, false, false};  // V1, V2, V3, V4, P1, P2, P3, P4, D1, D2, D3, D4 // FALSE = Normal, TRUE = SP Controlled
+uint8_t control_keys[12] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};                // V1, V2, V3, V4, P1, P2, P3, P4, D1, D2, D3, D4
+uint8_t next_control_key = 2;                                                                                       // 0 = Unused, 1 = Physical Controller Plugged In
 
 uint8_t next_dpi_index = 0;
 
-uint8_t selects[12] = {0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F}; // V1, V2, V3, V4, P1, P2, P3, P4, D1, D2, D3, D4
+uint8_t selects[12] = {0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F};  // V1, V2, V3, V4, P1, P2, P3, P4, D1, D2, D3, D4
 
 uint8_t share_mode = true;
 uint8_t is16sel_mode = true;
 uint8_t controller_timeout = 10;
 
-uint8_t enabled_controllers = 0b11111111; // V4|V3|V2|V1|P4|P3|P2|P1 // 0 = Enabled, 1 = Disabled
-uint8_t sp_a = 0x00;                      // V4|V3|V2|V1|P4|P3|P2|P1
+uint8_t enabled_controllers = 0b11111111;  // V4|V3|V2|V1|P4|P3|P2|P1 // 0 = Enabled, 1 = Disabled
+uint8_t sp_a = 0x00;                       // V4|V3|V2|V1|P4|P3|P2|P1
 uint8_t sp_b = 0x00;
 uint8_t sp_x = 0x00;
 uint8_t sp_y = 0x00;
@@ -135,12 +135,9 @@ uint8_t spi_series_count = 0;
 /// @param size The size of the array.
 /// @param value The value being looked for.
 /// @return true or false boolean value.
-bool contains(uint8_t array[], size_t size, uint8_t value)
-{
-  for (size_t i = 0; i < size; i++)
-  {
-    if (array[i] == value)
-    {
+bool contains(uint8_t array[], size_t size, uint8_t value) {
+  for (size_t i = 0; i < size; i++) {
+    if (array[i] == value) {
       return true;
     }
   }
@@ -148,34 +145,28 @@ bool contains(uint8_t array[], size_t size, uint8_t value)
 }
 
 /// @brief Convert controller index to bitwise position for V4|V3|V2|V1|P4|P3|P2|P1
-uint8_t controller_to_bitwise(uint8_t controller_index)
-{
+uint8_t controller_to_bitwise(uint8_t controller_index) {
   // Map: V1=0, V2=1, V3=2, V4=3, P1=4, P2=5, P3=6, P4=7
   // To:  P1=0, P2=1, P3=2, P4=3, V1=4, V2=5, V3=6, V4=7
   return (controller_index + 4) % 8;
 }
 
 /// @brief Set a button state for a specific controller
-void set_button_state(uint8_t* button_var, uint8_t controller_index, bool pressed)
-{
+void set_button_state(uint8_t* button_var, uint8_t controller_index, bool pressed) {
   uint8_t bitwise_index = controller_to_bitwise(controller_index);
-  
-  if (pressed)
-  {
+
+  if (pressed) {
     *button_var |= (1 << bitwise_index);
-  }
-  else
-  {
+  } else {
     *button_var &= ~(1 << bitwise_index);
   }
-  
+
   sp_priority_byte |= (1 << bitwise_index);
 }
 
 /// @brief Setup runs once to configure GPIO, SPI, and timer.
 /// @return void
-void setup(void)
-{
+void setup(void) {
   Serial.begin(115200);
 
   // Configure Smart Port GPIO
@@ -185,47 +176,40 @@ void setup(void)
   pinMode(SLAVE_READY_PIN, OUTPUT);
 
   // Configure SPI Interface
-  SPCR |= _BV(SPE);  // Enable SPI (Slave Mode)
-  SPCR |= _BV(SPIE); // Enable SPI Interrupt
-  SPDR = 0x00;       // Zero Out SPI Register
+  SPCR |= _BV(SPE);   // Enable SPI (Slave Mode)
+  SPCR |= _BV(SPIE);  // Enable SPI Interrupt
+  SPDR = 0x00;        // Zero Out SPI Register
 
   // Configure Timer
   TCCR1A = 0;
   TCCR1B = 0;
   TCNT1 = 0;
-  TCCR1B |= (1 << CS10);  // 64 Prescaler
-  TCCR1B |= (1 << CS11);  // 64 Prescaler
-  TIMSK1 |= (1 << TOIE1); // Enable Timer Overflow Interrupt
+  TCCR1B |= (1 << CS10);   // 64 Prescaler
+  TCCR1B |= (1 << CS11);   // 64 Prescaler
+  TIMSK1 |= (1 << TOIE1);  // Enable Timer Overflow Interrupt
 
   // Ready For First Byte
   digitalWrite(SLAVE_READY_PIN, HIGH);
-
 }
 
 /// @brief Receive commands via serial
 /// @return void
-void loop(void)
-{
+void loop(void) {
   // Wait for 3 bytes to be available
-  if (Serial.available() >= 3)
-  {
+  if (Serial.available() >= 3) {
     uint8_t cmd = Serial.read();
     uint8_t controller = Serial.read();
     uint8_t value = Serial.read();
 
     // Validate controller index
-    if (controller > 7)
-    {
-      return; // Invalid controller
+    if (controller > 7) {
+      return;  // Invalid controller
     }
 
-    switch (cmd)
-    {
-      case DEVICE_CMD_PRESS:
-      {
+    switch (cmd) {
+      case DEVICE_CMD_PRESS: {
         // Press a button on the specified controller
-        switch (value)
-        {
+        switch (value) {
           case CTRL_DPAD_UP:
             set_button_state(&sp_up, controller, true);
             break;
@@ -257,11 +241,9 @@ void loop(void)
         break;
       }
 
-      case DEVICE_CMD_RELEASE:
-      {
+      case DEVICE_CMD_RELEASE: {
         // Release a button on the specified controller
-        switch (value)
-        {
+        switch (value) {
           case CTRL_DPAD_UP:
             set_button_state(&sp_up, controller, false);
             break;
@@ -293,18 +275,15 @@ void loop(void)
         break;
       }
 
-      case DEVICE_CMD_EDIT:
-      {
+      case DEVICE_CMD_EDIT: {
         // Edit the vehicle selection for the specified controller
-        if (value <= NO_SELECTION)
-        {
+        if (value <= NO_SELECTION) {
           selects[controller] = value;
         }
         break;
       }
 
-      case DEVICE_CMD_ENABLE:
-      {
+      case DEVICE_CMD_ENABLE: {
         // Enable control for the specified controller
         enable_control[controller] = true;
         uint8_t bitwise_index = controller_to_bitwise(controller);
@@ -312,13 +291,12 @@ void loop(void)
         break;
       }
 
-      case DEVICE_CMD_DISABLE:
-      {
+      case DEVICE_CMD_DISABLE: {
         // Disable control for the specified controller
         enable_control[controller] = false;
         uint8_t bitwise_index = controller_to_bitwise(controller);
         enabled_controllers |= (1 << bitwise_index);
-        
+
         // Clear all button states for this controller
         set_button_state(&sp_up, controller, false);
         set_button_state(&sp_down, controller, false);
@@ -329,16 +307,14 @@ void loop(void)
         set_button_state(&sp_x, controller, false);
         set_button_state(&sp_y, controller, false);
         set_button_state(&sp_rt, controller, false);
-        
+
         selects[controller] = NO_SELECTION;
         break;
       }
 
-      case DEVICE_CMD_RESET:
-      {
+      case DEVICE_CMD_RESET: {
         // Reset all controllers
-        for (int i = 0; i < 8; i++)
-        {
+        for (int i = 0; i < 8; i++) {
           selects[i] = 0x0F;
           enable_control[i] = false;
         }
@@ -366,24 +342,19 @@ void loop(void)
 /// @brief ISR triggers when SPI byte is received and handles Smart Port logic.
 /// @param SPI_STC_vect SPI Serial Transfer Complete Vector
 /// @return N/A
-ISR(SPI_STC_vect)
-{
-  digitalWrite(SLAVE_READY_PIN, HIGH); // We are NOT ready for a new byte.
+ISR(SPI_STC_vect) {
+  digitalWrite(SLAVE_READY_PIN, HIGH);  // We are NOT ready for a new byte.
 
   uint8_t recv_byte = SPDR;
   uint8_t send_byte = 0x00;
 
   // NO SERIES
-  if (spi_current_series == NO_SERIES)
-  {
-    if (recv_byte == PRESYNC)
-    {
+  if (spi_current_series == NO_SERIES) {
+    if (recv_byte == PRESYNC) {
       spi_current_series = SYNC_SERIES;
       spi_series_count = 1;
       send_byte = SLAVE_SYNC;
-    }
-    else if (recv_byte == EDIT_TPADS)
-    {
+    } else if (recv_byte == EDIT_TPADS) {
       spi_current_series = EDIT_TPADS_SERIES;
       spi_series_count = 1;
       send_byte = VERIFY_EDIT;
@@ -392,61 +363,46 @@ ISR(SPI_STC_vect)
       // EDIT_TPADS byte will only be received with a good sync.
       TCNT1 = 0;
       sp_status = true;
-    }
-    else if (recv_byte == EDIT_SELECT)
-    {
+    } else if (recv_byte == EDIT_SELECT) {
       spi_current_series = EDIT_SELECT_SERIES;
       spi_series_count = 1;
       send_byte = VERIFY_EDIT;
-    }
-    else if (recv_byte == MASTER_ASK_INS)
-    {
+    } else if (recv_byte == MASTER_ASK_INS) {
       spi_current_series = PKT_INJECT_SERIES;
       spi_series_count = 1;
 
       // Generate First Half of DPI Packet (SEL3, SEL2, SEL1, SEL0, UP, DOWN, RIGHT, LEFT)
       uint8_t original_index = next_dpi_index;
       uint8_t valid_found = false;
-      do
-      {
+      do {
         next_dpi_index = (next_dpi_index + 1) % 4;
 
         // A DPI should only be broadcast if it has a selection and isn't the same as another V/P/D controller selection.
-        if (selects[next_dpi_index + 8] != 0x0F && !contains(selects, 8, selects[next_dpi_index + 8]))
-        {
+        if (selects[next_dpi_index + 8] != 0x0F && !contains(selects, 8, selects[next_dpi_index + 8])) {
           valid_found = true;
-          break; // Found the valid next index
+          break;  // Found the valid next index
         }
 
-      } while (next_dpi_index != original_index); // Stop if we've wrapped around back to the original index
+      } while (next_dpi_index != original_index);  // Stop if we've wrapped around back to the original index
 
-      if (valid_found)
-      { // Only generate a send_byte if a valid controller was found
+      if (valid_found) {  // Only generate a send_byte if a valid controller was found
         send_byte = (selects[next_dpi_index + 8] + 1) << 4;
-        if (dpi_up[next_dpi_index])
-        {
+        if (dpi_up[next_dpi_index]) {
           send_byte |= 0b00001000;
         }
-        if (dpi_down[next_dpi_index])
-        {
+        if (dpi_down[next_dpi_index]) {
           send_byte |= 0b00000100;
         }
-        if (dpi_right[next_dpi_index])
-        {
+        if (dpi_right[next_dpi_index]) {
           send_byte |= 0b00000010;
         }
-        if (dpi_left[next_dpi_index])
-        {
+        if (dpi_left[next_dpi_index]) {
           send_byte |= 0b00000001;
         }
+      } else {
+        send_byte = 0b00000000;  // Send NULL Upper Half
       }
-      else
-      {
-        send_byte = 0b00000000; // Send NULL Upper Half
-      }
-    }
-    else
-    {
+    } else {
       spi_current_series = NO_SERIES;
       spi_series_count = 0;
       send_byte = NULL_CMD;
@@ -454,34 +410,24 @@ ISR(SPI_STC_vect)
   }
 
   // SYNC SERIES
-  else if (spi_current_series == SYNC_SERIES)
-  {
-    if (spi_series_count == 1)
-    {
+  else if (spi_current_series == SYNC_SERIES) {
+    if (spi_series_count == 1) {
       spi_series_count = 2;
       send_byte = ENABLE_ATTRIB_BYTE;
-      for (uint8_t i = 8; i < 12; i++)
-      { // Only enable DPI if needed.
-        if (selects[i] != 0x0F)
-        {
+      for (uint8_t i = 8; i < 12; i++) {  // Only enable DPI if needed.
+        if (selects[i] != 0x0F) {
           send_byte = PACKET_INJECT_ATTRIB_BYTE;
           break;
         }
       }
-    }
-    else if (spi_series_count == 2)
-    {
+    } else if (spi_series_count == 2) {
       spi_series_count = 3;
       send_byte = NO_SEL_TIMEOUT;
-    }
-    else if (spi_series_count == 3)
-    {
+    } else if (spi_series_count == 3) {
       spi_current_series = NO_SERIES;
       spi_series_count = 0;
       send_byte = NULL_CMD;
-    }
-    else
-    {
+    } else {
       spi_current_series = NO_SERIES;
       spi_series_count = 0;
       send_byte = NULL_CMD;
@@ -489,42 +435,28 @@ ISR(SPI_STC_vect)
   }
 
   // EDIT TPADS SERIES
-  else if (spi_current_series == EDIT_TPADS_SERIES)
-  {
-    if (spi_series_count == 1)
-    {
-      spi_series_count = 2; // Select Button
+  else if (spi_current_series == EDIT_TPADS_SERIES) {
+    if (spi_series_count == 1) {
+      spi_series_count = 2;  // Select Button
       send_byte = recv_byte;
-    }
-    else if (spi_series_count == 2)
-    {
-      spi_series_count = 3; // Left Trigger (Last Select)
+    } else if (spi_series_count == 2) {
+      spi_series_count = 3;  // Left Trigger (Last Select)
       send_byte = recv_byte;
-    }
-    else if (spi_series_count == 3)
-    {
-      spi_series_count = 4; // Sharing Mode (1 = Allow Sharing)
-      if (share_mode)
-      {
-        send_byte = recv_byte | (~enabled_controllers); // Enable Sharing For Virtual Controllers
+    } else if (spi_series_count == 3) {
+      spi_series_count = 4;  // Sharing Mode (1 = Allow Sharing)
+      if (share_mode) {
+        send_byte = recv_byte | (~enabled_controllers);  // Enable Sharing For Virtual Controllers
+      } else {
+        send_byte = recv_byte & enabled_controllers;  // Disable Sharing For Virtual Controllers
       }
-      else
-      {
-        send_byte = recv_byte & enabled_controllers; // Disable Sharing For Virtual Controllers
-      }
-    }
-    else if (spi_series_count == 4)
-    {
-      spi_series_count = 5; // RESERVED (0 when plugged in, 1 when not)
+    } else if (spi_series_count == 4) {
+      spi_series_count = 5;  // RESERVED (0 when plugged in, 1 when not)
       send_byte = recv_byte;
 
-      for (uint8_t i = 4; i < 8; i++)
-      { // Check if P1-P4 are plugged in.
+      for (uint8_t i = 4; i < 8; i++) {  // Check if P1-P4 are plugged in.
         uint8_t bitwise_index = (i + 4) % 8;
-        if (!(recv_byte & (1 << bitwise_index)))
-        { // If it is plugged in...
-          if (control_keys[i] != 1)
-          { // And it is not currently tracked as physical controlled...
+        if (!(recv_byte & (1 << bitwise_index))) {  // If it is plugged in...
+          if (control_keys[i] != 1) {               // And it is not currently tracked as physical controlled...
             // Clear out virtual controller data and free for use.
             control_keys[i] = 1;
             selects[i] = 0x0F;
@@ -539,14 +471,11 @@ ISR(SPI_STC_vect)
             sp_rt &= ~(0b00000001 << bitwise_index);
             sp_priority_byte |= (0b00000001 << bitwise_index);
             enable_control[i] = false;
-            enabled_controllers |= (0b00000001 << bitwise_index); // THIS MAY BE BORKED????
+            enabled_controllers |= (0b00000001 << bitwise_index);  // THIS MAY BE BORKED????
           }
           timeouts[i] = true;
-        }
-        else
-        { // If it is not plugged in...
-          if (control_keys[i] == 1)
-          { // And if it was being used...
+        } else {                       // If it is not plugged in...
+          if (control_keys[i] == 1) {  // And if it was being used...
             // Free it back up for use.
             control_keys[i] = 0;
             selects[i] = 0x0F;
@@ -564,93 +493,58 @@ ISR(SPI_STC_vect)
           }
         }
       }
-    }
-    else if (spi_series_count == 5)
-    {
-      spi_series_count = 6; // IS16SEL? (0 when plugged in, 1 when not)
-      if (is16sel_mode)
-      {
+    } else if (spi_series_count == 5) {
+      spi_series_count = 6;  // IS16SEL? (0 when plugged in, 1 when not)
+      if (is16sel_mode) {
         send_byte = 0xFF;
-      }
-      else
-      {
+      } else {
         send_byte = 0x00;
       }
-    }
-    else if (spi_series_count == 6)
-    {
-      spi_series_count = 7; // D Pad Up
+    } else if (spi_series_count == 6) {
+      spi_series_count = 7;  // D Pad Up
       send_byte = (recv_byte & enabled_controllers) | sp_up;
-    }
-    else if (spi_series_count == 7)
-    {
-      spi_series_count = 8; // D Pad Down
+    } else if (spi_series_count == 7) {
+      spi_series_count = 8;  // D Pad Down
       send_byte = (recv_byte & enabled_controllers) | sp_down;
-    }
-    else if (spi_series_count == 8)
-    {
-      spi_series_count = 9; // D Pad Right
+    } else if (spi_series_count == 8) {
+      spi_series_count = 9;  // D Pad Right
       send_byte = (recv_byte & enabled_controllers) | sp_right;
-    }
-    else if (spi_series_count == 9)
-    {
-      spi_series_count = 10; // D Pad Left
+    } else if (spi_series_count == 9) {
+      spi_series_count = 10;  // D Pad Left
       send_byte = (recv_byte & enabled_controllers) | sp_left;
-    }
-    else if (spi_series_count == 10)
-    {
-      spi_series_count = 11; // A
+    } else if (spi_series_count == 10) {
+      spi_series_count = 11;  // A
       send_byte = (recv_byte & enabled_controllers) | (~sp_rt & sp_a);
-    }
-    else if (spi_series_count == 11)
-    {
-      spi_series_count = 12; // B
+    } else if (spi_series_count == 11) {
+      spi_series_count = 12;  // B
       send_byte = (recv_byte & enabled_controllers) | (~sp_rt & sp_b);
-    }
-    else if (spi_series_count == 12)
-    {
-      spi_series_count = 13; // X
+    } else if (spi_series_count == 12) {
+      spi_series_count = 13;  // X
       send_byte = (recv_byte & enabled_controllers) | sp_x;
-    }
-    else if (spi_series_count == 13)
-    {
-      spi_series_count = 14; // Y
+    } else if (spi_series_count == 13) {
+      spi_series_count = 14;  // Y
       send_byte = (recv_byte & enabled_controllers) | sp_y;
-    }
-    else if (spi_series_count == 14)
-    {
-      spi_series_count = 15; // RESERVED FOR A' (RT+A) (0 when plugged in, 1 when not)
+    } else if (spi_series_count == 14) {
+      spi_series_count = 15;  // RESERVED FOR A' (RT+A) (0 when plugged in, 1 when not)
       send_byte = (recv_byte & enabled_controllers) | (sp_rt & sp_a);
-    }
-    else if (spi_series_count == 15)
-    {
-      spi_series_count = 16; // RESERVED FOR B' (RT+B) (0 when plugged in, 1 when not)
+    } else if (spi_series_count == 15) {
+      spi_series_count = 16;  // RESERVED FOR B' (RT+B) (0 when plugged in, 1 when not)
       send_byte = (recv_byte & enabled_controllers) | (sp_rt & sp_b);
-    }
-    else if (spi_series_count == 16)
-    {
-      spi_series_count = 17; // Right Trigger (Slow)
+    } else if (spi_series_count == 16) {
+      spi_series_count = 17;  // Right Trigger (Slow)
       send_byte = (recv_byte & enabled_controllers) | sp_rt;
-    }
-    else if (spi_series_count == 17)
-    {
-      spi_series_count = 18; // Spare (0 regardless if plugged in or not)
-      send_byte = 0x00; // recv_byte;
-    }
-    else if (spi_series_count == 18)
-    {
-      spi_series_count = 19; // Priority Byte
+    } else if (spi_series_count == 17) {
+      spi_series_count = 18;  // Spare (0 regardless if plugged in or not)
+      send_byte = 0x00;       // recv_byte;
+    } else if (spi_series_count == 18) {
+      spi_series_count = 19;  // Priority Byte
       send_byte = recv_byte | sp_priority_byte;
       sp_priority_byte = 0x00;
-    }
-    else if (spi_series_count == 19)
-    {
+    } else if (spi_series_count == 19) {
       spi_current_series = NO_SERIES;
       spi_series_count = 0;
       send_byte = NULL_CMD;
-    }
-    else
-    {
+    } else {
       spi_current_series = NO_SERIES;
       spi_series_count = 0;
       send_byte = NULL_CMD;
@@ -658,93 +552,59 @@ ISR(SPI_STC_vect)
   }
 
   // EDIT SELECT SERIES
-  else if (spi_current_series == EDIT_SELECT_SERIES)
-  {
-    if (spi_series_count == 1)
-    {
-      spi_series_count = 2; // P1 Select
-      if (enable_control[4])
-      {
+  else if (spi_current_series == EDIT_SELECT_SERIES) {
+    if (spi_series_count == 1) {
+      spi_series_count = 2;  // P1 Select
+      if (enable_control[4]) {
         send_byte = selects[4];
-      }
-      else
-      {
+      } else {
         selects[4] = recv_byte;
         send_byte = recv_byte;
       }
-    }
-    else if (spi_series_count == 2)
-    {
-      spi_series_count = 3; // P2 Select
-      if (enable_control[5])
-      {
+    } else if (spi_series_count == 2) {
+      spi_series_count = 3;  // P2 Select
+      if (enable_control[5]) {
         send_byte = selects[5];
-      }
-      else
-      {
+      } else {
         selects[5] = recv_byte;
         send_byte = recv_byte;
       }
-    }
-    else if (spi_series_count == 3)
-    {
-      spi_series_count = 4; // P3 Select
-      if (enable_control[6])
-      {
+    } else if (spi_series_count == 3) {
+      spi_series_count = 4;  // P3 Select
+      if (enable_control[6]) {
         send_byte = selects[6];
-      }
-      else
-      {
+      } else {
         selects[6] = recv_byte;
         send_byte = recv_byte;
       }
-    }
-    else if (spi_series_count == 4)
-    {
-      spi_series_count = 5; // P4 Select
-      if (enable_control[7])
-      {
+    } else if (spi_series_count == 4) {
+      spi_series_count = 5;  // P4 Select
+      if (enable_control[7]) {
         send_byte = selects[7];
-      }
-      else
-      {
+      } else {
         selects[7] = recv_byte;
         send_byte = recv_byte;
       }
-    }
-    else if (spi_series_count == 5)
-    {
-      spi_series_count = 6; // V1 Select
+    } else if (spi_series_count == 5) {
+      spi_series_count = 6;  // V1 Select
       send_byte = selects[0];
-    }
-    else if (spi_series_count == 6)
-    {
-      spi_series_count = 7; // V2 Select
+    } else if (spi_series_count == 6) {
+      spi_series_count = 7;  // V2 Select
       send_byte = selects[1];
-    }
-    else if (spi_series_count == 7)
-    {
-      spi_series_count = 8; // V3 Select
+    } else if (spi_series_count == 7) {
+      spi_series_count = 8;  // V3 Select
       send_byte = selects[2];
-    }
-    else if (spi_series_count == 8)
-    {
-      spi_series_count = 9; // V4 Select
+    } else if (spi_series_count == 8) {
+      spi_series_count = 9;  // V4 Select
       send_byte = selects[3];
-    }
-    else if (spi_series_count == 9)
-    {
-      spi_series_count = 10; // Timer Value (Counts Up From 0-15 and Repeats)
+    } else if (spi_series_count == 9) {
+      spi_series_count = 10;  // Timer Value (Counts Up From 0-15 and Repeats)
       send_byte = recv_byte;
-    }
-    else if (spi_series_count == 10)
-    {
+    } else if (spi_series_count == 10) {
       spi_current_series = NO_SERIES;
       spi_series_count = 0;
-      send_byte = SLAVE_WAIT_INS; // Ready to Insert Packet
-    }
-    else
-    {
+      send_byte = SLAVE_WAIT_INS;  // Ready to Insert Packet
+    } else {
       spi_current_series = NO_SERIES;
       spi_series_count = 0;
       send_byte = NULL_CMD;
@@ -752,40 +612,31 @@ ISR(SPI_STC_vect)
   }
 
   // PKT INJECT SERIES
-  else if (spi_current_series == PKT_INJECT_SERIES)
-  {
-    if (spi_series_count == 1)
-    {
+  else if (spi_current_series == PKT_INJECT_SERIES) {
+    if (spi_series_count == 1) {
       spi_current_series = NO_SERIES;
       spi_series_count = 0;
 
       // Generate First Half of DPI Packet (A, B, X, Y, A', B', RT, ?)
       send_byte = 0b00000000;
 
-      if (dpi_a[next_dpi_index])
-      {
+      if (dpi_a[next_dpi_index]) {
         send_byte |= 0b10000000;
       }
-      if (dpi_b[next_dpi_index])
-      {
+      if (dpi_b[next_dpi_index]) {
         send_byte |= 0b01000000;
       }
-      if (dpi_x[next_dpi_index])
-      {
+      if (dpi_x[next_dpi_index]) {
         send_byte |= 0b00100000;
       }
-      if (dpi_y[next_dpi_index])
-      {
+      if (dpi_y[next_dpi_index]) {
         send_byte |= 0b00010000;
       }
-      if (dpi_rt[next_dpi_index])
-      {
+      if (dpi_rt[next_dpi_index]) {
         send_byte |= 0b00000010;
       }
     }
-  }
-  else
-  {
+  } else {
     spi_current_series = NO_SERIES;
     spi_series_count = 0;
     send_byte = NULL_CMD;
@@ -793,20 +644,17 @@ ISR(SPI_STC_vect)
 
   SPDR = send_byte;
 
-  digitalWrite(SLAVE_READY_PIN, LOW); // We are ready for a new byte.
+  digitalWrite(SLAVE_READY_PIN, LOW);  // We are ready for a new byte.
 }
 
 /// @brief ISR triggers if Smart Port sync is lost and resets variables.
 /// @param TIMER1_OVF_vect Timer 1 Overflow Vector
 /// @return N/A
-ISR(TIMER1_OVF_vect)
-{
-  if (sp_status == 1)
-  {
+ISR(TIMER1_OVF_vect) {
+  if (sp_status == 1) {
     sp_status = 0;
 
-    for (int i = 0; i < 12; i++)
-    {
+    for (int i = 0; i < 12; i++) {
       selects[i] = 0x0F;
       enable_control[i] = false;
     }
