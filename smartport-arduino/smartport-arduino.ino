@@ -504,7 +504,6 @@ ISR(SPI_STC_vect) {
                 enable_control[i] = false;
                 enabled_controllers |= (0b00000001 << bitwise_index);  // THIS MAY BE BORKED????
               }
-              timeouts[i] = true;
             } else {                       // If it is not plugged in...
               if (control_keys[i] == 1) {  // And if it was being used...
                 // Free it back up for use.
@@ -520,7 +519,6 @@ ISR(SPI_STC_vect) {
                 sp_right &= ~(0b00000001 << bitwise_index);
                 sp_rt &= ~(0b00000001 << bitwise_index);
                 sp_priority_byte |= (0b00000001 << bitwise_index);
-                timeouts[i] = false;
               }
             }
           }
