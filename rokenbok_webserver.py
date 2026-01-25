@@ -92,7 +92,6 @@ class CommandDeck:
             if controller.player_id is None:
                 controller.player_id = player_id
                 app.logger.info(f"Assigned {controller.index} to {player_id}")
-                controller.enable()
                 return controller
         app.logger.warning(f"No controller available for {player_id}")
         return None
@@ -112,7 +111,6 @@ class CommandDeck:
                 controller.player_id = None
                 controller.player_name = None
                 app.logger.info(f"Released {controller.index} from {player_id}")
-                controller.disable()
                 return controller
         return None
 
