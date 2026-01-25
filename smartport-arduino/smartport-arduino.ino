@@ -348,302 +348,355 @@ ISR(SPI_STC_vect) {
   uint8_t recv_byte = SPDR;
   uint8_t send_byte = 0x00;
 
-  // NO SERIES
-  if (spi_current_series == NO_SERIES) {
-    if (recv_byte == PRESYNC) {
-      spi_current_series = SYNC_SERIES;
-      spi_series_count = 1;
-      send_byte = SLAVE_SYNC;
-    } else if (recv_byte == EDIT_TPADS) {
-      spi_current_series = EDIT_TPADS_SERIES;
-      spi_series_count = 1;
-      send_byte = VERIFY_EDIT;
+  switch (spi_current_series) {
+    case NO_SERIES:
+      switch (recv_byte) {
+        case PRESYNC:
+          spi_current_series = SYNC_SERIES;
+          spi_series_count = 1;
+          send_byte = SLAVE_SYNC;
+          break;
+        
+        case EDIT_TPADS:
+          spi_current_series = EDIT_TPADS_SERIES;
+          spi_series_count = 1;
+          send_byte = VERIFY_EDIT;
+          // RESET SYNC TIMER
+          // EDIT_TPADS byte will only be received with a good sync.
+          TCNT1 = 0;
+          sp_status = true;
+          break;
+        
+        case EDIT_SELECT:
+          spi_current_series = EDIT_SELECT_SERIES;
+          spi_series_count = 1;
+          send_byte = VERIFY_EDIT;
+          break;
+        
+        case MASTER_ASK_INS:
+          spi_current_series = PKT_INJECT_SERIES;
+          spi_series_count = 1;
+          
+          // Generate First Half of DPI Packet (SEL3, SEL2, SEL1, SEL0, UP, DOWN, RIGHT, LEFT)
+          uint8_t original_index = next_dpi_index;
+          uint8_t valid_found = false;
+          do {
+            next_dpi_index = (next_dpi_index + 1) % 4;
 
-      // RESET SYNC TIMER
-      // EDIT_TPADS byte will only be received with a good sync.
-      TCNT1 = 0;
-      sp_status = true;
-    } else if (recv_byte == EDIT_SELECT) {
-      spi_current_series = EDIT_SELECT_SERIES;
-      spi_series_count = 1;
-      send_byte = VERIFY_EDIT;
-    } else if (recv_byte == MASTER_ASK_INS) {
-      spi_current_series = PKT_INJECT_SERIES;
-      spi_series_count = 1;
+            // A DPI should only be broadcast if it has a selection and isn't the same as another V/P/D controller selection.
+            if (selects[next_dpi_index + 8] != 0x0F && !contains(selects, 8, selects[next_dpi_index + 8])) {
+              valid_found = true;
+              break;  // Found the valid next index
+            }
 
-      // Generate First Half of DPI Packet (SEL3, SEL2, SEL1, SEL0, UP, DOWN, RIGHT, LEFT)
-      uint8_t original_index = next_dpi_index;
-      uint8_t valid_found = false;
-      do {
-        next_dpi_index = (next_dpi_index + 1) % 4;
+          } while (next_dpi_index != original_index);  // Stop if we've wrapped around back to the original index
 
-        // A DPI should only be broadcast if it has a selection and isn't the same as another V/P/D controller selection.
-        if (selects[next_dpi_index + 8] != 0x0F && !contains(selects, 8, selects[next_dpi_index + 8])) {
-          valid_found = true;
-          break;  // Found the valid next index
+          if (valid_found) {  // Only generate a send_byte if a valid controller was found
+            send_byte = (selects[next_dpi_index + 8] + 1) << 4;
+            if (dpi_up[next_dpi_index]) {
+              send_byte |= 0b00001000;
+            }
+            if (dpi_down[next_dpi_index]) {
+              send_byte |= 0b00000100;
+            }
+            if (dpi_right[next_dpi_index]) {
+              send_byte |= 0b00000010;
+            }
+            if (dpi_left[next_dpi_index]) {
+              send_byte |= 0b00000001;
+            }
+          } else {
+            send_byte = 0b00000000;  // Send NULL Upper Half
+          }
+          break;
+        
+        default:
+          spi_current_series = NO_SERIES;
+          spi_series_count = 0;
+          send_byte = NULL_CMD;
+          break;
+      }
+      break;
+    
+    case SYNC_SERIES:
+      switch (spi_series_count) {
+        case 1:
+          spi_series_count = 2;
+          send_byte = ENABLE_ATTRIB_BYTE;
+          for (uint8_t i = 8; i < 12; i++) {  // Only enable DPI if needed.
+            if (selects[i] != 0x0F) {
+              send_byte = PACKET_INJECT_ATTRIB_BYTE;
+              break;
+            }
+          }
+          break;
+        
+        case 2:
+          spi_series_count = 3;
+          send_byte = NO_SEL_TIMEOUT;
+          break;
+        
+        case 3:
+          spi_current_series = NO_SERIES;
+          spi_series_count = 0;
+          send_byte = NULL_CMD;
+          break;
+        
+        default:
+          spi_current_series = NO_SERIES;
+          spi_series_count = 0;
+          send_byte = NULL_CMD;
+          break;
+      }
+      break;
+    
+    case EDIT_TPADS_SERIES:
+      switch (spi_series_count) {
+        case 1:
+          spi_series_count = 2;  // Select Button
+          send_byte = recv_byte;
+          break;
+        
+        case 2:
+          spi_series_count = 3;  // Left Trigger (Last Select)
+          send_byte = recv_byte;
+          break;
+        
+        case 3:
+          spi_series_count = 4;  // Sharing Mode (1 = Allow Sharing)
+          if (share_mode) {
+            send_byte = recv_byte | (~enabled_controllers);  // Enable Sharing For Virtual Controllers
+          } else {
+            send_byte = recv_byte & enabled_controllers;  // Disable Sharing For Virtual Controllers
+          }
+          break;
+        
+        case 4:
+          spi_series_count = 5;  // RESERVED (0 when plugged in, 1 when not)
+          send_byte = recv_byte;
+          
+          for (uint8_t i = 4; i < 8; i++) {  // Check if P1-P4 are plugged in.
+            uint8_t bitwise_index = (i + 4) % 8;
+            if (!(recv_byte & (1 << bitwise_index))) {  // If it is plugged in...
+              if (control_keys[i] != 1) {               // And it is not currently tracked as physical controlled...
+                // Clear out virtual controller data and free for use.
+                control_keys[i] = 1;
+                selects[i] = 0x0F;
+                sp_a &= ~(0b00000001 << bitwise_index);
+                sp_b &= ~(0b00000001 << bitwise_index);
+                sp_x &= ~(0b00000001 << bitwise_index);
+                sp_y &= ~(0b00000001 << bitwise_index);
+                sp_up &= ~(0b00000001 << bitwise_index);
+                sp_down &= ~(0b00000001 << bitwise_index);
+                sp_left &= ~(0b00000001 << bitwise_index);
+                sp_right &= ~(0b00000001 << bitwise_index);
+                sp_rt &= ~(0b00000001 << bitwise_index);
+                sp_priority_byte |= (0b00000001 << bitwise_index);
+                enable_control[i] = false;
+                enabled_controllers |= (0b00000001 << bitwise_index);  // THIS MAY BE BORKED????
+              }
+              timeouts[i] = true;
+            } else {                       // If it is not plugged in...
+              if (control_keys[i] == 1) {  // And if it was being used...
+                // Free it back up for use.
+                control_keys[i] = 0;
+                selects[i] = 0x0F;
+                sp_a &= ~(0b00000001 << bitwise_index);
+                sp_b &= ~(0b00000001 << bitwise_index);
+                sp_x &= ~(0b00000001 << bitwise_index);
+                sp_y &= ~(0b00000001 << bitwise_index);
+                sp_up &= ~(0b00000001 << bitwise_index);
+                sp_down &= ~(0b00000001 << bitwise_index);
+                sp_left &= ~(0b00000001 << bitwise_index);
+                sp_right &= ~(0b00000001 << bitwise_index);
+                sp_rt &= ~(0b00000001 << bitwise_index);
+                sp_priority_byte |= (0b00000001 << bitwise_index);
+                timeouts[i] = false;
+              }
+            }
+          }
+          break;
+        
+        case 5:
+          spi_series_count = 6;  // IS16SEL? (0 when plugged in, 1 when not)
+          send_byte = is16sel_mode ? 0xFF : 0x00;
+          break;
+        
+        case 6:
+          spi_series_count = 7;  // D Pad Up
+          send_byte = (recv_byte & enabled_controllers) | sp_up;
+          break;
+        
+        case 7:
+          spi_series_count = 8;  // D Pad Down
+          send_byte = (recv_byte & enabled_controllers) | sp_down;
+          break;
+        
+        case 8:
+          spi_series_count = 9;  // D Pad Right
+          send_byte = (recv_byte & enabled_controllers) | sp_right;
+          break;
+        
+        case 9:
+          spi_series_count = 10;  // D Pad Left
+          send_byte = (recv_byte & enabled_controllers) | sp_left;
+          break;
+        
+        case 10:
+          spi_series_count = 11;  // A
+          send_byte = (recv_byte & enabled_controllers) | (~sp_rt & sp_a);
+          break;
+        
+        case 11:
+          spi_series_count = 12;  // B
+          send_byte = (recv_byte & enabled_controllers) | (~sp_rt & sp_b);
+          break;
+        
+        case 12:
+          spi_series_count = 13;  // X
+          send_byte = (recv_byte & enabled_controllers) | sp_x;
+          break;
+        
+        case 13:
+          spi_series_count = 14;  // Y
+          send_byte = (recv_byte & enabled_controllers) | sp_y;
+          break;
+        
+        case 14:
+          spi_series_count = 15;  // RESERVED FOR A' (RT+A) (0 when plugged in, 1 when not)
+          send_byte = (recv_byte & enabled_controllers) | (sp_rt & sp_a);
+          break;
+        
+        case 15:
+          spi_series_count = 16;  // RESERVED FOR B' (RT+B) (0 when plugged in, 1 when not)
+          send_byte = (recv_byte & enabled_controllers) | (sp_rt & sp_b);
+          break;
+        
+        case 16:
+          spi_series_count = 17;  // Right Trigger (Slow)
+          send_byte = (recv_byte & enabled_controllers) | sp_rt;
+          break;
+        
+        case 17:  // Spare (0 regardless if plugged in or not)
+          spi_series_count = 18;
+          send_byte = 0x00; // recv_byte;
+          break;
+        
+        case 18:
+          spi_series_count = 19;  // Priority Byte
+          send_byte = recv_byte | sp_priority_byte;
+          sp_priority_byte = 0x00;
+          break;
+        
+        case 19:
+          spi_current_series = NO_SERIES;
+          spi_series_count = 0;
+          send_byte = NULL_CMD;
+          break;
+        
+        default:
+          spi_current_series = NO_SERIES;
+          spi_series_count = 0;
+          send_byte = NULL_CMD;
+          break;
+      }
+      break;
+    
+    case EDIT_SELECT_SERIES:
+      switch (spi_series_count) {
+        case 1:
+          spi_series_count = 2;  // P1 Select
+          send_byte = enable_control[4] ? selects[4] : (selects[4] = recv_byte, recv_byte);
+          break;
+        
+        case 2:
+          spi_series_count = 3;  // P2 Select
+          send_byte = enable_control[5] ? selects[5] : (selects[5] = recv_byte, recv_byte);
+          break;
+        
+        case 3:
+          spi_series_count = 4;  // P3 Select
+          send_byte = enable_control[6] ? selects[6] : (selects[6] = recv_byte, recv_byte);
+          break;
+        
+        case 4:
+          spi_series_count = 5;  // P4 Select
+          send_byte = enable_control[7] ? selects[7] : (selects[7] = recv_byte, recv_byte);
+          break;
+        
+        case 5:
+          spi_series_count = 6;  // V1 Select
+          send_byte = selects[0];
+          break;
+        
+        case 6:
+          spi_series_count = 7;  // V2 Select
+          send_byte = selects[1];
+          break;
+        
+        case 7:
+          spi_series_count = 8;  // V3 Select
+          send_byte = selects[2];
+          break;
+        
+        case 8:
+          spi_series_count = 9;  // V4 Select
+          send_byte = selects[3];
+          break;
+        
+        case 9:
+          spi_series_count = 10;  // Timer Value (Counts Up From 0-15 and Repeats)
+          send_byte = recv_byte;
+          break;
+        
+        case 10:
+          spi_current_series = NO_SERIES;
+          spi_series_count = 0;
+          send_byte = SLAVE_WAIT_INS;  // Ready to Insert Packet
+          break;
+        
+        default:
+          spi_current_series = NO_SERIES;
+          spi_series_count = 0;
+          send_byte = NULL_CMD;
+          break;
+      }
+      break;
+    
+    case PKT_INJECT_SERIES:
+      if (spi_series_count == 1) {
+        spi_current_series = NO_SERIES;
+        spi_series_count = 0;
+
+        // Generate First Half of DPI Packet (A, B, X, Y, A', B', RT, ?)
+        send_byte = 0b00000000;
+
+        if (dpi_a[next_dpi_index]) {
+          send_byte |= 0b10000000;
         }
-
-      } while (next_dpi_index != original_index);  // Stop if we've wrapped around back to the original index
-
-      if (valid_found) {  // Only generate a send_byte if a valid controller was found
-        send_byte = (selects[next_dpi_index + 8] + 1) << 4;
-        if (dpi_up[next_dpi_index]) {
-          send_byte |= 0b00001000;
+        if (dpi_b[next_dpi_index]) {
+          send_byte |= 0b01000000;
         }
-        if (dpi_down[next_dpi_index]) {
-          send_byte |= 0b00000100;
+        if (dpi_x[next_dpi_index]) {
+          send_byte |= 0b00100000;
         }
-        if (dpi_right[next_dpi_index]) {
+        if (dpi_y[next_dpi_index]) {
+          send_byte |= 0b00010000;
+        }
+        if (dpi_rt[next_dpi_index]) {
           send_byte |= 0b00000010;
         }
-        if (dpi_left[next_dpi_index]) {
-          send_byte |= 0b00000001;
-        }
-      } else {
-        send_byte = 0b00000000;  // Send NULL Upper Half
       }
-    } else {
+      break;
+    
+    default:
       spi_current_series = NO_SERIES;
       spi_series_count = 0;
       send_byte = NULL_CMD;
-    }
-  }
-
-  // SYNC SERIES
-  else if (spi_current_series == SYNC_SERIES) {
-    if (spi_series_count == 1) {
-      spi_series_count = 2;
-      send_byte = ENABLE_ATTRIB_BYTE;
-      for (uint8_t i = 8; i < 12; i++) {  // Only enable DPI if needed.
-        if (selects[i] != 0x0F) {
-          send_byte = PACKET_INJECT_ATTRIB_BYTE;
-          break;
-        }
-      }
-    } else if (spi_series_count == 2) {
-      spi_series_count = 3;
-      send_byte = NO_SEL_TIMEOUT;
-    } else if (spi_series_count == 3) {
-      spi_current_series = NO_SERIES;
-      spi_series_count = 0;
-      send_byte = NULL_CMD;
-    } else {
-      spi_current_series = NO_SERIES;
-      spi_series_count = 0;
-      send_byte = NULL_CMD;
-    }
-  }
-
-  // EDIT TPADS SERIES
-  else if (spi_current_series == EDIT_TPADS_SERIES) {
-    if (spi_series_count == 1) {
-      spi_series_count = 2;  // Select Button
-      send_byte = recv_byte;
-    } else if (spi_series_count == 2) {
-      spi_series_count = 3;  // Left Trigger (Last Select)
-      send_byte = recv_byte;
-    } else if (spi_series_count == 3) {
-      spi_series_count = 4;  // Sharing Mode (1 = Allow Sharing)
-      if (share_mode) {
-        send_byte = recv_byte | (~enabled_controllers);  // Enable Sharing For Virtual Controllers
-      } else {
-        send_byte = recv_byte & enabled_controllers;  // Disable Sharing For Virtual Controllers
-      }
-    } else if (spi_series_count == 4) {
-      spi_series_count = 5;  // RESERVED (0 when plugged in, 1 when not)
-      send_byte = recv_byte;
-
-      for (uint8_t i = 4; i < 8; i++) {  // Check if P1-P4 are plugged in.
-        uint8_t bitwise_index = (i + 4) % 8;
-        if (!(recv_byte & (1 << bitwise_index))) {  // If it is plugged in...
-          if (control_keys[i] != 1) {               // And it is not currently tracked as physical controlled...
-            // Clear out virtual controller data and free for use.
-            control_keys[i] = 1;
-            selects[i] = 0x0F;
-            sp_a &= ~(0b00000001 << bitwise_index);
-            sp_b &= ~(0b00000001 << bitwise_index);
-            sp_x &= ~(0b00000001 << bitwise_index);
-            sp_y &= ~(0b00000001 << bitwise_index);
-            sp_up &= ~(0b00000001 << bitwise_index);
-            sp_down &= ~(0b00000001 << bitwise_index);
-            sp_left &= ~(0b00000001 << bitwise_index);
-            sp_right &= ~(0b00000001 << bitwise_index);
-            sp_rt &= ~(0b00000001 << bitwise_index);
-            sp_priority_byte |= (0b00000001 << bitwise_index);
-            enable_control[i] = false;
-            enabled_controllers |= (0b00000001 << bitwise_index);  // THIS MAY BE BORKED????
-          }
-          timeouts[i] = true;
-        } else {                       // If it is not plugged in...
-          if (control_keys[i] == 1) {  // And if it was being used...
-            // Free it back up for use.
-            control_keys[i] = 0;
-            selects[i] = 0x0F;
-            sp_a &= ~(0b00000001 << bitwise_index);
-            sp_b &= ~(0b00000001 << bitwise_index);
-            sp_x &= ~(0b00000001 << bitwise_index);
-            sp_y &= ~(0b00000001 << bitwise_index);
-            sp_up &= ~(0b00000001 << bitwise_index);
-            sp_down &= ~(0b00000001 << bitwise_index);
-            sp_left &= ~(0b00000001 << bitwise_index);
-            sp_right &= ~(0b00000001 << bitwise_index);
-            sp_rt &= ~(0b00000001 << bitwise_index);
-            sp_priority_byte |= (0b00000001 << bitwise_index);
-            timeouts[i] = false;
-          }
-        }
-      }
-    } else if (spi_series_count == 5) {
-      spi_series_count = 6;  // IS16SEL? (0 when plugged in, 1 when not)
-      if (is16sel_mode) {
-        send_byte = 0xFF;
-      } else {
-        send_byte = 0x00;
-      }
-    } else if (spi_series_count == 6) {
-      spi_series_count = 7;  // D Pad Up
-      send_byte = (recv_byte & enabled_controllers) | sp_up;
-    } else if (spi_series_count == 7) {
-      spi_series_count = 8;  // D Pad Down
-      send_byte = (recv_byte & enabled_controllers) | sp_down;
-    } else if (spi_series_count == 8) {
-      spi_series_count = 9;  // D Pad Right
-      send_byte = (recv_byte & enabled_controllers) | sp_right;
-    } else if (spi_series_count == 9) {
-      spi_series_count = 10;  // D Pad Left
-      send_byte = (recv_byte & enabled_controllers) | sp_left;
-    } else if (spi_series_count == 10) {
-      spi_series_count = 11;  // A
-      send_byte = (recv_byte & enabled_controllers) | (~sp_rt & sp_a);
-    } else if (spi_series_count == 11) {
-      spi_series_count = 12;  // B
-      send_byte = (recv_byte & enabled_controllers) | (~sp_rt & sp_b);
-    } else if (spi_series_count == 12) {
-      spi_series_count = 13;  // X
-      send_byte = (recv_byte & enabled_controllers) | sp_x;
-    } else if (spi_series_count == 13) {
-      spi_series_count = 14;  // Y
-      send_byte = (recv_byte & enabled_controllers) | sp_y;
-    } else if (spi_series_count == 14) {
-      spi_series_count = 15;  // RESERVED FOR A' (RT+A) (0 when plugged in, 1 when not)
-      send_byte = (recv_byte & enabled_controllers) | (sp_rt & sp_a);
-    } else if (spi_series_count == 15) {
-      spi_series_count = 16;  // RESERVED FOR B' (RT+B) (0 when plugged in, 1 when not)
-      send_byte = (recv_byte & enabled_controllers) | (sp_rt & sp_b);
-    } else if (spi_series_count == 16) {
-      spi_series_count = 17;  // Right Trigger (Slow)
-      send_byte = (recv_byte & enabled_controllers) | sp_rt;
-    } else if (spi_series_count == 17) {
-      spi_series_count = 18;  // Spare (0 regardless if plugged in or not)
-      send_byte = 0x00;       // recv_byte;
-    } else if (spi_series_count == 18) {
-      spi_series_count = 19;  // Priority Byte
-      send_byte = recv_byte | sp_priority_byte;
-      sp_priority_byte = 0x00;
-    } else if (spi_series_count == 19) {
-      spi_current_series = NO_SERIES;
-      spi_series_count = 0;
-      send_byte = NULL_CMD;
-    } else {
-      spi_current_series = NO_SERIES;
-      spi_series_count = 0;
-      send_byte = NULL_CMD;
-    }
-  }
-
-  // EDIT SELECT SERIES
-  else if (spi_current_series == EDIT_SELECT_SERIES) {
-    if (spi_series_count == 1) {
-      spi_series_count = 2;  // P1 Select
-      if (enable_control[4]) {
-        send_byte = selects[4];
-      } else {
-        selects[4] = recv_byte;
-        send_byte = recv_byte;
-      }
-    } else if (spi_series_count == 2) {
-      spi_series_count = 3;  // P2 Select
-      if (enable_control[5]) {
-        send_byte = selects[5];
-      } else {
-        selects[5] = recv_byte;
-        send_byte = recv_byte;
-      }
-    } else if (spi_series_count == 3) {
-      spi_series_count = 4;  // P3 Select
-      if (enable_control[6]) {
-        send_byte = selects[6];
-      } else {
-        selects[6] = recv_byte;
-        send_byte = recv_byte;
-      }
-    } else if (spi_series_count == 4) {
-      spi_series_count = 5;  // P4 Select
-      if (enable_control[7]) {
-        send_byte = selects[7];
-      } else {
-        selects[7] = recv_byte;
-        send_byte = recv_byte;
-      }
-    } else if (spi_series_count == 5) {
-      spi_series_count = 6;  // V1 Select
-      send_byte = selects[0];
-    } else if (spi_series_count == 6) {
-      spi_series_count = 7;  // V2 Select
-      send_byte = selects[1];
-    } else if (spi_series_count == 7) {
-      spi_series_count = 8;  // V3 Select
-      send_byte = selects[2];
-    } else if (spi_series_count == 8) {
-      spi_series_count = 9;  // V4 Select
-      send_byte = selects[3];
-    } else if (spi_series_count == 9) {
-      spi_series_count = 10;  // Timer Value (Counts Up From 0-15 and Repeats)
-      send_byte = recv_byte;
-    } else if (spi_series_count == 10) {
-      spi_current_series = NO_SERIES;
-      spi_series_count = 0;
-      send_byte = SLAVE_WAIT_INS;  // Ready to Insert Packet
-    } else {
-      spi_current_series = NO_SERIES;
-      spi_series_count = 0;
-      send_byte = NULL_CMD;
-    }
-  }
-
-  // PKT INJECT SERIES
-  else if (spi_current_series == PKT_INJECT_SERIES) {
-    if (spi_series_count == 1) {
-      spi_current_series = NO_SERIES;
-      spi_series_count = 0;
-
-      // Generate First Half of DPI Packet (A, B, X, Y, A', B', RT, ?)
-      send_byte = 0b00000000;
-
-      if (dpi_a[next_dpi_index]) {
-        send_byte |= 0b10000000;
-      }
-      if (dpi_b[next_dpi_index]) {
-        send_byte |= 0b01000000;
-      }
-      if (dpi_x[next_dpi_index]) {
-        send_byte |= 0b00100000;
-      }
-      if (dpi_y[next_dpi_index]) {
-        send_byte |= 0b00010000;
-      }
-      if (dpi_rt[next_dpi_index]) {
-        send_byte |= 0b00000010;
-      }
-    }
-  } else {
-    spi_current_series = NO_SERIES;
-    spi_series_count = 0;
-    send_byte = NULL_CMD;
+      break;
   }
 
   SPDR = send_byte;
-
   digitalWrite(SLAVE_READY_PIN, LOW);  // We are ready for a new byte.
 }
 
