@@ -90,21 +90,24 @@
 #define PKT_INJECT_SERIES 4
 
 // Rokenbok Control Logic Variables
-uint8_t timeouts[12] = {false, false, false, false, false, false, false, false, false, false, false, false};        // V1, V2, V3, V4, P1, P2, P3, P4, D1, D2, D3, D4
-uint8_t enable_control[12] = {false, false, false, false, false, false, false, false, false, false, false, false};  // V1, V2, V3, V4, P1, P2, P3, P4, D1, D2, D3, D4 // FALSE = Normal, TRUE = SP Controlled
-uint8_t control_keys[12] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};                // V1, V2, V3, V4, P1, P2, P3, P4, D1, D2, D3, D4
-uint8_t next_control_key = 2;                                                                                       // 0 = Unused, 1 = Physical Controller Plugged In
+// V1, V2, V3, V4, P1, P2, P3, P4, D1, D2, D3, D4
 
-uint8_t next_dpi_index = 0;
+// Allows the smartport to change the selection of physical controllers
+uint8_t enable_control[12] = {false, false, false, false, true, true, true, true, false, false, false, false};
 
-uint8_t selects[12] = {0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F};  // V1, V2, V3, V4, P1, P2, P3, P4, D1, D2, D3, D4
+// Tracked as physically controlled
+// 0 = Unused, 1 = Physical Controller Plugged In
+uint8_t control_keys[12] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-uint8_t share_mode = true;
-uint8_t is16sel_mode = true;
-uint8_t controller_timeout = 10;
+// Vehicle selection of controller in hex
+uint8_t selects[12] = {0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F};
 
-uint8_t enabled_controllers = 0b11111111;  // V4|V3|V2|V1|P4|P3|P2|P1 // 0 = Enabled, 1 = Disabled
-uint8_t sp_a = 0x00;                       // V4|V3|V2|V1|P4|P3|P2|P1
+// A mask to prevent control
+// V4|V3|V2|V1|P4|P3|P2|P1 // 0 = Enabled, 1 = Disabled
+uint8_t enabled_controllers = 0b11111111;
+
+// V4|V3|V2|V1|P4|P3|P2|P1
+uint8_t sp_a = 0x00;
 uint8_t sp_b = 0x00;
 uint8_t sp_x = 0x00;
 uint8_t sp_y = 0x00;
@@ -124,6 +127,12 @@ uint8_t dpi_down[4] = {false, false, false, false};
 uint8_t dpi_left[4] = {false, false, false, false};
 uint8_t dpi_right[4] = {false, false, false, false};
 uint8_t dpi_rt[4] = {false, false, false, false};
+
+uint8_t next_dpi_index = 0;
+
+uint8_t share_mode = true;
+uint8_t is16sel_mode = true;
+uint8_t controller_timeout = 10;
 
 uint8_t sp_status = 0;
 
