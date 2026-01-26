@@ -4,6 +4,10 @@
 
 #define SLAVE_READY_PIN 9
 
+#define CMD_ENABLED_CONTROLLERS  0x01
+#define CMD_SELECT               0x02
+#define CMD_SP_BUTTON            0x03
+
 #define DEVICE_CMD_PRESS 0
 #define DEVICE_CMD_RELEASE 1
 #define DEVICE_CMD_EDIT 2
@@ -203,145 +207,48 @@ void setup(void) {
 
 /// @brief Receive commands via serial
 /// @return void
-void loop(void) {
-  // Wait for 3 bytes to be available
-  if (Serial.available() >= 3) {
+void loop(void)
+{
+  while (Serial.available() >= 2)
+  {
     uint8_t cmd = Serial.read();
-    uint8_t controller = Serial.read();
-    uint8_t value = Serial.read();
 
-    // Validate controller index
-    if (controller > 7) {
-      return;  // Invalid controller
-    }
-
-    switch (cmd) {
-      case DEVICE_CMD_PRESS: {
-        // Press a button on the specified controller
-        switch (value) {
-          case CTRL_DPAD_UP:
-            set_button_state(&sp_up, controller, true);
-            break;
-          case CTRL_DPAD_DOWN:
-            set_button_state(&sp_down, controller, true);
-            break;
-          case CTRL_DPAD_LEFT:
-            set_button_state(&sp_left, controller, true);
-            break;
-          case CTRL_DPAD_RIGHT:
-            set_button_state(&sp_right, controller, true);
-            break;
-          case CTRL_A:
-            set_button_state(&sp_a, controller, true);
-            break;
-          case CTRL_B:
-            set_button_state(&sp_b, controller, true);
-            break;
-          case CTRL_X:
-            set_button_state(&sp_x, controller, true);
-            break;
-          case CTRL_Y:
-            set_button_state(&sp_y, controller, true);
-            break;
-          case CTRL_RIGHT_TRIGGER:
-            set_button_state(&sp_rt, controller, true);
-            break;
-        }
+    switch (cmd)
+    {
+      case CMD_ENABLED_CONTROLLERS:
+      {
+        uint8_t value = Serial.read();
+        enabled_controllers = value;
         break;
       }
 
-      case DEVICE_CMD_RELEASE: {
-        // Release a button on the specified controller
-        switch (value) {
-          case CTRL_DPAD_UP:
-            set_button_state(&sp_up, controller, false);
-            break;
-          case CTRL_DPAD_DOWN:
-            set_button_state(&sp_down, controller, false);
-            break;
-          case CTRL_DPAD_LEFT:
-            set_button_state(&sp_left, controller, false);
-            break;
-          case CTRL_DPAD_RIGHT:
-            set_button_state(&sp_right, controller, false);
-            break;
-          case CTRL_A:
-            set_button_state(&sp_a, controller, false);
-            break;
-          case CTRL_B:
-            set_button_state(&sp_b, controller, false);
-            break;
-          case CTRL_X:
-            set_button_state(&sp_x, controller, false);
-            break;
-          case CTRL_Y:
-            set_button_state(&sp_y, controller, false);
-            break;
-          case CTRL_RIGHT_TRIGGER:
-            set_button_state(&sp_rt, controller, false);
-            break;
-        }
+      case CMD_SELECT:
+      {
+        // Needs 2 more bytes
+        while (Serial.available() < 2);
+        uint8_t index = Serial.read();  // 0–11
+        uint8_t value = Serial.read();  // select value
+
+        if (index < 12)
+          selects[index] = value;
         break;
       }
 
-      case DEVICE_CMD_EDIT: {
-        // Edit the vehicle selection for the specified controller
-        if (value <= NO_SELECTION) {
-          selects[controller] = value;
-        }
-        break;
-      }
-
-      case DEVICE_CMD_ENABLE: {
-        // Enable control for the specified controller
-        enable_control[controller] = true;
-        uint8_t bitwise_index = controller_to_bitwise(controller);
-        enabled_controllers &= ~(1 << bitwise_index);
-        break;
-      }
-
-      case DEVICE_CMD_DISABLE: {
-        // Disable control for the specified controller
-        enable_control[controller] = false;
-        uint8_t bitwise_index = controller_to_bitwise(controller);
-        enabled_controllers |= (1 << bitwise_index);
-
-        // Clear all button states for this controller
-        set_button_state(&sp_up, controller, false);
-        set_button_state(&sp_down, controller, false);
-        set_button_state(&sp_left, controller, false);
-        set_button_state(&sp_right, controller, false);
-        set_button_state(&sp_a, controller, false);
-        set_button_state(&sp_b, controller, false);
-        set_button_state(&sp_x, controller, false);
-        set_button_state(&sp_y, controller, false);
-        set_button_state(&sp_rt, controller, false);
-
-        selects[controller] = NO_SELECTION;
-        break;
-      }
-
-      case DEVICE_CMD_RESET: {
-        // Reset all controllers
-        for (int i = 0; i < 8; i++) {
-          selects[i] = 0x0F;
-          enable_control[i] = false;
-        }
-
-        enabled_controllers = 0b11111111;
-        sp_a = 0x00;
-        sp_b = 0x00;
-        sp_x = 0x00;
-        sp_y = 0x00;
-        sp_up = 0x00;
-        sp_down = 0x00;
-        sp_right = 0x00;
-        sp_left = 0x00;
-        sp_rt = 0x00;
-        sp_priority_byte = 0x00;
-
-        spi_current_series = 0;
-        spi_series_count = 0;
+      case CMD_SP_BUTTON:
+      {
+        // Wait for the 9 bytes to arrive
+        while (Serial.available() < 9);
+        
+        // Read the 9 bytes in order
+        sp_a     = Serial.read();
+        sp_b     = Serial.read();
+        sp_x     = Serial.read();
+        sp_y     = Serial.read();
+        sp_up    = Serial.read();
+        sp_down  = Serial.read();
+        sp_right = Serial.read();
+        sp_left  = Serial.read();
+        sp_rt    = Serial.read();
         break;
       }
     }
