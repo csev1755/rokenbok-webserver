@@ -48,7 +48,7 @@ def handle_controller(data):
         controller.player_name = data['player_name']
         controller.send_input(data)
 
-class CommandDeck:
+class VirtualCommandDeck:
     """Represents a Command Deck and provides methods to communicate with it.
 
     Attributes:
@@ -59,7 +59,7 @@ class CommandDeck:
 
     def __init__(self, **kwargs):
         """
-        Initializes the CommandDeck and connects to a specified hardware device.
+        Initializes the virtual command deck and connects to a specified hardware device.
 
         Keyword Args:
             device_name (str): Identifier for the control device type.
@@ -72,7 +72,7 @@ class CommandDeck:
         else:
             app.logger.warning("Invalid device or no device specified")
 
-        self.controllers: dict[Rokenbok.ControllerIdentifier, CommandDeck.Controller] = {}
+        self.controllers: dict[Rokenbok.ControllerIdentifier, VirtualCommandDeck.Controller] = {}
         self.vehicle_count = 15
 
         for cid in Rokenbok.ControllerIdentifier:
@@ -158,7 +158,7 @@ class CommandDeck:
         A single logical controller assigned to a client.
 
         Attributes:
-            deck (CommandDeck): Parent command deck instance.
+            deck (VirtualCommandDeck): Parent command deck instance.
             index (ControllerIdentifier): Controller identifier.
             selection (int): Current vehicle selection.
             player_id (str): Socket.IO session identifier.
@@ -169,7 +169,7 @@ class CommandDeck:
             Initializes a controller instance.
 
             Args:
-                command_deck (CommandDeck): Parent command deck.
+                command_deck (VirtualCommandDeck): Parent command deck.
                 index (ControllerIdentifier): Controller identifier.
             """
             self.deck = command_deck
@@ -185,7 +185,7 @@ class CommandDeck:
                 vehicle (int)
 
             Sends:
-                A command to the `CommandDeck` to edit the controller's selection.
+                A command to the `VirtualCommandDeck` to edit the controller's selection.
             """
             self.selection = vehicle
             self.deck.send_command(Rokenbok.DeviceCommand.EDIT, self, self.selection)
@@ -197,7 +197,7 @@ class CommandDeck:
                 input (dict): A dictionary containing a button (int) and its state (string).
 
             Sends:
-                A command to the `CommandDeck` to either press or release a button.
+                A command to the `VirtualCommandDeck` to either press or release a button.
             """
             button = Rokenbok.ControllerCommand(input['button'])
 
@@ -293,7 +293,7 @@ if __name__ == '__main__':
     else:
         device_name = None
     
-    command_deck = CommandDeck(device_name=device_name, serial_device=config['smartport_arduino']['serial_port'])
+    command_deck = VirtualCommandDeck(device_name=device_name, serial_device=config['smartport_arduino']['serial_port'])
 
     if config['webserver'].getboolean('upnp'):
         print("Trying to open port via UPnP")
