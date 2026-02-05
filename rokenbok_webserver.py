@@ -54,7 +54,7 @@ class CommandDeck:
     Attributes:
         device: The underlying hardware device interface, if configured.
         controllers (dict): Mapping of controller identifiers to Controller instances.
-        selection_count (int): Number of selectable vehicles.
+        vehicle_count (int): Number of selectable vehicles.
     """
 
     def __init__(self, **kwargs):
@@ -73,7 +73,7 @@ class CommandDeck:
             app.logger.warning("Invalid device or no device specified")
 
         self.controllers: dict[Rokenbok.ControllerIdentifier, CommandDeck.Controller] = {}
-        self.selection_count = 16
+        self.vehicle_count = 15
 
         for cid in Rokenbok.ControllerIdentifier:
             self.controllers[cid] = self.Controller(self, cid)
@@ -204,7 +204,7 @@ class CommandDeck:
             if button in (Rokenbok.ControllerCommand.SELECT_UP, Rokenbok.ControllerCommand.SELECT_DOWN):
                 if input['pressed']:
                     delta = 1 if button == Rokenbok.ControllerCommand.SELECT_UP else -1
-                    next_selection = (self.selection.value + delta) % self.deck.selection_count
+                    next_selection = (self.selection.value + delta) % (self.deck.vehicle_count - 1)
                     self.select(Rokenbok.VehicleKey(next_selection))
             
             else:
