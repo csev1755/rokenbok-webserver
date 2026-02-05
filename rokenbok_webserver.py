@@ -92,7 +92,6 @@ class CommandDeck:
             if controller.player_id is None:
                 controller.player_id = player_id
                 app.logger.info(f"Assigned {controller.index} to {player_id}")
-                controller.enable()
                 return controller
         app.logger.warning(f"No controller available for {player_id}")
         return None
@@ -112,7 +111,6 @@ class CommandDeck:
                 controller.player_id = None
                 controller.player_name = None
                 app.logger.info(f"Released {controller.index} from {player_id}")
-                controller.disable()
                 return controller
         return None
 
@@ -191,22 +189,6 @@ class CommandDeck:
             """
             self.selection = vehicle
             self.deck.send_command(Rokenbok.DeviceCommand.EDIT, self, self.selection)
-
-        def disable(self):
-            """Disables the controller.
-
-            Sends:
-                A command to the `CommandDeck` to disable the controller.
-            """
-            self.deck.send_command(Rokenbok.DeviceCommand.DISABLE, self)
-        
-        def enable(self):
-            """Enables the controller.
-
-            Sends:
-                A command to the `CommandDeck` to enable the controller.
-            """
-            self.deck.send_command(Rokenbok.DeviceCommand.ENABLE, self)
 
         def send_input(self, input):
             """Processes input from a gamepad.
