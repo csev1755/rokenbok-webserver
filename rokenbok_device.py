@@ -40,25 +40,6 @@ class Commands:
         VIRTUAL_CONTROLLER_3 = 6
         VIRTUAL_CONTROLLER_4 = 7
 
-    class VehicleKey(Enum):
-        """Enum representing vehicles for selection."""
-        SELECT_KEY_1 = 0
-        SELECT_KEY_2 = 1
-        SELECT_KEY_3 = 2
-        SELECT_KEY_4 = 3
-        SELECT_KEY_5 = 4
-        SELECT_KEY_6 = 5
-        SELECT_KEY_7 = 6
-        SELECT_KEY_8 = 7
-        SELECT_KEY_9 = 8
-        SELECT_KEY_10 = 9
-        SELECT_KEY_11 = 10
-        SELECT_KEY_12 = 11
-        SELECT_KEY_13 = 12
-        SELECT_KEY_14 = 13
-        SELECT_KEY_15 = 14
-        NO_SELECTION = 15
-
 class SmartPortArduino:
     """A class that provides methods to communicate with an
         Arduino with the `smartport-arduino` sketch installed

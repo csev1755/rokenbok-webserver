@@ -138,7 +138,7 @@ class CommandDeck:
 
         for controller in self.controllers.values():
             if controller.player_id is not None:
-                if controller.selection is not Rokenbok.VehicleKey.NO_SELECTION:
+                if controller.selection:
                     selection = controller.selection.value + 1
                     vehicle_name = config["vehicle_names"][str(selection)]
                 else:
@@ -160,7 +160,7 @@ class CommandDeck:
         Attributes:
             deck (CommandDeck): Parent command deck instance.
             index (ControllerIdentifier): Controller identifier.
-            selection (VehicleKey): Current vehicle selection.
+            selection (int): Current vehicle selection.
             player_id (str): Socket.IO session identifier.
         """
 
@@ -174,15 +174,15 @@ class CommandDeck:
             """
             self.deck = command_deck
             self.index = index
-            self.selection = Rokenbok.VehicleKey.NO_SELECTION
+            self.selection = None
             self.player_name = None
             self.player_id = None
 
-        def select(self, vehicle: Rokenbok.VehicleKey):
+        def select(self, vehicle):
             """Changes the controller's selection.
 
             Args:
-                vehicle (VehicleKey)
+                vehicle (int)
 
             Sends:
                 A command to the `CommandDeck` to edit the controller's selection.
@@ -205,7 +205,7 @@ class CommandDeck:
                 if input['pressed']:
                     delta = 1 if button == Rokenbok.ControllerCommand.SELECT_UP else -1
                     next_selection = (self.selection.value + delta) % (self.deck.vehicle_count - 1)
-                    self.select(Rokenbok.VehicleKey(next_selection))
+                    self.select(next_selection)
             
             else:
                 command = Rokenbok.DeviceCommand.PRESS if input['pressed'] else Rokenbok.DeviceCommand.RELEASE
