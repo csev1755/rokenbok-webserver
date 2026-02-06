@@ -1,4 +1,4 @@
-# smartport-arduino
+# smartport_arduino
 An Arduino sketch that listens to commands from its USB serial interface to perform commands via the SmartPort protocol
 
 ## SmartPort pinout

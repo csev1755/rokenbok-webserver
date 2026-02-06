@@ -31,7 +31,7 @@ class Commands:
 
 class SmartPortArduino:
     """A class that provides methods to communicate with an
-        Arduino with the `smartport-arduino` sketch installed
+        Arduino with the `smartport_arduino` sketch installed
         via command Enums.
     """
     def __init__(self, serial_device=None):

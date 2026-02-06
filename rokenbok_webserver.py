@@ -68,7 +68,7 @@ class VirtualCommandDeck:
         """
         self.device = None
 
-        if kwargs['device_name'] == "smartport-arduino":
+        if kwargs['device_name'] == "smartport_arduino":
             self.device = SmartPortArduino(kwargs['serial_device'])
         else:
             app.logger.warning("Invalid device or no device specified")
@@ -142,7 +142,7 @@ class VirtualCommandDeck:
             if controller.player_id is not None:
                 if controller.selection is not None:
                     selection = controller.selection + 1
-                    vehicle_name = config["vehicle_names"][str(selection)]
+                    vehicle_name = config["smartport_arduino.vehicles"][str(selection)]
                 else:
                     selection = "None"
                     vehicle_name = ""
@@ -261,7 +261,7 @@ if __name__ == '__main__':
             'serial_port': ''
         }
 
-        config['vehicle_names'] = {
+        config['smartport_arduino.vehicles'] = {
             '1': '',
             '2': '',
             '3': '',
@@ -294,7 +294,7 @@ if __name__ == '__main__':
         logging.getLogger('werkzeug').setLevel(logging.ERROR)
     
     if config['smartport_arduino'].getboolean('enabled'):
-        device_name = "smartport-arduino"
+        device_name = "smartport_arduino"
     else:
         device_name = None
     
