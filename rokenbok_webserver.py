@@ -54,6 +54,7 @@ class VirtualCommandDeck:
     Attributes:
         device: The underlying hardware device interface, if configured.
         controllers (dict): Mapping of controller identifiers to Controller instances.
+        controller_count (int): Number of usable controllers.
         vehicle_count (int): Number of selectable vehicles.
     """
 
@@ -72,11 +73,12 @@ class VirtualCommandDeck:
         else:
             app.logger.warning("Invalid device or no device specified")
 
-        self.controllers: dict[Rokenbok.ControllerIdentifier, VirtualCommandDeck.Controller] = {}
+        self.controllers: dict[int, VirtualCommandDeck.Controller] = {}
+        self.controller_count = 12
         self.vehicle_count = 15
 
-        for cid in Rokenbok.ControllerIdentifier:
-            self.controllers[cid] = self.Controller(self, cid)
+        for controller_id in range(1, self.controller_count + 1):
+            self.controllers[controller_id] = self.Controller(self, controller_id)
 
     def assign_controller(self, player_id):
         """
@@ -91,9 +93,9 @@ class VirtualCommandDeck:
         for controller in self.controllers.values():
             if controller.player_id is None:
                 controller.player_id = player_id
-                app.logger.info(f"Assigned {controller.index} to {player_id}")
+                app.logger.info(f"Assigned controller {controller.controller_id} to player {player_id}")
                 return controller
-        app.logger.warning(f"No controller available for {player_id}")
+        app.logger.warning(f"No controller available for player {player_id}")
         return None
 
     def release_controller(self, player_id):
@@ -110,7 +112,7 @@ class VirtualCommandDeck:
             if controller.player_id == player_id:
                 controller.player_id = None
                 controller.player_name = None
-                app.logger.info(f"Released {controller.index} from {player_id}")
+                app.logger.info(f"Released controller {controller.controller_id} from player {player_id}")
                 return controller
         return None
 
@@ -138,8 +140,8 @@ class VirtualCommandDeck:
 
         for controller in self.controllers.values():
             if controller.player_id is not None:
-                if controller.selection:
-                    selection = controller.selection.value + 1
+                if controller.selection is not None:
+                    selection = controller.selection + 1
                     vehicle_name = config["vehicle_names"][str(selection)]
                 else:
                     selection = "None"
@@ -159,24 +161,24 @@ class VirtualCommandDeck:
 
         Attributes:
             deck (VirtualCommandDeck): Parent command deck instance.
-            index (ControllerIdentifier): Controller identifier.
+            controller_id (int): Controller identifier.
             selection (int): Current vehicle selection.
             player_id (str): Socket.IO session identifier.
         """
 
-        def __init__(self, command_deck, index: Rokenbok.ControllerIdentifier):
+        def __init__(self, command_deck, controller_id):
             """
             Initializes a controller instance.
 
             Args:
                 command_deck (VirtualCommandDeck): Parent command deck.
-                index (ControllerIdentifier): Controller identifier.
+                controller_id (int): Controller identifier.
             """
             self.deck = command_deck
-            self.index = index
             self.selection = None
             self.player_name = None
             self.player_id = None
+            self.controller_id = controller_id
 
         def select(self, vehicle):
             """Changes the controller's selection.
@@ -204,7 +206,10 @@ class VirtualCommandDeck:
             if button in (Rokenbok.ControllerCommand.SELECT_UP, Rokenbok.ControllerCommand.SELECT_DOWN):
                 if input['pressed']:
                     delta = 1 if button == Rokenbok.ControllerCommand.SELECT_UP else -1
-                    next_selection = (self.selection.value + delta) % (self.deck.vehicle_count - 1)
+                    if self.selection is not None:
+                        next_selection = (self.selection + delta) % (self.deck.vehicle_count - 1)
+                    else:
+                        next_selection = 1
                     self.select(next_selection)
             
             else:
@@ -227,7 +232,7 @@ class VirtualCommandDeck:
         if self.device is not None:
             self.device.send_command(command, controller, value)
         
-        app.logger.debug(f"{command} - {controller.index.name if controller is not None else None} - {value}")
+        app.logger.debug(f"command={command} controller={controller.controller_id or 'None'} value={value or 'None'}")
 
 def handle_exit(signal, frame):
     print("Program interrupted, performing cleanup...")

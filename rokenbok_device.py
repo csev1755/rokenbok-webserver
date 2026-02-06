@@ -29,17 +29,6 @@ class Commands:
         SELECT_UP = 13
         SELECT_DOWN = 14
 
-    class ControllerIdentifier(Enum):
-        """Enum representing identifiers for physical and virtual controllers."""
-        PHYSICAL_CONTROLLER_1 = 0
-        PHYSICAL_CONTROLLER_2 = 1
-        PHYSICAL_CONTROLLER_3 = 2
-        PHYSICAL_CONTROLLER_4 = 3
-        VIRTUAL_CONTROLLER_1 = 4
-        VIRTUAL_CONTROLLER_2 = 5
-        VIRTUAL_CONTROLLER_3 = 6
-        VIRTUAL_CONTROLLER_4 = 7
-
 class SmartPortArduino:
     """A class that provides methods to communicate with an
         Arduino with the `smartport-arduino` sketch installed
@@ -74,7 +63,7 @@ class SmartPortArduino:
         """
 
         byte1 = command.value
-        byte2 = controller.index.value if controller else 0
-        byte3 = value.value if value else 0
+        byte2 = controller.controller_id
+        byte3 = value.value or value
 
         self.arduino.write(bytes([byte1, byte2, byte3]))
