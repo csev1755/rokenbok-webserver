@@ -78,30 +78,30 @@ function getSelectedDevice() {
 
 // Default input maps
 const CONTROLS = [
-    { name: 'A_BUTTON', button: 8,  key_default: 'KeyF', gamepad_default: 0 },
-    { name: 'B_BUTTON', button: 9,  key_default: 'KeyG', gamepad_default: 1 },
-    { name: 'X_BUTTON', button: 10,  key_default: 'KeyR', gamepad_default: 2 },
-    { name: 'Y_BUTTON', button: 11,  key_default: 'KeyT', gamepad_default: 3 },
-    { name: 'LEFT_TRIGGER', button: 1,  key_default: 'Digit1', gamepad_default: 4 },
-    { name: 'RIGHT_TRIGGER', button: 12,  key_default: 'Digit3', gamepad_default: 5 },
-    { name: 'DPAD_UP', button: 4, key_default: 'KeyW', gamepad_default: 12 },
-    { name: 'DPAD_DOWN', button: 5, key_default: 'KeyS', gamepad_default: 13 },
-    { name: 'DPAD_LEFT', button: 7, key_default: 'KeyA', gamepad_default: 14 },
-    { name: 'DPAD_RIGHT', button: 6, key_default: 'KeyD', gamepad_default: 15 },
-    { name: 'SELECT_UP', button: 13, key_default: 'KeyE', gamepad_default: 9 },
-    { name: 'SELECT_DOWN', button: 14, key_default: 'KeyQ', gamepad_default: 8 },
+    { button: 'A_BUTTON', key_default: 'KeyF', gamepad_default: 0 },
+    { button: 'B_BUTTON', key_default: 'KeyG', gamepad_default: 1 },
+    { button: 'X_BUTTON', key_default: 'KeyR', gamepad_default: 2 },
+    { button: 'Y_BUTTON', key_default: 'KeyT', gamepad_default: 3 },
+    { button: 'LEFT_TRIGGER', key_default: 'Digit1', gamepad_default: 4 },
+    { button: 'RIGHT_TRIGGER', key_default: 'Digit3', gamepad_default: 5 },
+    { button: 'DPAD_UP', key_default: 'KeyW', gamepad_default: 12 },
+    { button: 'DPAD_DOWN', key_default: 'KeyS', gamepad_default: 13 },
+    { button: 'DPAD_LEFT', key_default: 'KeyA', gamepad_default: 14 },
+    { button: 'DPAD_RIGHT', key_default: 'KeyD', gamepad_default: 15 },
+    { button: 'SELECT_UP', key_default: 'KeyE', gamepad_default: 9 },
+    { button: 'SELECT_DOWN', key_default: 'KeyQ', gamepad_default: 8 },
 ];
 
 // Control mapping table and fields
 CONTROLS.forEach(control => {
     const row = document.createElement('tr');
     row.innerHTML = `
-        <td>${control.name}</td>
+        <td>${control.button}</td>
         <td>
-            <input id="map_kb_${control.name}" class="map-key" size="6" value="${control.key_default}">
+            <input id="map_kb_${control.button}" class="map-key" size="6" value="${control.key_default}">
         </td>
         <td>
-            <input id="map_gp_${control.name}" class="map-btn" size="1" value="${control.gamepad_default}">
+            <input id="map_gp_${control.button}" class="map-btn" size="1" value="${control.gamepad_default}">
         </td>
     `;
     mappingBody.appendChild(row);
@@ -109,8 +109,8 @@ CONTROLS.forEach(control => {
 
 /**
  * Update UI with current input state
- * @param {string|number} button - The button identifier (key code or button index)
- * @param {boolean} pressed - State of the button
+ * @param {string} button - Button identifier
+ * @param {boolean} pressed - Button state
  */
 function renderInput(button, pressed) {
     const fragment = inputTemplate.content.cloneNode(true);
@@ -155,7 +155,7 @@ socket.on('players', data => {
 
 /**
  * Send a controller event to the server
- * @param {number} button - Button ID
+ * @param {string} button - Button identifier
  * @param {boolean} pressed - Button state
  */
 function emitControllerEvent(button, pressed) {
@@ -181,7 +181,7 @@ function pollGamepad() {
     buttons.forEach((pressed, index) => {
         // Map control
         const control = CONTROLS.find(c => 
-            Number(document.getElementById(`map_gp_${c.name}`).value) === index
+            Number(document.getElementById(`map_gp_${c.button}`).value) === index
         );
 
         // Send event if button state changed and the button is mapped
@@ -205,7 +205,7 @@ window.addEventListener('keydown', e => {
     
     // Map key
     const control = CONTROLS.find(c => 
-        document.getElementById(`map_kb_${c.name}`).value === e.code
+        document.getElementById(`map_kb_${c.button}`).value === e.code
     );
 
     // Mark key as pressed and send event
@@ -221,7 +221,7 @@ window.addEventListener('keyup', e => {
     
     // Map key
     const control = CONTROLS.find(c => 
-        document.getElementById(`map_kb_${c.name}`).value === e.code
+        document.getElementById(`map_kb_${c.button}`).value === e.code
     );
 
     // Mark key as released and send event

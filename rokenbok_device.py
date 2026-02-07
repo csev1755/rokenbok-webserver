@@ -1,33 +1,4 @@
 import serial
-from enum import Enum
-
-class Commands:
-    class DeviceCommand(Enum):
-        """Enum representing commands associated with a Rokenbok device."""
-        PRESS = 0
-        RELEASE = 1
-        EDIT = 2
-        ENABLE = 3
-        DISABLE = 4
-        RESET = 5
-
-    class ControllerCommand(Enum):
-        """Enum representing functions associated with a controller."""
-        SELECT = 0
-        LEFT_TRIGGER = 1
-        SHARE_SWITCH = 2
-        IS_16_SEL = 3
-        DPAD_UP = 4
-        DPAD_DOWN = 5
-        DPAD_RIGHT = 6
-        DPAD_LEFT = 7
-        A = 8
-        B = 9
-        X = 10
-        Y = 11
-        RIGHT_TRIGGER = 12
-        SELECT_UP = 13
-        SELECT_DOWN = 14
 
 class SmartPortArduino:
     """A class that provides methods to communicate with an
