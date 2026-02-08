@@ -3,7 +3,7 @@ An Arduino sketch that listens to commands from its USB serial interface to perf
 
 ## SmartPort pinout
 
-![SmartPort diagram](./mini-din-6.jpg)
+![SmartPort diagram](./mini_din_6.jpg)
 
 | SmartPort | Arduino | Function |
 |---|---|---|
@@ -16,7 +16,7 @@ An Arduino sketch that listens to commands from its USB serial interface to perf
 | - | 9 * | Slave Ready (Virtual) |
 | - | 10 * | Slave Select |
 
-*\* Pins 9 and 10 should be connected separately*
+*\* Pins 9 and 10 connect to eachother instead of the SmartPort*
 
 ## Other projects
 
