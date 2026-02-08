@@ -3,9 +3,9 @@ import logging
 import os
 import signal
 import sys
+import rokenbok_device as RokenbokDevice
 from flask import Flask, request, send_from_directory, render_template
 from flask_socketio import SocketIO
-from rokenbok_device import SmartPortArduino
 from upnp import UPnPPortMapper
 
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
@@ -45,7 +45,8 @@ def handle_controller(data):
     controller = command_deck.get_controller(request.sid)
     if controller:
         controller.player_name = data['player_name']
-        controller.send_input(data)
+        controller.get_input(data)
+        socketio.emit("players", {"players": command_deck.get_players()})
 
 class VirtualCommandDeck:
     """Represents a Command Deck and provides methods to communicate with it.
@@ -57,27 +58,36 @@ class VirtualCommandDeck:
         vehicle_count (int): Number of selectable vehicles.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self):
         """
-        Initializes the virtual command deck and connects to a specified hardware device.
+        Initializes the virtual command deck, controllers, and controllable devices
 
         Keyword Args:
             device_name (str): Identifier for the control device type.
             serial_device (str): Serial port path for the control device.
         """
-        self.device = None
 
-        if kwargs['device_name'] == "smartport_arduino":
-            self.device = SmartPortArduino(kwargs['serial_device'])
-        else:
-            app.logger.warning("Invalid device or no device specified")
-
-        self.controllers: dict[int, VirtualCommandDeck.Controller] = {}
+        self.controllers: dict[int, RokenbokDevice.Controller] = {}
         self.controller_count = 12
-        self.vehicle_count = 15
+
+        self.vehicles: dict[int, RokenbokDevice.Vehicle] = {}
+        self.vehicle_count = 0
+
+        for section in config.sections():
+            if section.endswith(".vehicles"):
+                device_type = section.replace(".vehicles", "")
+                
+                for vehicle_id, vehicle_name in config[section].items():
+                    self.vehicle_count += 1
+                    self.vehicles[int(vehicle_id)] = RokenbokDevice.Vehicle.configure(
+                        vehicle_type=device_type,
+                        device=section,
+                        id=int(vehicle_id),
+                        name=vehicle_name
+                    )
 
         for controller_id in range(1, self.controller_count + 1):
-            self.controllers[controller_id] = self.Controller(self, controller_id)
+            self.controllers[controller_id] = RokenbokDevice.Controller(self, controller_id)
 
     def assign_controller(self, player_id):
         """
@@ -131,6 +141,21 @@ class VirtualCommandDeck:
                 return controller
         return None
 
+    def get_vehicle(self, vehicle_id):
+        """
+        Retrieves the vehicle and its device
+
+        Args:
+            vehicle_id (str): Socket.IO session identifier.
+
+        Returns:
+            Controller or None: The matching controller, or None if not found.
+        """
+        for vehicle in self.vehicles.values():
+            if vehicle.id == vehicle_id:
+                return vehicle
+        return None
+
     def get_players(self):
         """
         Returns:
@@ -147,79 +172,6 @@ class VirtualCommandDeck:
                 })
 
         return players
-
-    class Controller:
-        """
-        A single logical controller assigned to a client.
-
-        Attributes:
-            deck (VirtualCommandDeck): Parent command deck instance.
-            controller_id (int): Controller identifier.
-            selection (int): Current vehicle selection.
-            player_id (str): Socket.IO session identifier.
-        """
-
-        def __init__(self, command_deck, controller_id):
-            """
-            Initializes a controller instance.
-
-            Args:
-                command_deck (VirtualCommandDeck): Parent command deck.
-                controller_id (int): Controller identifier.
-            """
-            self.deck = command_deck
-            self.selection = None
-            self.player_name = None
-            self.player_id = None
-            self.controller_id = controller_id
-
-        def send_input(self, input):
-            """Processes input from a gamepad.
-
-            Args:
-                input (dict): A dictionary containing a button (int) and its state (string).
-
-            Sends:
-                A command to the `VirtualCommandDeck` to either press or release a button.
-            """
-            button = input['button']
-
-            if button in ("SELECT_UP", "SELECT_DOWN"):
-                if input['pressed']:
-                    delta = 1 if button == "SELECT_UP" else -1
-
-                    if self.selection is None:
-                        self.selection = 1 if delta == 1 else self.deck.vehicle_count
-
-                    elif ((self.selection + delta) < 1) or ((self.selection + delta) > self.deck.vehicle_count):
-                        self.selection = None
-
-                    else:
-                        self.selection += delta
-
-                    self.deck.send_command(button, self.player_name, self.selection)
-            
-            else:
-                command = "pressed" if input['pressed'] else "release"
-                self.deck.send_command(command, self.player_name, button)
-
-            socketio.emit("players", {"players": self.deck.get_players()})
-
-    def send_command(self, command, controller=None, value=None):
-        """Sends a command to the connected device.
-
-        Args:
-            command (str): The command to send.
-            controller (Controller, optional): The controller that triggered the command.
-            value (optional): An optional value associated with the command.
-
-        Sends:
-            A command to the connected device.
-        """
-        if self.device is not None:
-            self.device.send_command(command, controller, value)
-    
-        app.logger.debug(f"command={command} controller={controller or 'None'} value={value or 'None'}")
 
 def handle_exit(signal, frame):
     print("Program interrupted, performing cleanup...")
@@ -244,7 +196,6 @@ if __name__ == '__main__':
         }
 
         config['smartport_arduino'] = {
-            'enabled': 'false',
             'serial_port': ''
         }
 
@@ -280,12 +231,7 @@ if __name__ == '__main__':
     if not config['webserver'].getboolean('flask_logs'):
         logging.getLogger('werkzeug').setLevel(logging.ERROR)
     
-    if config['smartport_arduino'].getboolean('enabled'):
-        device_name = "smartport_arduino"
-    else:
-        device_name = None
-    
-    command_deck = VirtualCommandDeck(device_name=device_name, serial_device=config['smartport_arduino']['serial_port'])
+    command_deck = VirtualCommandDeck()
 
     if config['webserver'].getboolean('upnp'):
         print("Trying to open port via UPnP")
