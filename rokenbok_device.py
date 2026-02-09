@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from rokenbok_webserver import VirtualCommandDeck
 
 class Controller:
     """
@@ -26,7 +25,7 @@ class Controller:
         self.player_id = None
         self.controller_id = controller_id
 
-    def get_input(self, input):
+    def handle_input(self, input):
         """Processes input from a gamepad.
 
         Args:
@@ -35,25 +34,23 @@ class Controller:
         Sends:
             A command to the `VirtualCommandDeck` to either press or release a button.
         """
-        button = input['button']
 
-        if button in ("SELECT_UP", "SELECT_DOWN"):
+        if input['button'] in ("SELECT_UP", "SELECT_DOWN"):
             if input['pressed']:
-                delta = 1 if button == "SELECT_UP" else -1
+                delta = 1 if input['button'] == "SELECT_UP" else -1
 
                 if self.selection is None:
                     self.selection = 1 if delta == 1 else self.deck.vehicle_count
-
                 elif ((self.selection + delta) < 1) or ((self.selection + delta) > self.deck.vehicle_count):
                     self.selection = None
-
                 else:
                     self.selection += delta
 
-                return [button, self.selection]
-        else:
-            state = "pressed" if input['pressed'] else "release"
-            return [button, state]
+        button_state = "pressed" if input['pressed'] else "release"
+        vehicle = self.deck.get_vehicle(self.selection) or None
+        controller_state = self.player_id, input['button'], button_state
+        if vehicle:
+            vehicle.control(controller_state)
 
 class Vehicle(ABC):
     """Exposes methods to control a vehicle
@@ -97,5 +94,5 @@ class SmartPortArduino(Vehicle):
     def __init__(self, device, id, name):
         super().__init__(device, id, name)
     
-    def control(self):
-        print(f"vehicle={self.id} action")
+    def control(self, action):
+        print(action, self.vehicle_type)

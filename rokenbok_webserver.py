@@ -45,7 +45,7 @@ def handle_controller(data):
     controller = command_deck.get_controller(request.sid)
     if controller:
         controller.player_name = data['player_name']
-        controller.get_input(data)
+        controller.handle_input(data)
         socketio.emit("players", {"players": command_deck.get_players()})
 
 class VirtualCommandDeck:
@@ -141,7 +141,7 @@ class VirtualCommandDeck:
                 return controller
         return None
 
-    def get_vehicle(self, vehicle_id):
+    def get_vehicle(self, vehicle_id=None):
         """
         Retrieves the vehicle and its device
 
