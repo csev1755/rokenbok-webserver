@@ -80,7 +80,7 @@ class VirtualCommandDeck:
                 for vehicle_id, vehicle_name in config[section].items():
                     self.vehicle_count += 1
                     self.vehicles[int(vehicle_id)] = RokenbokDevice.Vehicle.configure(
-                        vehicle_type=device_type,
+                        type=device_type,
                         device=section,
                         id=int(vehicle_id),
                         name=vehicle_name
@@ -168,7 +168,7 @@ class VirtualCommandDeck:
                 players.append({
                     "player_name": controller.player_name,
                     "selection": controller.selection,
-                    "selection_name": config['smartport_arduino.vehicles'][str(controller.selection)] if controller.selection else None
+                    "selection_name": self.get_vehicle(controller.selection).name if controller.selection else None
                 })
 
         return players

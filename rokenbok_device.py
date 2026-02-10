@@ -61,12 +61,12 @@ class Vehicle(ABC):
         name: The name of the vehicle
     """
 
+    type = None
     vehicle_types = {}
-    vehicle_type = None
 
     def __init_subclass__(cls):
         super().__init_subclass__()
-        Vehicle.vehicle_types[cls.vehicle_type] = cls
+        Vehicle.vehicle_types[cls.type] = cls
 
     def __init__(self, device, id, name):
         self.device = device
@@ -74,13 +74,13 @@ class Vehicle(ABC):
         self.name = name
 
     @classmethod
-    def configure(cls, vehicle_type, device, id, name):
+    def configure(cls, type, device, id, name):
         try:
-            vehicle_cls = cls.vehicle_types[vehicle_type]
+            vehicle_cls = cls.vehicle_types[type]
         except KeyError:
-            raise ValueError(f"Unknown vehicle type: {vehicle_type}")
+            raise ValueError(f"Unknown vehicle type: {type}")
 
-        print(f"Configured vehicle <{name}> with id <{id}> and device type <{vehicle_type}>")
+        print(f"Configured vehicle <{name}> with id <{id}> and device type <{type}>")
         return vehicle_cls(device, id, name)
 
     @abstractmethod
@@ -89,10 +89,10 @@ class Vehicle(ABC):
         pass
 
 class SmartPortArduino(Vehicle):
-    vehicle_type = "smartport_arduino"
+    type = "smartport_arduino"
 
     def __init__(self, device, id, name):
         super().__init__(device, id, name)
     
     def control(self, action):
-        print(action, self.vehicle_type)
+        print(action, self.type)
