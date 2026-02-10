@@ -1,3 +1,4 @@
+import serial
 from abc import ABC, abstractmethod
 
 class Controller:
@@ -56,9 +57,9 @@ class Vehicle(ABC):
     """Exposes methods to control a vehicle
 
     Attributes:
-        device: The control device dependency
         id: The numeric unique id for seleciton
         name: The name of the vehicle
+        type: The name of the control device
     """
 
     type = None
@@ -68,20 +69,20 @@ class Vehicle(ABC):
         super().__init_subclass__()
         Vehicle.vehicle_types[cls.type] = cls
 
-    def __init__(self, device, id, name):
-        self.device = device
+    def __init__(self, config, id, name):
         self.id = id
         self.name = name
+        self.config = config
 
     @classmethod
-    def configure(cls, type, device, id, name):
+    def configure(cls, type, config, id, name):
         try:
-            vehicle_cls = cls.vehicle_types[type]
+            device = cls.vehicle_types[type]
         except KeyError:
             raise ValueError(f"Unknown vehicle type: {type}")
 
-        print(f"Configured vehicle <{name}> with id <{id}> and device type <{type}>")
-        return vehicle_cls(device, id, name)
+        print(f"Configured <{type}> vehicle <{name}> with id <{id}>")
+        return device(config, id, name)
 
     @abstractmethod
     def control(self):
@@ -90,9 +91,13 @@ class Vehicle(ABC):
 
 class SmartPortArduino(Vehicle):
     type = "smartport_arduino"
+    serial = None
 
-    def __init__(self, device, id, name):
-        super().__init__(device, id, name)
+    def __init__(self, config, id, name):
+        super().__init__(config, id, name)
+        if SmartPortArduino.serial is None:
+            SmartPortArduino.serial = serial.Serial(config['serial_port'], 1000000)
+            print(f"Connected to serial at {config['serial_port']}")
     
-    def control(self, action):
-        print(action, self.type)
+    def control(self, controller_state):
+        print(controller_state)

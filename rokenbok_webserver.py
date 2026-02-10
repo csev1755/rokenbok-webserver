@@ -75,13 +75,15 @@ class VirtualCommandDeck:
 
         for section in config.sections():
             if section.endswith(".vehicles"):
-                device_type = section.replace(".vehicles", "")
+                device_vehicles = config[section].items()
+                device_name = section.replace(".vehicles", "")
+                device_config = config[device_name]
                 
-                for vehicle_id, vehicle_name in config[section].items():
+                for vehicle_id, vehicle_name in device_vehicles:
                     self.vehicle_count += 1
                     self.vehicles[int(vehicle_id)] = RokenbokDevice.Vehicle.configure(
-                        type=device_type,
-                        device=section,
+                        type=device_name,
+                        config=device_config,
                         id=int(vehicle_id),
                         name=vehicle_name
                     )
