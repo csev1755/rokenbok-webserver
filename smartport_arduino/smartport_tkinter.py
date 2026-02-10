@@ -118,41 +118,66 @@ class RokenbokGUI:
         self.held_keys.discard(event.char.lower())
         self.held_keys.discard(event.keysym)
 
+    def process_player_input(self, idx):
+        if not self.enabled_vars[idx].get():
+            return 0, 0
+
+        if idx != self.active_idx:
+            return 0, 0
+
+        up    = 'w' in self.held_keys
+        down  = 's' in self.held_keys
+        right = 'd' in self.held_keys
+        left  = 'a' in self.held_keys
+
+        b_a = 'f' in self.held_keys
+        b_b = 'r' in self.held_keys
+        b_x = 'q' in self.held_keys
+        b_y = 'e' in self.held_keys
+
+        b_rt = int('Shift_L' in self.held_keys or 'Shift_R' in self.held_keys)
+
+        byte1 = (up << 3) | (down << 2) | (right << 1) | left
+        byte2 = (b_a << 4) | (b_b << 3) | (b_x << 2) | (b_y << 1) | b_rt
+
+        return byte1, byte2
+
+    def send_and_receive_packet(self, packet):
+        if not self.ser:
+            return
+
+        self.ser.write(packet)
+        self.last_sent_hex = packet.hex(' ').upper()
+
+        if self.ser.in_waiting >= 27:
+            raw = self.ser.read(self.ser.in_waiting)
+            start = raw.rfind(254)
+
+            if start != -1 and len(raw) >= start + 27 and raw[start + 26] == 255:
+                frame = raw[start:start + 27]
+                self.mcu_sp_status = frame[1]
+                self.mcu_user_ids = list(frame[2:14])
+                self.mcu_selects = list(frame[14:26])
+                self.last_rcvd_hex = frame.hex(' ').upper()
+
     def update_loop(self):
-        if self.ser:
-            # 1. Prepare and Send Packet
-            packet = bytearray([254])
-            current_ui_bits = []
-            
-            for i in range(16):
-                p_id, v_sel = self.players[i]
-                byte1 = byte2 = 0
-                if self.enabled_vars[i].get():
-                    if i == self.active_idx:
-                        up, down, right, left = ('w' in self.held_keys, 's' in self.held_keys, 'd' in self.held_keys, 'a' in self.held_keys)
-                        b_a, b_b, b_x, b_y = ('f' in self.held_keys, 'r' in self.held_keys, 'q' in self.held_keys, 'e' in self.held_keys)
-                        b_rt = 1 if ('Shift_L' in self.held_keys or 'Shift_R' in self.held_keys) else 0
-                        byte1 = (up << 3) | (down << 2) | (right << 1) | left
-                        byte2 = (b_a << 4) | (b_b << 3) | (b_x << 2) | (b_y << 1) | b_rt
-                    packet.extend([p_id, v_sel, byte1, byte2])
-                current_ui_bits.append((byte1, byte2))
-            
-            packet.append(255)
-            self.ser.write(packet)
-            self.last_sent_hex = packet.hex(' ').upper()
+        packet = bytearray([254])
+        current_ui_bits = []
 
-            # 2. Read Feedback (27 bytes: 254 + Status + 12 IDs + 12 Sels + 255)
-            if self.ser.in_waiting >= 27:
-                raw = self.ser.read(self.ser.in_waiting)
-                start = raw.rfind(254)
-                if start != -1 and len(raw) >= start + 27 and raw[start+26] == 255:
-                    frame = raw[start:start+27]
-                    self.mcu_sp_status = frame[1]
-                    self.mcu_user_ids = list(frame[2:14])
-                    self.mcu_selects = list(frame[14:26])
-                    self.last_rcvd_hex = frame.hex(' ').upper()
+        for i in range(16):
+            p_id, v_sel = self.players[i]
+            byte1, byte2 = self.process_player_input(i)
 
-        # 3. Update UI
+            if self.enabled_vars[i].get():
+                packet.extend([p_id, v_sel, byte1, byte2])
+
+            current_ui_bits.append((byte1, byte2))
+
+        packet.append(255)
+        self.send_and_receive_packet(packet)
+
+        # --- UI UPDATE  ---
+
         self.sync_label.config(
             text="SMART PORT ONLINE" if self.mcu_sp_status else "SMART PORT OFFLINE",
             fg="green" if self.mcu_sp_status else "red"
