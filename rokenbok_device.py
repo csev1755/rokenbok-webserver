@@ -25,6 +25,7 @@ class Controller:
         self.player_name = None
         self.player_id = None
         self.controller_id = controller_id
+        self.buttons = set()
 
     def handle_input(self, input):
         """Processes input from a gamepad.
@@ -35,9 +36,8 @@ class Controller:
         Sends:
             A command to the `VirtualCommandDeck` to either press or release a button.
         """
-
-        if input['button'] in ("SELECT_UP", "SELECT_DOWN"):
-            if input['pressed']:
+        if input['pressed']:
+            if input['button'] in ("SELECT_UP", "SELECT_DOWN"):
                 delta = 1 if input['button'] == "SELECT_UP" else -1
 
                 if self.selection is None:
@@ -46,12 +46,15 @@ class Controller:
                     self.selection = None
                 else:
                     self.selection += delta
+            else:
+                self.buttons.add(input['button'])
+        else:
+            self.buttons.discard(input['button'])
 
-        button_state = "pressed" if input['pressed'] else "release"
         vehicle = self.deck.get_vehicle(self.selection) or None
-        controller_state = self.player_id, input['button'], button_state
+
         if vehicle:
-            vehicle.control(controller_state)
+            vehicle.control(self)
 
 class Vehicle(ABC):
     """Exposes methods to control a vehicle
@@ -99,5 +102,24 @@ class SmartPortArduino(Vehicle):
             SmartPortArduino.serial = serial.Serial(config['serial_port'], 1000000)
             print(f"Connected to serial at {config['serial_port']}")
     
-    def control(self, controller_state):
-        print(controller_state)
+    def control(self, controller):   
+        for button in controller.buttons:
+            print(button)
+
+    def encode_controller_state(self, buttons):
+        up    = 'DPAD_UP' in buttons
+        down  = 'DPAD_DOWN' in buttons
+        right = 'DPAD_RIGHT' in buttons
+        left  = 'DPAD_LEFT' in buttons
+
+        b_a = 'A_BUTTON' in buttons
+        b_b = 'B_BUTTON' in buttons
+        b_x = 'X_BUTTON' in buttons
+        b_y = 'Y_BUTTON' in buttons
+
+        b_rt = int('LEFT_TRIGGER' in buttons or 'RIGHT_TRIGGER' in buttons)
+
+        byte1 = (up << 3) | (down << 2) | (right << 1) | left
+        byte2 = (b_a << 4) | (b_b << 3) | (b_x << 2) | (b_y << 1) | b_rt
+
+        return byte1, byte2
