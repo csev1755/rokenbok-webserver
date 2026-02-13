@@ -6,7 +6,7 @@ class Controller:
     A single logical controller assigned to a client.
 
     Attributes:
-        deck (VirtualCommandDeck): Parent command deck instance.
+        command_deck (VirtualCommandDeck): Parent command deck instance.
         controller_id (int): Controller identifier.
         selection (int): Current vehicle selection.
         player_id (str): Socket.IO session identifier.
@@ -20,7 +20,7 @@ class Controller:
             command_deck (VirtualCommandDeck): Parent command deck.
             controller_id (int): Controller identifier.
         """
-        self.deck = command_deck
+        self.command_deck = command_deck
         self.selection = None
         self.player_name = None
         self.player_id = None
@@ -41,8 +41,8 @@ class Controller:
                 delta = 1 if input['button'] == "SELECT_UP" else -1
 
                 if self.selection is None:
-                    self.selection = 1 if delta == 1 else self.deck.vehicle_count
-                elif ((self.selection + delta) < 1) or ((self.selection + delta) > self.deck.vehicle_count):
+                    self.selection = 1 if delta == 1 else self.command_deck.vehicle_count
+                elif ((self.selection + delta) < 1) or ((self.selection + delta) > self.command_deck.vehicle_count):
                     self.selection = None
                 else:
                     self.selection += delta
@@ -51,10 +51,10 @@ class Controller:
         else:
             self.buttons.discard(input['button'])
 
-        vehicle = self.deck.get_vehicle(self.selection) or None
+        vehicle = self.command_deck.get_vehicle(self.selection) or None
 
         if vehicle:
-            vehicle.control(self)
+            vehicle.control(self, self.command_deck)
 
 class Vehicle(ABC):
     """Exposes methods to control a vehicle
@@ -72,7 +72,8 @@ class Vehicle(ABC):
         super().__init_subclass__()
         Vehicle.vehicle_types[cls.type] = cls
 
-    def __init__(self, config, id, name):
+    def __init__(self, command_deck, config, id, name):
+        self.command_deck = command_deck
         self.id = id
         self.name = name
         self.config = config
@@ -88,7 +89,7 @@ class Vehicle(ABC):
         return device(config, id, name)
 
     @abstractmethod
-    def control(self):
+    def control(self, controller, command_deck):
         """Vehicle controls"""
         pass
 
@@ -97,29 +98,50 @@ class SmartPortArduino(Vehicle):
     serial = None
 
     def __init__(self, config, id, name):
-        super().__init__(config, id, name)
+        super().__init__(self, config, id, name)
         if SmartPortArduino.serial is None:
             SmartPortArduino.serial = serial.Serial(config['serial_port'], 1000000)
             print(f"Connected to serial at {config['serial_port']}")
     
-    def control(self, controller):   
-        for button in controller.buttons:
-            print(button)
+    @classmethod
+    def encode_controller_state(self, controller):
+        up    = 'DPAD_UP' in controller.buttons
+        down  = 'DPAD_DOWN' in controller.buttons
+        right = 'DPAD_RIGHT' in controller.buttons
+        left  = 'DPAD_LEFT' in controller.buttons
 
-    def encode_controller_state(self, buttons):
-        up    = 'DPAD_UP' in buttons
-        down  = 'DPAD_DOWN' in buttons
-        right = 'DPAD_RIGHT' in buttons
-        left  = 'DPAD_LEFT' in buttons
+        b_a = 'A_BUTTON' in controller.buttons
+        b_b = 'B_BUTTON' in controller.buttons
+        b_x = 'X_BUTTON' in controller.buttons
+        b_y = 'Y_BUTTON' in controller.buttons
 
-        b_a = 'A_BUTTON' in buttons
-        b_b = 'B_BUTTON' in buttons
-        b_x = 'X_BUTTON' in buttons
-        b_y = 'Y_BUTTON' in buttons
-
-        b_rt = int('LEFT_TRIGGER' in buttons or 'RIGHT_TRIGGER' in buttons)
+        b_rt = int('LEFT_TRIGGER' in controller.buttons or 'RIGHT_TRIGGER' in controller.buttons)
 
         byte1 = (up << 3) | (down << 2) | (right << 1) | left
         byte2 = (b_a << 4) | (b_b << 3) | (b_x << 2) | (b_y << 1) | b_rt
 
         return byte1, byte2
+
+    def control(self, controller, command_deck):
+        packet = bytearray([254])
+        for controller in command_deck.controllers.values():
+            p_id = controller.controller_id + 10 or 0
+            v_sel = 15 if controller.selection is None else controller.selection - 1
+            byte1, byte2 = self.encode_controller_state(controller)
+            packet.extend([p_id, v_sel, byte1, byte2])
+        packet.append(255)
+        self.send_and_receive_packet(packet)
+        print(packet)
+
+    def send_and_receive_packet(self, packet):
+        SmartPortArduino.serial.write(packet)
+        if SmartPortArduino.serial.in_waiting >= 27:
+            raw = SmartPortArduino.serial.read(SmartPortArduino.serial.in_waiting)
+            start = raw.rfind(254)
+
+            if start != -1 and len(raw) >= start + 27 and raw[start + 26] == 255:
+                frame = raw[start:start + 27]
+                print(frame[1])
+                print(list(frame[2:14]))
+                print(list(frame[14:26]))
+                print(frame.hex(' ').upper())
