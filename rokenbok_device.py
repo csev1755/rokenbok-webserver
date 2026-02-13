@@ -14,7 +14,7 @@ class Controller:
         buttons (set): Set of currently pressed button identifiers.
     """
 
-    def __init__(self, command_deck, controller_id):
+    def __init__(self, command_deck, controller_id, logger=None):
         """
         Initializes a controller instance.
 
@@ -28,6 +28,7 @@ class Controller:
         self.player_id = None
         self.controller_id = controller_id
         self.buttons = set()
+        self.logger = logger
 
     def handle_input(self, input):
         """
@@ -40,6 +41,7 @@ class Controller:
         """
         if input['pressed']:
             if input['button'] in ("SELECT_UP", "SELECT_DOWN"):
+                self.logger.debug(f"Session {self.player_id} - Event {input['button']}")
                 delta = 1 if input['button'] == "SELECT_UP" else -1
 
                 if self.selection is None:
@@ -50,6 +52,7 @@ class Controller:
                     self.selection += delta
             else:
                 self.buttons.add(input['button'])
+                self.logger.debug(f"Session {self.player_id} - Event {self.buttons}")
         else:
             self.buttons.discard(input['button'])
 
@@ -81,7 +84,7 @@ class Vehicle(ABC):
         super().__init_subclass__()
         Vehicle.vehicle_types[cls.type] = cls
 
-    def __init__(self, command_deck, config, id, name):
+    def __init__(self, command_deck, config, id, name, logger=None):
         """
         Initializes a vehicle instance.
 
@@ -95,9 +98,10 @@ class Vehicle(ABC):
         self.id = id
         self.name = name
         self.config = config
+        self.logger = logger
 
     @classmethod
-    def configure(cls, type, config, id, name):
+    def configure(cls, type, config, id, name, logger=None):
         """
         Factory method to create a vehicle instance of the specified type.
 
@@ -118,8 +122,8 @@ class Vehicle(ABC):
         except KeyError:
             raise ValueError(f"Unknown vehicle type: {type}")
 
-        print(f"Configured <{type}> vehicle <{name}> with id <{id}>")
-        return device(config, id, name)
+        logger.info(f"Configured <{type}> vehicle <{name}> with id <{id}>")
+        return device(config, id, name, logger)
 
     @abstractmethod
     def control(self, controller, command_deck):
@@ -139,11 +143,11 @@ class SmartPortArduino(Vehicle):
     type = "smartport_arduino"
     serial = None
 
-    def __init__(self, config, id, name):
-        super().__init__(self, config, id, name)
+    def __init__(self, config, id, name, logger=None):
+        super().__init__(self, config, id, name, logger)
         if SmartPortArduino.serial is None:
             SmartPortArduino.serial = serial.Serial(config['serial_port'], 1000000)
-            print(f"Connected to serial at {config['serial_port']}")
+        self.logger.info(f"Connected to serial at {config['serial_port']}")
     
     @classmethod
     def encode_controller_state(self, controller):
@@ -204,5 +208,5 @@ class SmartPortArduino(Vehicle):
 
             if start != -1 and len(raw) >= start + 27 and raw[start + 26] == 255:
                 frame = raw[start:start + 27]
-                print(f"\nSmartPort Controllers: {[x == 1 for x in frame[2:14]]}")
-                print(f"SmartPort Selections: {[None if x == 15 else x + 1 for x in frame[14:26]]}")
+                self.logger.debug(f"SmartPortArduino Controllers - {[x == 1 for x in frame[2:14]]}")
+                self.logger.debug(f"SmartPortArduino Selections - {[None if x == 15 else x + 1 for x in frame[14:26]]}")

@@ -15,7 +15,6 @@ else:
 
 web_dir = "web"
 
-log = logging.getLogger()
 app = Flask(__name__, static_folder=web_dir, template_folder=web_dir)
 config = configparser.ConfigParser()
 config.optionxform = str
@@ -86,12 +85,13 @@ class VirtualCommandDeck:
         vehicle_count (int): Number of selectable vehicles.
     """
 
-    def __init__(self):
+    def __init__(self, logger):
         """
         Initializes the virtual command deck and controllers.
 
         Reads vehicle/device configurations from the config file and creates vehicle instances.
         """
+        self.logger = logger
 
         self.controllers: dict[int, RokenbokDevice.Controller] = {}
         self.controller_count = 12
@@ -111,11 +111,12 @@ class VirtualCommandDeck:
                         type=device_name,
                         config=device_config,
                         id=int(vehicle_id),
-                        name=vehicle_name
+                        name=vehicle_name,
+                        logger=self.logger
                     )
 
         for controller_id in range(1, self.controller_count + 1):
-            self.controllers[controller_id] = RokenbokDevice.Controller(self, controller_id)
+            self.controllers[controller_id] = RokenbokDevice.Controller(self, controller_id, self.logger)
 
     def assign_controller(self, player_id):
         """
@@ -131,9 +132,9 @@ class VirtualCommandDeck:
             if controller.player_id is None:
                 controller.player_id = player_id
                 controller.selection = None
-                app.logger.info(f"Assigned controller {controller.controller_id} to player {player_id}")
+                self.logger.info(f"Assigned controller {controller.controller_id} to player {player_id}")
                 return controller
-        app.logger.warning(f"No controller available for player {player_id}")
+        self.logger.warning(f"No controller available for player {player_id}")
         return None
 
     def release_controller(self, player_id):
@@ -150,7 +151,7 @@ class VirtualCommandDeck:
             if controller.player_id == player_id:
                 controller.player_id = None
                 controller.player_name = None
-                app.logger.info(f"Released controller {controller.controller_id} from player {player_id}")
+                self.logger.info(f"Released controller {controller.controller_id} from player {player_id}")
                 return controller
         return None
 
@@ -258,14 +259,20 @@ if __name__ == '__main__':
     
     config.read(config_file)
 
-    log.setLevel(config['webserver']['log_level'])
+    logging.basicConfig(
+        level=config['webserver']['log_level'],
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    
+    logger = logging.getLogger('rokenbok_webserver')
+    
     if not config['webserver'].getboolean('flask_logs'):
         logging.getLogger('werkzeug').setLevel(logging.ERROR)
     
-    command_deck = VirtualCommandDeck()
+    command_deck = VirtualCommandDeck(logger=logger)
 
     if config['webserver'].getboolean('upnp'):
-        print("Trying to open port via UPnP")
+        logger.info("Trying to open port via UPnP")
         upnp_mapper = UPnPPortMapper(config['webserver']['listen_port'], config['webserver']['listen_port'], config['webserver']['listen_ip'], "SmartPort Web Server")
 
     socketio.run(app, host=config['webserver']['listen_ip'], port=config['webserver']['listen_port'])
