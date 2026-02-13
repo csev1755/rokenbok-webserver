@@ -189,7 +189,6 @@ class SmartPortArduino(Vehicle):
             packet.extend([p_id, v_sel, byte1, byte2])
         packet.append(255)
         self.send_and_receive_packet(packet)
-        print(packet)
 
     def send_and_receive_packet(self, packet):
         """
@@ -205,7 +204,5 @@ class SmartPortArduino(Vehicle):
 
             if start != -1 and len(raw) >= start + 27 and raw[start + 26] == 255:
                 frame = raw[start:start + 27]
-                print(frame[1])
-                print(list(frame[2:14]))
-                print(list(frame[14:26]))
-                print(frame.hex(' ').upper())
+                print(f"\nSmartPort Controllers: {[x == 1 for x in frame[2:14]]}")
+                print(f"SmartPort Selections: {[None if x == 15 else x + 1 for x in frame[14:26]]}")
