@@ -24,24 +24,50 @@ socketio = SocketIO(app)
 
 @app.route('/')
 def index():
+    """
+    Returns:
+        str: Rendered HTML template with video configuration.
+    """
     return render_template('player.html', enable_video=config['webserver'].getboolean('enable_video'), video_streams=config['video_streams'])
 
 @app.route('/player.js')
 def script():
+    """
+    Returns:
+        Response: The player.js file from the web directory.
+    """
     return send_from_directory('web', 'player.js')
 
 @socketio.on("connect")
 def handle_connect():
+    """
+    Assigns a controller to the connecting player and broadcasts
+    the updated player list to all clients.
+    """
     command_deck.assign_controller(request.sid)
     socketio.emit("players", {"players": command_deck.get_players()})
 
 @socketio.on("disconnect")
 def handle_disconnect():
+    """
+    Releases the controller from the disconnecting player and broadcasts
+    the updated player list to all clients.
+    """
     command_deck.release_controller(request.sid)
     socketio.emit("players", {"players": command_deck.get_players()})
 
 @socketio.on("controller")
 def handle_controller(data):
+    """
+    Updates the player name and processes controller input, then broadcasts
+    the updated player list to all clients.
+
+    Args:
+        data (dict): Controller data containing:
+            - 'player_name' (str): Display name of the player
+            - 'button' (str): Button identifier
+            - 'pressed' (bool): Button state
+    """
     controller = command_deck.get_controller(request.sid)
     if controller:
         controller.player_name = data['player_name']
@@ -49,22 +75,22 @@ def handle_controller(data):
         socketio.emit("players", {"players": command_deck.get_players()})
 
 class VirtualCommandDeck:
-    """Represents a Command Deck and provides methods to communicate with it.
+    """
+    Manages controllers and vehicles and handles player assignments and
+    vehicle control routing.
 
     Attributes:
-        device: The underlying hardware device interface, if configured.
-        controllers (dict): Mapping of controller identifiers to Controller instances.
-        controller_count (int): Number of usable controllers.
+        controllers (dict[int, RokenbokDevice.Controller]): Mapping of controller IDs to Controller instances.
+        controller_count (int): Number of usable controllers (default: 12).
+        vehicles (dict[int, RokenbokDevice.Vehicle]): Mapping of vehicle IDs to Vehicle instances.
         vehicle_count (int): Number of selectable vehicles.
     """
 
     def __init__(self):
         """
-        Initializes the virtual command deck, controllers, and controllable devices
+        Initializes the virtual command deck and controllers.
 
-        Keyword Args:
-            device_name (str): Identifier for the control device type.
-            serial_device (str): Serial port path for the control device.
+        Reads vehicle/device configurations from the config file and creates vehicle instances.
         """
 
         self.controllers: dict[int, RokenbokDevice.Controller] = {}
@@ -99,7 +125,7 @@ class VirtualCommandDeck:
             player_id (str): Socket.IO session identifier.
 
         Returns:
-            Controller or None: The assigned controller, or None if none are available.
+            RokenbokDevice.Controller or None: The assigned controller.
         """
         for controller in self.controllers.values():
             if controller.player_id is None:
@@ -118,7 +144,7 @@ class VirtualCommandDeck:
             player_id (str): Socket.IO session identifier.
 
         Returns:
-            Controller or None: The released controller, or None if not found.
+            RokenbokDevice.Controller or None: The released controller.
         """
         for controller in self.controllers.values():
             if controller.player_id == player_id:
@@ -136,7 +162,7 @@ class VirtualCommandDeck:
             player_id (str): Socket.IO session identifier.
 
         Returns:
-            Controller or None: The matching controller, or None if not found.
+            RokenbokDevice.Controller or None: The matching controller.
         """
         for controller in self.controllers.values():
             if controller.player_id == player_id:
@@ -145,13 +171,13 @@ class VirtualCommandDeck:
 
     def get_vehicle(self, vehicle_id=None):
         """
-        Retrieves the vehicle and its device
+        Retrieves a vehicle by its ID.
 
         Args:
-            vehicle_id (str): Socket.IO session identifier.
+            vehicle_id (int or None): The vehicle identifier.
 
         Returns:
-            Controller or None: The matching controller, or None if not found.
+            RokenbokDevice.Vehicle or None: The matching vehicle.
         """
         for vehicle in self.vehicles.values():
             if vehicle.id == vehicle_id:
@@ -161,7 +187,10 @@ class VirtualCommandDeck:
     def get_players(self):
         """
         Returns:
-            list[dict]: A list of player metadata dictionaries.
+            list[dict]: A list of player metadata dictionaries:
+                - 'player_name' (str or None): Player display name
+                - 'selection' (int or None): Currently selected vehicle ID
+                - 'selection_name' (str or None): Name of the selected vehicle
         """
         players = []
 

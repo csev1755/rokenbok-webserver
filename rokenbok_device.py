@@ -8,8 +8,10 @@ class Controller:
     Attributes:
         command_deck (VirtualCommandDeck): Parent command deck instance.
         controller_id (int): Controller identifier.
-        selection (int): Current vehicle selection.
-        player_id (str): Socket.IO session identifier.
+        selection (int or None): Current vehicle selection (1-indexed), or None if no vehicle selected.
+        player_name (str or None): Display name of the player using this controller.
+        player_id (str or None): Socket.IO session identifier for the connected player.
+        buttons (set): Set of currently pressed button identifiers.
     """
 
     def __init__(self, command_deck, controller_id):
@@ -28,13 +30,13 @@ class Controller:
         self.buttons = set()
 
     def handle_input(self, input):
-        """Processes input from a gamepad.
+        """
+        Processes input from a gamepad and updates controller state.
 
         Args:
-            input (dict): A dictionary containing a button (int) and its state (string).
-
-        Sends:
-            A command to the `VirtualCommandDeck` to either press or release a button.
+            input (dict): A dictionary containing:
+                - 'button' (str): Button identifier
+                - 'pressed' (bool): True if button is pressed, False if released
         """
         if input['pressed']:
             if input['button'] in ("SELECT_UP", "SELECT_DOWN"):
@@ -57,22 +59,38 @@ class Controller:
             vehicle.control(self, self.command_deck)
 
 class Vehicle(ABC):
-    """Exposes methods to control a vehicle
+    """
+    Abstract base class for controllable vehicles.
 
     Attributes:
-        id: The numeric unique id for seleciton
-        name: The name of the vehicle
-        type: The name of the control device
+        id (int): The numeric identifier for selection.
+        name (str): The display name of the vehicle.
+        type (str or None): The unique name of the control device type.
+        command_deck (VirtualCommandDeck): Reference to the parent command deck class.
+        config (dict): Configuration for the vehicle's device type.
+        vehicle_types (dict): Mapping of type names to device-specific vehicle classes.
     """
 
     type = None
     vehicle_types = {}
 
     def __init_subclass__(cls):
+        """
+        Registers vehicle subclasses in the vehicle_types registry.
+        """
         super().__init_subclass__()
         Vehicle.vehicle_types[cls.type] = cls
 
     def __init__(self, command_deck, config, id, name):
+        """
+        Initializes a vehicle instance.
+
+        Args:
+            command_deck (VirtualCommandDeck): Parent command deck instance.
+            config (dict): Configuration parameters for this vehicle.
+            id (int): Unique numeric identifier for vehicle selection.
+            name (str): Display name of the vehicle.
+        """
         self.command_deck = command_deck
         self.id = id
         self.name = name
@@ -80,6 +98,21 @@ class Vehicle(ABC):
 
     @classmethod
     def configure(cls, type, config, id, name):
+        """
+        Factory method to create a vehicle instance of the specified type.
+
+        Args:
+            type (str): Vehicle type identifier.
+            config (dict): Configuration parameters for the vehicle's contrtol device.
+            id (int): Unique numeric identifier for vehicle selection.
+            name (str): Display name of the vehicle.
+
+        Returns:
+            Vehicle: Instance of the appropriate vehicle subclass.
+
+        Raises:
+            ValueError: If the specified vehicle type is not registered.
+        """
         try:
             device = cls.vehicle_types[type]
         except KeyError:
@@ -90,10 +123,19 @@ class Vehicle(ABC):
 
     @abstractmethod
     def control(self, controller, command_deck):
-        """Vehicle controls"""
+        """
+        Abstract method to control the vehicle based on controller input.
+
+        Args:
+            controller (Controller): The controller issuing commands.
+            command_deck (VirtualCommandDeck): The parent command deck instance.
+        """
         pass
 
 class SmartPortArduino(Vehicle):
+    """
+    Device type/vehicle class for the smartport_arduino sketch
+    """
     type = "smartport_arduino"
     serial = None
 
@@ -105,6 +147,18 @@ class SmartPortArduino(Vehicle):
     
     @classmethod
     def encode_controller_state(self, controller):
+        """
+        Encodes controller button states into two bytes for serial transmission.
+
+        Byte 1: D-pad directions (up, down, right, left)
+        Byte 2: Action buttons (A, B, X, Y) and triggers
+
+        Args:
+            controller (Controller): A controller object.
+
+        Returns:
+            tuple[int, int]: Two bytes representing the controller state.
+        """
         up    = 'DPAD_UP' in controller.buttons
         down  = 'DPAD_DOWN' in controller.buttons
         right = 'DPAD_RIGHT' in controller.buttons
@@ -123,6 +177,10 @@ class SmartPortArduino(Vehicle):
         return byte1, byte2
 
     def control(self, controller, command_deck):
+        """
+        Constructs and transmits a packet containing the state of all controllers
+        to the Arduino and receives data representing the command deck's state
+        """
         packet = bytearray([254])
         for controller in command_deck.controllers.values():
             p_id = controller.controller_id + 10 or 0
@@ -134,6 +192,12 @@ class SmartPortArduino(Vehicle):
         print(packet)
 
     def send_and_receive_packet(self, packet):
+        """
+        Sends a packet via serial and processes any incoming response.
+
+        Args:
+            packet (bytearray): The packet to transmit.
+        """
         SmartPortArduino.serial.write(packet)
         if SmartPortArduino.serial.in_waiting >= 27:
             raw = SmartPortArduino.serial.read(SmartPortArduino.serial.in_waiting)
