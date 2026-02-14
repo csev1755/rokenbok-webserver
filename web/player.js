@@ -20,18 +20,18 @@ function updateStream(stream) {
     videoStream.src = stream;
 }
 
-// Load or switch camera stream
-document.addEventListener("DOMContentLoaded", function() {
-    const selectedStream = document.getElementById("stream-selector").value;
-    updateStream(selectedStream);
-});
-
 // UI panel elements
+const selectedStream = document.getElementById("stream-selector");
 const inputElement = document.getElementById('input');
 const inputTemplate = document.getElementById('input-template');
 const playersElement = document.getElementById('players');
 const playerTemplate = document.getElementById('player-template');
 const mappingBody = document.getElementById('mapping-body');
+
+// Load settings and update stream
+document.addEventListener("DOMContentLoaded", function() {
+    updateStream(selectedStream.value);
+});
 
 // Tracks whether the panel is being dragged
 let isDragging = false;

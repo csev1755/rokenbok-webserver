@@ -83,7 +83,7 @@
           <strong>Camera:</strong>
         </label>
         <label>
-          <select id="stream-selector" onchange="updateStream(this.value)">
+          <select id="stream-selector">
             {% for name, url in video_streams.items() %}
               <option value="{{ url }}">{{ name }}</option>
             {% endfor %}
