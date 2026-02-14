@@ -7,30 +7,30 @@ function loop() {
 
 socket.on('connect', loop);
 
-// Video stream iframe element
-const videoStream = document.getElementById("stream-iframe");
-
-// ============================================================================
-// UI Panel
-// ============================================================================
 const panel = document.querySelector('.ui-panel');
+const videoStream = document.getElementById("stream-iframe");
+const streamSelector = document.getElementById("stream-selector");
+const inputElement = document.getElementById('input');
+const inputTemplate = document.getElementById('input-template');
+const playersElement = document.getElementById('players');
+const playerTemplate = document.getElementById('player-template');
+const mappingBody = document.getElementById('mapping-body');
+const playerNameInput = document.getElementById('player_name');
+const inputDeviceSelect = document.getElementById('input_device');
+
+playerNameInput.addEventListener('input', saveSettings);
+inputDeviceSelect.addEventListener('change', saveSettings);
+streamSelector.addEventListener('change', (e) => updateStream(e.target.value));
 
 // Update video stream source
 function updateStream(stream) {
     videoStream.src = stream;
 }
 
-// UI panel elements
-const selectedStream = document.getElementById("stream-selector");
-const inputElement = document.getElementById('input');
-const inputTemplate = document.getElementById('input-template');
-const playersElement = document.getElementById('players');
-const playerTemplate = document.getElementById('player-template');
-const mappingBody = document.getElementById('mapping-body');
-
 // Load settings and update stream
 document.addEventListener("DOMContentLoaded", function() {
-    updateStream(selectedStream.value);
+    loadSettings();
+    updateStream(streamSelector.value);
 });
 
 // Tracks whether the panel is being dragged
@@ -68,12 +68,12 @@ document.addEventListener('mouseup', () => {
 
 // Get player name from input field
 function getPlayerName() {
-    return document.getElementById('player_name').value;
+    return playerNameInput.value;
 }
 
 // Get device type from dropdown
 function getSelectedDevice() {
-    return document.getElementById('input_device').value;
+    return inputDeviceSelect.value;
 }
 
 // Default input maps
@@ -92,6 +92,46 @@ const CONTROLS = [
     { button: 'SELECT_DOWN', key_default: 'KeyQ', gamepad_default: 8 },
 ];
 
+// Save client settings
+function saveSettings() {
+    const settings = {
+        playerName: playerNameInput.value,
+        inputDevice: inputDeviceSelect.value,
+        mappings: {}
+    };
+    
+    CONTROLS.forEach(control => {
+        settings.mappings[control.button] = {
+            keyboard: document.getElementById(`map_kb_${control.button}`).value,
+            gamepad: document.getElementById(`map_gp_${control.button}`).value
+        };
+    });
+    
+    localStorage.setItem('playerSettings', JSON.stringify(settings));
+}
+
+// Load client settings
+function loadSettings() {
+    const saved = localStorage.getItem('playerSettings');
+    if (!saved) return;
+    const settings = JSON.parse(saved);
+
+    if (settings.playerName) {
+        playerNameInput.value = settings.playerName;
+    }
+    if (settings.inputDevice) {
+        inputDeviceSelect.value = settings.inputDevice;
+    }
+    if (settings.mappings) {
+        CONTROLS.forEach(control => {
+            if (settings.mappings[control.button]) {
+                document.getElementById(`map_kb_${control.button}`).value = settings.mappings[control.button].keyboard;
+                document.getElementById(`map_gp_${control.button}`).value = settings.mappings[control.button].gamepad;
+            }
+        });
+    }
+}
+
 // Control mapping table and fields
 CONTROLS.forEach(control => {
     const row = document.createElement('tr');
@@ -105,7 +145,12 @@ CONTROLS.forEach(control => {
         </td>
     `;
     mappingBody.appendChild(row);
+    row.querySelector('.map-key').addEventListener('change', saveSettings);
+    row.querySelector('.map-btn').addEventListener('change', saveSettings);
 });
+
+// Load saved settings after creating the table
+loadSettings();
 
 /**
  * Update UI with current input state
@@ -143,10 +188,6 @@ function renderPlayers(players) {
         playersElement.appendChild(fragment);
     });
 }
-
-// ============================================================================
-// Controller Input
-// ============================================================================
 
 // Get player data from server and render it
 socket.on('players', data => {
