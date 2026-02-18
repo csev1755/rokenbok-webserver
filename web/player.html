@@ -73,7 +73,7 @@
 <body>
 <div class="stream-container">
   {% if enable_video %}
-  <iframe class="stream" id="stream-iframe"></iframe>
+  <iframe id="stream-iframe" class="stream" src=""></iframe>
   {% endif %}
   <div class="overlay">
     <div class="ui-panel">
@@ -82,13 +82,9 @@
         <label>
           <strong>Camera:</strong>
         </label>
-        <label>
-          <select id="stream-selector">
-            {% for name, url in video_streams.items() %}
-              <option value="{{ url }}">{{ name }}</option>
-            {% endfor %}
-          </select>
-        </label>
+        <span id="stream-label" data-streams='{{ video_streams | tojson }}'>
+          {{ video_streams.keys()|list|first }}
+        </span>
       </div>
       {% endif %}
       <div>

@@ -27,7 +27,8 @@ def index():
     Returns:
         str: Rendered HTML template with video configuration.
     """
-    return render_template('player.html', enable_video=config['webserver'].getboolean('enable_video'), video_streams=config['video_streams'])
+    stream_config = dict(config['video_streams']) if config['webserver'].getboolean('enable_video') else None
+    return render_template('player.html', enable_video=(True if stream_config is not None else False), video_streams=stream_config)
 
 @app.route('/player.js')
 def script():

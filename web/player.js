@@ -20,17 +20,33 @@ const inputDeviceSelect = document.getElementById('input_device');
 
 playerNameInput.addEventListener('input', saveSettings);
 inputDeviceSelect.addEventListener('change', saveSettings);
-streamSelector.addEventListener('change', (e) => updateStream(e.target.value));
+
+// Get the streams if the HTML elements exist
+const streamLabel = document.getElementById('stream-label');
+const STREAMS = streamLabel
+    ? Object.entries(JSON.parse(streamLabel.dataset.streams))
+        .map(([name, url]) => ({ name, url }))
+    : [];
 
 // Update video stream source
-function updateStream(stream) {
-    videoStream.src = stream;
+function updateStream(url) {
+    const iframe = document.getElementById('stream-iframe');
+    if (iframe) iframe.src = url;
 }
 
-// Load settings and update stream
+let streamIndex = 0;
+
+// Cycle through streams
+function cycleStream(direction) {
+    if (!STREAMS.length) return;
+    streamIndex = (streamIndex + direction + STREAMS.length) % STREAMS.length;
+    streamLabel.textContent = STREAMS[streamIndex].name;
+    updateStream(STREAMS[streamIndex].url);
+}
+
 document.addEventListener("DOMContentLoaded", function() {
     loadSettings();
-    updateStream(streamSelector.value);
+    if (STREAMS.length) updateStream(STREAMS[0].url);
 });
 
 // Tracks whether the panel is being dragged
@@ -82,14 +98,16 @@ const CONTROLS = [
     { button: 'B_BUTTON', key_default: 'KeyG', gamepad_default: 1 },
     { button: 'X_BUTTON', key_default: 'KeyR', gamepad_default: 2 },
     { button: 'Y_BUTTON', key_default: 'KeyT', gamepad_default: 3 },
-    { button: 'LEFT_TRIGGER', key_default: 'Digit1', gamepad_default: 4 },
-    { button: 'RIGHT_TRIGGER', key_default: 'Digit3', gamepad_default: 5 },
+    { button: 'LEFT_TRIGGER', key_default: 'Digit1', gamepad_default: 6 },
+    { button: 'RIGHT_TRIGGER', key_default: 'Digit3', gamepad_default: 7 },
     { button: 'DPAD_UP', key_default: 'KeyW', gamepad_default: 12 },
     { button: 'DPAD_DOWN', key_default: 'KeyS', gamepad_default: 13 },
     { button: 'DPAD_LEFT', key_default: 'KeyA', gamepad_default: 14 },
     { button: 'DPAD_RIGHT', key_default: 'KeyD', gamepad_default: 15 },
     { button: 'SELECT_UP', key_default: 'KeyE', gamepad_default: 9 },
     { button: 'SELECT_DOWN', key_default: 'KeyQ', gamepad_default: 8 },
+    { button: 'CAM_NEXT', key_default: 'Period', gamepad_default: 5 },
+    { button: 'CAM_PREV', key_default: 'Comma', gamepad_default: 4 },
 ];
 
 // Save client settings
@@ -201,6 +219,8 @@ socket.on('players', data => {
  */
 function emitControllerEvent(button, pressed) {
     const player_name = getPlayerName();
+    if (button === 'CAM_NEXT' && pressed) { cycleStream(1); }
+    else if (button === 'CAM_PREV' && pressed) { cycleStream(-1); }
     socket.emit('controller', { button, pressed, player_name });
 }
 
@@ -225,11 +245,14 @@ function pollGamepad() {
             Number(document.getElementById(`map_gp_${c.button}`).value) === index
         );
 
-        // Send event if button state changed and the button is mapped
-        if (pressed !== lastGamepadButtons[index] && control) {
+        // Render input when button is pressed
+        if (pressed !== lastGamepadButtons[index]) {
             renderInput(index, pressed);
-            emitControllerEvent(control.button, pressed);
-        }
+            // Send event if button is mapped
+            if (control) {
+                emitControllerEvent(control.button, pressed);
+            }
+        }            
     });
 
     // Store state for next comparison
@@ -243,9 +266,9 @@ const keyboardState = {};
 window.addEventListener('keydown', e => {
     // Make sure key isn't already held
     if (getSelectedDevice() !== 'keyboard' || keyboardState[e.code]) return;
-    
+
     // Map key
-    const control = CONTROLS.find(c => 
+    const control = CONTROLS.find(c =>
         document.getElementById(`map_kb_${c.button}`).value === e.code
     );
 
