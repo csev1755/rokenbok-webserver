@@ -208,5 +208,7 @@ class SmartPortArduino(Vehicle):
 
             if start != -1 and len(raw) >= start + 27 and raw[start + 26] == 255:
                 frame = raw[start:start + 27]
+                if frame[1] is not True:
+                    self.logger.error(f"SmartPortArduino Status - SmartPort Communication Down")
                 self.logger.debug(f"SmartPortArduino Controllers - {[x == 1 for x in frame[2:14]]}")
                 self.logger.debug(f"SmartPortArduino Selections - {[None if x == 15 else x + 1 for x in frame[14:26]]}")
