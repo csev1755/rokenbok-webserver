@@ -41,7 +41,6 @@ class Controller:
         """
         if input['pressed']:
             if input['button'] in ("SELECT_UP", "SELECT_DOWN"):
-                self.logger.debug(f"Session {self.player_id} - Event {input['button']}")
                 delta = 1 if input['button'] == "SELECT_UP" else -1
 
                 if self.selection is None:
@@ -50,14 +49,13 @@ class Controller:
                     self.selection = None
                 else:
                     self.selection += delta
-            else:
-                self.buttons.add(input['button'])
-                self.logger.debug(f"Session {self.player_id} - Event {self.buttons}")
+            self.buttons.add(input['button'])
         else:
             self.buttons.discard(input['button'])
+        
+        self.logger.debug(f"Session {self.player_id} - {self.buttons if len(self.buttons) > 0 else {''}} - {self.selection}")
 
         vehicle = self.command_deck.get_vehicle(self.selection) or None
-
         if vehicle:
             vehicle.control(self, self.command_deck)
 
@@ -145,10 +143,15 @@ class SmartPortArduino(Vehicle):
 
     def __init__(self, config, id, name, logger=None):
         super().__init__(self, config, id, name, logger)
-        if SmartPortArduino.serial is None:
-            SmartPortArduino.serial = serial.Serial(config['serial_port'], 1000000)
-        self.logger.info(f"Connected to serial at {config['serial_port']}")
-    
+        self.connect_serial()
+
+    def connect_serial(self):
+        try:
+            SmartPortArduino.serial = serial.Serial(self.config['serial_port'], 1000000)
+            self.logger.info(f"Connected to serial at {self.config['serial_port']}")
+        except:
+            self.logger.error(f"Could not connect to SmartPort Arduino at \"{self.config['serial_port']}\"")
+
     @classmethod
     def encode_controller_state(self, controller):
         """
@@ -201,14 +204,20 @@ class SmartPortArduino(Vehicle):
         Args:
             packet (bytearray): The packet to transmit.
         """
-        SmartPortArduino.serial.write(packet)
-        if SmartPortArduino.serial.in_waiting >= 27:
-            raw = SmartPortArduino.serial.read(SmartPortArduino.serial.in_waiting)
-            start = raw.rfind(254)
+        try:
+            SmartPortArduino.serial.write(packet)
 
-            if start != -1 and len(raw) >= start + 27 and raw[start + 26] == 255:
-                frame = raw[start:start + 27]
-                if not frame[1]:
-                    self.logger.error(f"SmartPortArduino Status - SmartPort Communication Down")
-                self.logger.debug(f"SmartPortArduino Controllers - {[x == 1 for x in frame[2:14]]}")
-                self.logger.debug(f"SmartPortArduino Selections - {[None if x == 15 else x + 1 for x in frame[14:26]]}")
+            if SmartPortArduino.serial.in_waiting >= 27:
+                raw = SmartPortArduino.serial.read(SmartPortArduino.serial.in_waiting)
+                start = raw.rfind(254)
+
+                if start != -1 and len(raw) >= start + 27 and raw[start + 26] == 255:
+                    frame = raw[start:start + 27]
+                    if not frame[1]:
+                        self.logger.error(f"SmartPortArduino Status - SmartPort Communication Down")
+                    self.logger.debug(f"SmartPortArduino Controllers - {[x == 1 for x in frame[2:14]]}")
+                    self.logger.debug(f"SmartPortArduino Selections - {[None if x == 15 else x + 1 for x in frame[14:26]]}")
+         
+        except:
+            self.logger.error(f"SmartPortArduino Status - Serial Communication Down")
+            self.connect_serial() # try to connect to serial for next time
