@@ -217,47 +217,8 @@ signal.signal(signal.SIGINT, handle_exit)
 if __name__ == '__main__':
 
     if not os.path.exists(config_file):
-        print(f"Creating new config file: {config_file}")
-
-        config['webserver'] = {
-            'listen_ip': '0.0.0.0',
-            'listen_port': '5000',
-            'upnp': 'false',
-            'log_level': 'WARNING',
-            'flask_logs': 'false',
-            'enable_video': 'false'
-        }
-
-        config['smartport_arduino'] = {
-            'serial_port': ''
-        }
-
-        config['smartport_arduino.vehicles'] = {
-            '1': '',
-            '2': '',
-            '3': '',
-            '4': '',
-            '5': '',
-            '6': '',
-            '7': '',
-            '8': '',
-            '9': '',
-            '10': '',
-            '11': '',
-            '12': '',
-            '13': '',
-            '14': '',
-            '15': ''
-        }
-
-        config['video_streams'] = {
-            'Camera 1': '',
-            'Camera 2': ''
-        }
-
-        with open(f'{app_dir}/rokenbok_webserver.ini', 'w') as configfile:
-            config.write(configfile)
-    
+        input(f"Config file '{config_file}' not found, press Enter to quit ")
+        sys.exit(0)
     config.read(config_file)
 
     logging.basicConfig(
