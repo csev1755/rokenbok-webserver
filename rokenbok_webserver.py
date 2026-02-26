@@ -6,7 +6,6 @@ import sys
 import rokenbok_device as RokenbokDevice
 from flask import Flask, request, send_from_directory, render_template
 from flask_socketio import SocketIO
-from upnp import UPnPPortMapper
 
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     app_dir = os.path.abspath(os.path.dirname(sys.executable))
@@ -207,9 +206,7 @@ class VirtualCommandDeck:
         return players
 
 def handle_exit(signal, frame):
-    print("Program interrupted, performing cleanup...")
-    if config['webserver'].getboolean('upnp'):
-        upnp_mapper.remove_port_mapping()
+    print("Program interrupted, exiting...")
     sys.exit(0)
 
 signal.signal(signal.SIGINT, handle_exit)
@@ -232,9 +229,5 @@ if __name__ == '__main__':
         logging.getLogger('werkzeug').setLevel(logging.ERROR)
     
     command_deck = VirtualCommandDeck(logger=logger)
-
-    if config['webserver'].getboolean('upnp'):
-        logger.info("Trying to open port via UPnP")
-        upnp_mapper = UPnPPortMapper(config['webserver']['listen_port'], config['webserver']['listen_port'], config['webserver']['listen_ip'], "SmartPort Web Server")
 
     socketio.run(app, host=config['webserver']['listen_ip'], port=config['webserver']['listen_port'])

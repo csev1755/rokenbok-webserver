@@ -5,6 +5,3 @@ A Flask webserver that emulates Command Deck functions with input over WebSocket
 
 ## [rokenbok_device.py](/rokenbok_device.py)
 A module called by the webserver to control a Rokenbok device like a SmartPort adapter ([smartport_arduino](/smartport_arduino))
-
-## [upnp.py](/upnp.py)
-A module that can be used by the webserver to open a port on a router via UPnP
