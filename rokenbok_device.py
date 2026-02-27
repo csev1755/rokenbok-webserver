@@ -143,7 +143,8 @@ class SmartPortArduino(Vehicle):
 
     def __init__(self, config, id, name, logger=None):
         super().__init__(self, config, id, name, logger)
-        self.connect_serial()
+        if SmartPortArduino.serial is None:
+            self.connect_serial()
 
     def connect_serial(self):
         try:
