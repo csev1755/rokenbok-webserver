@@ -30,6 +30,29 @@ class Controller:
         self.buttons = set()
         self.logger = logger
 
+    def cycle_vehicle_select(self, delta):
+        """
+        Cycles through available vehicles.
+
+        Args:
+            delta (int): A positive or negative integer that determines the direction and length of each step in the cycle
+        """
+        new_selection = self.selection if self.selection is not None else 0
+        occupied_selections = {
+            player["selection"]
+            for player in self.command_deck.get_players()
+            if player["selection"] is not None
+        }
+
+        for _selection in range(self.command_deck.vehicle_count):
+            new_selection = (new_selection + delta) % (self.command_deck.vehicle_count + 1)
+            if new_selection == 0:
+                self.selection = None
+                return
+            if new_selection not in occupied_selections:
+                self.selection = new_selection
+                return      
+
     def handle_input(self, input):
         """
         Processes input from a gamepad and updates controller state.
@@ -42,13 +65,7 @@ class Controller:
         if input['pressed']:
             if input['button'] in ("SELECT_UP", "SELECT_DOWN"):
                 delta = 1 if input['button'] == "SELECT_UP" else -1
-
-                if self.selection is None:
-                    self.selection = 1 if delta == 1 else self.command_deck.vehicle_count
-                elif ((self.selection + delta) < 1) or ((self.selection + delta) > self.command_deck.vehicle_count):
-                    self.selection = None
-                else:
-                    self.selection += delta
+                self.cycle_vehicle_select(delta)
             self.buttons.add(input['button'])
         else:
             self.buttons.discard(input['button'])
