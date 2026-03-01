@@ -44,8 +44,10 @@ function cycleStream(direction) {
     updateStream(STREAMS[streamIndex].url);
 }
 
+// Get preferences and send player name on page load
 document.addEventListener("DOMContentLoaded", function() {
     loadSettings();
+    emitControllerEvent("SEND_NAME", true);
     if (STREAMS.length) updateStream(STREAMS[0].url);
 });
 
