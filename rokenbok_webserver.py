@@ -212,6 +212,7 @@ def handle_exit(signal, frame):
 signal.signal(signal.SIGINT, handle_exit)
 
 if __name__ == '__main__':
+    print("rokenbok-webserver v0.1.0")
 
     if not os.path.exists(config_file):
         input(f"Config file '{config_file}' not found, press Enter to quit ")
