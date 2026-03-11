@@ -23,6 +23,7 @@ jobs:
 
       - name: Stage
         run: cp dist/rokenbok_webserver.* rokenbok_webserver.ini staging/
+        shell: bash
 
       - name: Upload
         uses: actions/upload-artifact@v6
