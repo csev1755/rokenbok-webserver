@@ -1,0 +1,29 @@
+name: Build with PyInstaller
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build
+        run: pyinstaller rokenbok_webserver.spec
+
+      - name: Upload
+        uses: actions/upload-artifact@v6
+        with:
+          name: rokenbok-webserver-windows
+          path: |
+            dist/rokenbok_webserver.exe
+            rokenbok_webserver.ini
