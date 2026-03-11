@@ -13,16 +13,14 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.14'
-          check-latest: true
-
-      - name: Install Dependencies
-        run: pip install -r requirements.txt
+          check-latest: true 
 
       - name: Build
-        run: pyinstaller rokenbok_webserver.spec
-
-      - name: Stage
-        run: cp dist/rokenbok_webserver.* rokenbok_webserver.ini staging/
+        run: | 
+          pip install -r requirements.txt
+          pyinstaller rokenbok_webserver.spec
+          mkdir staging
+          cp dist/rokenbok_webserver.* rokenbok_webserver.ini staging/
         shell: bash
 
       - name: Upload
