@@ -12,7 +12,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.13'
+          python-version: '3.14'
+          check-latest: true
 
       - name: Install Dependencies
         run: pip install -r requirements.txt
@@ -20,10 +21,11 @@ jobs:
       - name: Build
         run: pyinstaller rokenbok_webserver.spec
 
+      - name: Stage
+        run: cp dist/rokenbok_webserver.* rokenbok_webserver.ini staging/
+
       - name: Upload
         uses: actions/upload-artifact@v6
         with:
           name: rokenbok-webserver-windows
-          path: |
-            dist/rokenbok_webserver.exe
-            rokenbok_webserver.ini
+          path: staging/
