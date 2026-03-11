@@ -1,0 +1,17 @@
+services:
+  python-app:
+    build: .
+    container_name: rokenbok-webserver
+    network_mode: bridge
+    volumes:
+      - .:/usr/src/app
+    restart: unless-stopped
+
+  go2rtc:
+    image: alexxit/go2rtc
+    container_name: go2rtc
+    privileged: true
+    network_mode: host
+    volumes:
+      - "./go2rtc:/config" 
+    restart: unless-stopped

@@ -231,4 +231,4 @@ if __name__ == '__main__':
     
     command_deck = VirtualCommandDeck(logger=logger)
 
-    socketio.run(app, host=config['webserver']['listen_ip'], port=config['webserver']['listen_port'])
+    socketio.run(app, host=config['webserver']['listen_ip'], port=config['webserver']['listen_port'], allow_unsafe_werkzeug=True)
