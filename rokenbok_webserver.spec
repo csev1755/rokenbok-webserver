@@ -1,5 +1,18 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import os, re
+ref = os.getenv('REF_NAME', '')
+if re.match(r'^v\d+\.\d+\.\d+', ref):
+    path = 'rokenbok_webserver.py'
+    content = open(path).read().replace('print(\"rokenbok-webserver (dev)\")', f'print(\"rokenbok-webserver {ref}\")')
+    open(path, 'w').write(content)
+    github_env = os.getenv('GITHUB_ENV')
+    with open(github_env, 'a') as f:
+        f.write(f'BUILD_STRING={build_str}\n')
+else:
+    ref = "dev"
+
+print(f"Building rokenbok-webserver version: {ref}")
 
 a = Analysis(
     ['rokenbok_webserver.py'],

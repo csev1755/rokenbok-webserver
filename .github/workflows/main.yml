@@ -13,7 +13,7 @@ jobs:
           - os: macos-latest
             name: mac
           - os: macos-15-intel
-            name: mac-intel
+            name: mac_intel
 
     runs-on: ${{ matrix.os }}
     
@@ -27,6 +27,8 @@ jobs:
           check-latest: true 
 
       - name: Build
+        env:
+          REF_NAME: ${{ github.ref_name }}
         run: | 
           pip install -r requirements.txt
           pyinstaller rokenbok_webserver.spec
@@ -37,5 +39,5 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v6
         with:
-          name: rokenbok-webserver-${{ matrix.name }}
+          name: rokenbok_webserver_${{ env.BUILD_STRING }}_${{ matrix.name }}
           path: staging/
