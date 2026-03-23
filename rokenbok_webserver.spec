@@ -8,11 +8,11 @@ if re.match(r'^v\d+\.\d+\.\d+', ref):
     open(path, 'w').write(content)
     github_env = os.getenv('GITHUB_ENV')
     with open(github_env, 'a') as f:
-        f.write(f'BUILD_STRING={build_str}\n')
+        f.write(f'BUILD_STRING={ref}\n')
 else:
     ref = "dev"
 
-print(f"Building rokenbok-webserver version: {ref}")
+print(f"rokenbok-webserver version: {ref}")
 
 a = Analysis(
     ['rokenbok_webserver.py'],
