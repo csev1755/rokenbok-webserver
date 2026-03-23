@@ -2,6 +2,7 @@ import configparser
 import logging
 import os
 import signal
+import subprocess
 import sys
 import rokenbok_device as RokenbokDevice
 from flask import Flask, request, send_from_directory, render_template
@@ -9,15 +10,19 @@ from flask_socketio import SocketIO
 
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     app_dir = os.path.abspath(os.path.dirname(sys.executable))
+    bundle_dir = sys._MEIPASS
 else:
     app_dir = "."
+    bundle_dir = "."
 
+bin_dir = "bin"
 web_dir = "web"
 
 app = Flask(__name__, static_folder=web_dir, template_folder=web_dir)
 config = configparser.ConfigParser()
 config.optionxform = str
-config_file = f"{app_dir}/rokenbok_webserver.ini"
+config_file = os.path.join(app_dir, "rokenbok_webserver.ini")
+go2rtc_bin = os.path.join(bundle_dir, bin_dir, "go2rtc")
 socketio = SocketIO(app)
 
 @app.route('/')
@@ -207,6 +212,7 @@ class VirtualCommandDeck:
 
 def handle_exit(signal, frame):
     print("Program interrupted, exiting...")
+    proc.terminate()
     sys.exit(0)
 
 signal.signal(signal.SIGINT, handle_exit)
@@ -219,8 +225,10 @@ if __name__ == '__main__':
         sys.exit(0)
     config.read(config_file)
 
+    srv_log_lvl = config['webserver']['log_level']
+
     logging.basicConfig(
-        level=config['webserver']['log_level'],
+        level=srv_log_lvl,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     
@@ -230,5 +238,7 @@ if __name__ == '__main__':
         logging.getLogger('werkzeug').setLevel(logging.ERROR)
     
     command_deck = VirtualCommandDeck(logger=logger)
+
+    proc = subprocess.Popen([go2rtc_bin, "-c", f"log.level={srv_log_lvl}"])
 
     socketio.run(app, host=config['webserver']['listen_ip'], port=config['webserver']['listen_port'])

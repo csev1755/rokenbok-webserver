@@ -17,7 +17,7 @@ print(f"rokenbok-webserver version: {ref}")
 a = Analysis(
     ['rokenbok_webserver.py'],
     pathex=[],
-    binaries=[],
+    binaries=[('bin', 'bin')],
     datas=[('web', 'web')],
     hiddenimports=['engineio.async_drivers.threading'],
     hookspath=[],
