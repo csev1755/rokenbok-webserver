@@ -220,25 +220,24 @@ signal.signal(signal.SIGINT, handle_exit)
 if __name__ == '__main__':
     print("rokenbok-webserver (dev)")
 
+    # Read config file
     if not os.path.exists(config_file):
         input(f"Config file '{config_file}' not found, press Enter to quit ")
         sys.exit(0)
     config.read(config_file)
 
+    # Set log level and config for main app
     srv_log_lvl = config['webserver']['log_level']
-
-    logging.basicConfig(
-        level=srv_log_lvl,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-    
+    logging.basicConfig(level=srv_log_lvl, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger = logging.getLogger('rokenbok_webserver')
-    
+    command_deck = VirtualCommandDeck(logger=logger)
+
+    # Set log level for Flask
     if not config['webserver'].getboolean('flask_logs'):
         logging.getLogger('werkzeug').setLevel(logging.ERROR)
     
-    command_deck = VirtualCommandDeck(logger=logger)
-
+    # Start go2rtc subprocess
     proc = subprocess.Popen([go2rtc_bin, "-c", f"log.level={srv_log_lvl}"])
 
+    # Launch app
     socketio.run(app, host=config['webserver']['listen_ip'], port=config['webserver']['listen_port'])
