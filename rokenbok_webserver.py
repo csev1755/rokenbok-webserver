@@ -7,6 +7,8 @@ import rokenbok_device as RokenbokDevice
 from flask import Flask, request, send_from_directory, render_template
 from flask_socketio import SocketIO
 
+version_string = "rokenbok-webserver (dev)"
+
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     app_dir = os.path.abspath(os.path.dirname(sys.executable))
 else:
@@ -14,7 +16,7 @@ else:
 
 web_dir = "web"
 
-app = Flask(__name__, static_folder=web_dir, template_folder=web_dir)
+app = Flask(version_string, static_folder=web_dir, template_folder=web_dir)
 config = configparser.ConfigParser()
 config.optionxform = str
 config_file = f"{app_dir}/rokenbok_webserver.ini"
@@ -212,7 +214,6 @@ def handle_exit(signal, frame):
 signal.signal(signal.SIGINT, handle_exit)
 
 if __name__ == '__main__':
-    print("rokenbok-webserver (dev)")
 
     if not os.path.exists(config_file):
         input(f"Config file '{config_file}' not found, press Enter to quit ")
@@ -224,7 +225,7 @@ if __name__ == '__main__':
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     
-    logger = logging.getLogger('rokenbok_webserver')
+    logger = logging.getLogger(version_string)
     
     if not config['webserver'].getboolean('flask_logs'):
         logging.getLogger('werkzeug').setLevel(logging.ERROR)

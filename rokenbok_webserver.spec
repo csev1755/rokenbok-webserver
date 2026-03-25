@@ -2,15 +2,17 @@
 
 import os, re
 ref = os.getenv('REF_NAME', '')
+
+github_env = os.getenv('GITHUB_ENV')
 if re.match(r'^v\d+\.\d+\.\d+', ref):
     path = 'rokenbok_webserver.py'
-    content = open(path).read().replace('print(\"rokenbok-webserver (dev)\")', f'print(\"rokenbok-webserver {ref}\")')
+    content = open(path).read().replace('version_string = "rokenbok-webserver (dev)"', f'version_string = "rokenbok-webserver {ref}"')
     open(path, 'w').write(content)
-    github_env = os.getenv('GITHUB_ENV')
-    with open(github_env, 'a') as f:
-        f.write(f'BUILD_STRING={ref}\n')
 else:
     ref = "dev"
+if github_env:
+    with open(github_env, 'a') as f:
+        f.write(f'BUILD_STRING={ref}\n')
 
 print(f"rokenbok-webserver version: {ref}")
 
