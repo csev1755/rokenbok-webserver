@@ -1,8 +1,11 @@
 import configparser
 import logging
 import os
+import requests
 import signal
+import subprocess
 import sys
+import yaml
 import rokenbok_device as RokenbokDevice
 from flask import Flask, request, send_from_directory, render_template
 from flask_socketio import SocketIO
@@ -11,16 +14,23 @@ version_string = "rokenbok-webserver (dev)"
 
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     app_dir = os.path.abspath(os.path.dirname(sys.executable))
+    bundle_dir = sys._MEIPASS
 else:
     app_dir = "."
+    bundle_dir = "."
 
+bin_dir = "bin"
 web_dir = "web"
 
 app = Flask(version_string, static_folder=web_dir, template_folder=web_dir)
+socketio = SocketIO(app)
+
 config = configparser.ConfigParser()
 config.optionxform = str
-config_file = f"{app_dir}/rokenbok_webserver.ini"
-socketio = SocketIO(app)
+config_file = os.path.join(app_dir, "rokenbok_webserver.ini")
+
+go2rtc_bin = os.path.join(bundle_dir, bin_dir, "go2rtc")
+go2rtc_yaml = os.path.join(bundle_dir, bin_dir, "go2rtc.yaml")
 
 @app.route('/')
 def index():
@@ -28,8 +38,12 @@ def index():
     Returns:
         str: Rendered HTML template with video configuration.
     """
-    stream_config = dict(config['video_streams']) if config['webserver'].getboolean('enable_video') else None
-    return render_template('player.html', enable_video=(True if stream_config is not None else False), video_streams=stream_config)
+    stream_config = {
+        stream: f"http://{request.host.split(':')[0]}:1984/webrtc.html?src={stream}"
+        for stream, device in config.items('video_streams')
+        if device
+    }
+    return render_template('player.html', enable_video=config['webserver'].getboolean('enable_video'), video_streams=stream_config)
 
 @app.route('/player.js')
 def script():
@@ -209,27 +223,58 @@ class VirtualCommandDeck:
 
 def handle_exit(signal, frame):
     print("Program interrupted, exiting...")
+    proc.terminate()
     sys.exit(0)
 
 signal.signal(signal.SIGINT, handle_exit)
 
 if __name__ == '__main__':
 
+    # Read config file
     if not os.path.exists(config_file):
         input(f"Config file '{config_file}' not found, press Enter to quit ")
         sys.exit(0)
     config.read(config_file)
 
-    logging.basicConfig(
-        level=config['webserver']['log_level'],
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-    
+    # Set log level and config for main app
+    srv_log_lvl = config['webserver']['log_level']
+    logging.basicConfig(level=srv_log_lvl, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger = logging.getLogger(version_string)
-    
-    if not config['webserver'].getboolean('flask_logs'):
-        logging.getLogger('werkzeug').setLevel(logging.ERROR)
-    
     command_deck = VirtualCommandDeck(logger=logger)
 
+    # Set log level for Flask
+    if not config['webserver'].getboolean('flask_logs'):
+        logging.getLogger('werkzeug').setLevel(logging.ERROR)
+
+    if config['webserver'].getboolean('enable_video') is True:
+
+        # Configure go2rtc
+        go2rtc_streams = {
+            stream: f"ffmpeg:device?video={device}#video=h264"
+            for stream, device in config.items('video_streams')
+            if device
+        }
+        go2rtc_config = {
+            'webrtc': {
+                'listen': ':8555',
+                'candidates': ['stun:8555']
+            },
+            'streams': go2rtc_streams,
+            'log': {
+                'format': 'text',
+                'level': srv_log_lvl,
+            }
+        }
+        with open(go2rtc_yaml, 'w') as f:
+            yaml.dump(go2rtc_config, f, default_flow_style=False, sort_keys=False)    
+
+        # Start go2rtc subprocess
+        proc = subprocess.Popen([go2rtc_bin, "-c", go2rtc_yaml])
+        response = requests.get('http://127.0.0.1:1984/api/ffmpeg/devices')
+        data = response.json()
+        print("Available go2rtc Devices:")
+        for source in data.get('sources', []):
+            print(f" - {source.get('name')}")
+
+    # Launch app
     socketio.run(app, host=config['webserver']['listen_ip'], port=config['webserver']['listen_port'])
