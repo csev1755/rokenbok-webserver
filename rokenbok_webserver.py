@@ -36,8 +36,12 @@ def index():
     Returns:
         str: Rendered HTML template with video configuration.
     """
-    stream_config = dict(config['video_streams']) if config['webserver'].getboolean('enable_video') else None
-    return render_template('player.html', enable_video=(True if stream_config is not None else False), video_streams=stream_config)
+    stream_config = {
+        stream: f"http://{request.host.split(':')[0]}:1984/webrtc.html?src={stream}"
+        for stream, device in config.items('video_streams')
+        if device
+    }
+    return render_template('player.html', enable_video=config['webserver'].getboolean('enable_video'), video_streams=stream_config)
 
 @app.route('/player.js')
 def script():
@@ -241,33 +245,35 @@ if __name__ == '__main__':
     if not config['webserver'].getboolean('flask_logs'):
         logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
-    # Configure go2rtc
-    go2rtc_streams = {
-        stream: f"ffmpeg:device?video={device}#video=h264"
-        for stream, device in config.items('video_streams')
-        if device
-    }
-    go2rtc_config = {
-        'webrtc': {
-            'listen': ':8555',
-            'candidates': ['stun:8555']
-        },
-        'streams': go2rtc_streams,
-        'log': {
-            'format': 'text',
-            'level': srv_log_lvl,
-        }
-    }
-    with open(go2rtc_yaml, 'w') as f:
-        yaml.dump(go2rtc_config, f, default_flow_style=False, sort_keys=False)    
+    if config['webserver'].getboolean('enable_video') is True:
 
-    # Start go2rtc subprocess
-    proc = subprocess.Popen([go2rtc_bin, "-c", go2rtc_yaml])
-    response = requests.get('http://127.0.0.1:1984/api/ffmpeg/devices')
-    data = response.json()
-    print("Available go2rtc Devices:")
-    for source in data.get('sources', []):
-        print(f" - {source.get('name')}")
+        # Configure go2rtc
+        go2rtc_streams = {
+            stream: f"ffmpeg:device?video={device}#video=h264"
+            for stream, device in config.items('video_streams')
+            if device
+        }
+        go2rtc_config = {
+            'webrtc': {
+                'listen': ':8555',
+                'candidates': ['stun:8555']
+            },
+            'streams': go2rtc_streams,
+            'log': {
+                'format': 'text',
+                'level': srv_log_lvl,
+            }
+        }
+        with open(go2rtc_yaml, 'w') as f:
+            yaml.dump(go2rtc_config, f, default_flow_style=False, sort_keys=False)    
+
+        # Start go2rtc subprocess
+        proc = subprocess.Popen([go2rtc_bin, "-c", go2rtc_yaml])
+        response = requests.get('http://127.0.0.1:1984/api/ffmpeg/devices')
+        data = response.json()
+        print("Available go2rtc Devices:")
+        for source in data.get('sources', []):
+            print(f" - {source.get('name')}")
 
     # Launch app
     socketio.run(app, host=config['webserver']['listen_ip'], port=config['webserver']['listen_port'])
