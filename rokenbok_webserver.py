@@ -1,9 +1,11 @@
 import configparser
 import logging
 import os
+import requests
 import signal
 import subprocess
 import sys
+import yaml
 import rokenbok_device as RokenbokDevice
 from flask import Flask, request, send_from_directory, render_template
 from flask_socketio import SocketIO
@@ -19,11 +21,14 @@ bin_dir = "bin"
 web_dir = "web"
 
 app = Flask(__name__, static_folder=web_dir, template_folder=web_dir)
+socketio = SocketIO(app)
+
 config = configparser.ConfigParser()
 config.optionxform = str
 config_file = os.path.join(app_dir, "rokenbok_webserver.ini")
+
 go2rtc_bin = os.path.join(bundle_dir, bin_dir, "go2rtc")
-socketio = SocketIO(app)
+go2rtc_yaml = os.path.join(bundle_dir, bin_dir, "go2rtc.yaml")
 
 @app.route('/')
 def index():
@@ -235,9 +240,34 @@ if __name__ == '__main__':
     # Set log level for Flask
     if not config['webserver'].getboolean('flask_logs'):
         logging.getLogger('werkzeug').setLevel(logging.ERROR)
-    
+
+    # Configure go2rtc
+    go2rtc_streams = {
+        stream: f"ffmpeg:device?video={device}#video=h264"
+        for stream, device in config.items('video_streams')
+        if device
+    }
+    go2rtc_config = {
+        'webrtc': {
+            'listen': ':8555',
+            'candidates': ['stun:8555']
+        },
+        'streams': go2rtc_streams,
+        'log': {
+            'format': 'text',
+            'level': srv_log_lvl,
+        }
+    }
+    with open(go2rtc_yaml, 'w') as f:
+        yaml.dump(go2rtc_config, f, default_flow_style=False, sort_keys=False)    
+
     # Start go2rtc subprocess
-    proc = subprocess.Popen([go2rtc_bin, "-c", f"log.level={srv_log_lvl}"])
+    proc = subprocess.Popen([go2rtc_bin, "-c", go2rtc_yaml])
+    response = requests.get('http://127.0.0.1:1984/api/ffmpeg/devices')
+    data = response.json()
+    print("Available go2rtc Devices:")
+    for source in data.get('sources', []):
+        print(f" - {source.get('name')}")
 
     # Launch app
     socketio.run(app, host=config['webserver']['listen_ip'], port=config['webserver']['listen_port'])
