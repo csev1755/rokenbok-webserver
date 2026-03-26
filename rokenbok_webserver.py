@@ -1,6 +1,7 @@
 import configparser
 import logging
 import os
+import time
 import requests
 import signal
 import subprocess
@@ -270,11 +271,17 @@ if __name__ == '__main__':
 
         # Start go2rtc subprocess
         proc = subprocess.Popen([go2rtc_bin, "-c", go2rtc_yaml])
-        response = requests.get('http://127.0.0.1:1984/api/ffmpeg/devices')
-        data = response.json()
-        print("Available go2rtc Devices:")
-        for source in data.get('sources', []):
-            print(f" - {source.get('name')}")
+        for i in range(10):
+            try:
+                response = requests.get('http://127.0.0.1:1984/api/ffmpeg/devices')
+                data = response.json()
+                print("Available go2rtc Devices:")
+                for source in data.get('sources', []):
+                    print(f" - {source.get('name')}")
+                break
+            except: 
+                time.sleep(0.2)
+                pass
 
     # Launch app
     socketio.run(app, host=config['webserver']['listen_ip'], port=config['webserver']['listen_port'])
