@@ -20,8 +20,8 @@ else:
     app_dir = "."
     bundle_dir = "."
 
-bin_dir = "bin"
-web_dir = "web"
+bin_dir = os.path.join(bundle_dir, "bin")
+web_dir = os.path.join(bundle_dir, "web")
 
 app = Flask(version_string, static_folder=web_dir, template_folder=web_dir)
 socketio = SocketIO(app)
@@ -30,8 +30,8 @@ config = configparser.ConfigParser()
 config.optionxform = str
 config_file = os.path.join(app_dir, "rokenbok_webserver.ini")
 
-go2rtc_bin = os.path.join(bundle_dir, bin_dir, "go2rtc")
-go2rtc_yaml = os.path.join(bundle_dir, bin_dir, "go2rtc.yaml")
+go2rtc_bin = os.path.join(bin_dir, "go2rtc")
+go2rtc_yaml = os.path.join(bin_dir, "go2rtc.yaml")
 
 @app.route('/')
 def index():
