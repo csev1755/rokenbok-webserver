@@ -52,7 +52,7 @@ def script():
     Returns:
         Response: The player.js file from the web directory.
     """
-    return send_from_directory('web', 'player.js')
+    return send_from_directory(web_dir, 'player.js')
 
 @socketio.on("connect")
 def handle_connect():
