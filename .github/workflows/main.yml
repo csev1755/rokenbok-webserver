@@ -10,10 +10,13 @@ jobs:
         include:
           - os: windows-latest
             name: win
+            go2rtc: "https://github.com/AlexxIT/go2rtc/releases/download/v1.9.14/go2rtc_win64.zip"
           - os: macos-latest
             name: mac
+            go2rtc: "https://github.com/AlexxIT/go2rtc/releases/download/v1.9.14/go2rtc_mac_arm64.zip"
           - os: macos-15-intel
             name: mac_intel
+            go2rtc: "https://github.com/AlexxIT/go2rtc/releases/download/v1.9.14/go2rtc_mac_amd64.zip"
 
     runs-on: ${{ matrix.os }}
     
@@ -29,10 +32,16 @@ jobs:
       - name: Build
         env:
           REF_NAME: ${{ github.ref_name }}
+          GO2RTC_URL: ${{ matrix.go2rtc }}
         run: | 
+          mkdir bin staging
+          curl -L "$GO2RTC_URL" -o go2rtc.zip
+          unzip -o go2rtc.zip -d bin/
+          EXECUTABLE=$(ls bin/go2rtc*)
+          mv "$EXECUTABLE" "${EXECUTABLE%.*}"
+          chmod +x bin/go2rtc
           pip install -r requirements.txt
           pyinstaller rokenbok_webserver.spec
-          mkdir staging
           cp dist/rokenbok_webserver* rokenbok_webserver.ini staging/
         shell: bash
 
