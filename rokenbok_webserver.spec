@@ -20,7 +20,7 @@ a = Analysis(
     ['rokenbok_webserver.py'],
     pathex=[],
     binaries=[('bin', 'bin')],
-    datas=[('web', 'web')],
+    datas=[('server', 'server')],
     hiddenimports=['engineio.async_drivers.threading'],
     hookspath=[],
     hooksconfig={},

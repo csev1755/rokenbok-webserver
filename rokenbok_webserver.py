@@ -7,7 +7,7 @@ import signal
 import subprocess
 import sys
 import yaml
-import rokenbok_device as RokenbokDevice
+import devices.rokenbok_device as RokenbokDevice
 from flask import Flask, request, send_from_directory, render_template
 from flask_socketio import SocketIO
 
@@ -21,10 +21,11 @@ else:
     bundle_dir = "."
 
 bin_dir = os.path.join(bundle_dir, "bin")
-web_dir = os.path.join(bundle_dir, "web", "flask")
+web_dir = os.path.join(bundle_dir, "server", "web")
+flask_dir = os.path.join(web_dir, "flask")
 
-app = Flask(version_string, static_folder=web_dir, template_folder=web_dir)
-socketio = SocketIO(app)
+flask = Flask(version_string, static_folder=flask_dir, template_folder=flask_dir)
+socketio = SocketIO(flask)
 
 config = configparser.ConfigParser()
 config.optionxform = str
@@ -32,9 +33,9 @@ config_file = os.path.join(app_dir, "rokenbok_webserver.ini")
 
 go2rtc_bin = os.path.join(bin_dir, "go2rtc")
 go2rtc_yaml = os.path.join(bin_dir, "go2rtc.yaml")
-go2rtc_www = os.path.join(bundle_dir, "web", "go2rtc")
+go2rtc_www = os.path.join(web_dir, "go2rtc")
 
-@app.route('/')
+@flask.route('/')
 def index():
     """
     Returns:
@@ -47,13 +48,13 @@ def index():
     }
     return render_template('player.html', enable_video=config['webserver'].getboolean('enable_video'), video_streams=stream_config)
 
-@app.route('/player.js')
+@flask.route('/player.js')
 def script():
     """
     Returns:
         Response: The player.js file from the web directory.
     """
-    return send_from_directory(web_dir, 'player.js')
+    return send_from_directory(flask_dir, 'player.js')
 
 @socketio.on("connect")
 def handle_connect():
@@ -288,4 +289,4 @@ if __name__ == '__main__':
                 pass
 
     # Launch app
-    socketio.run(app, host=config['webserver']['listen_ip'], port=config['webserver']['listen_port'])
+    socketio.run(flask, host=config['webserver']['listen_ip'], port=config['webserver']['listen_port'])
