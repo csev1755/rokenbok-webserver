@@ -21,7 +21,7 @@ else:
     bundle_dir = "."
 
 bin_dir = os.path.join(bundle_dir, "bin")
-web_dir = os.path.join(bundle_dir, "web")
+web_dir = os.path.join(bundle_dir, "web", "flask")
 
 app = Flask(version_string, static_folder=web_dir, template_folder=web_dir)
 socketio = SocketIO(app)
@@ -32,6 +32,7 @@ config_file = os.path.join(app_dir, "rokenbok_webserver.ini")
 
 go2rtc_bin = os.path.join(bin_dir, "go2rtc")
 go2rtc_yaml = os.path.join(bin_dir, "go2rtc.yaml")
+go2rtc_www = os.path.join(bundle_dir, "web", "go2rtc")
 
 @app.route('/')
 def index():
@@ -40,7 +41,7 @@ def index():
         str: Rendered HTML template with video configuration.
     """
     stream_config = {
-        stream: f"http://{request.host.split(':')[0]}:1984/webrtc.html?src={stream}"
+        stream: f"http://{request.host.split(':')[0]}:1984/stream.html?src={stream}"
         for stream, device in config.items('video_streams')
         if device
     }
@@ -256,6 +257,9 @@ if __name__ == '__main__':
             if device
         }
         go2rtc_config = {
+            'api': {
+                'static_dir': go2rtc_www
+            },
             'webrtc': {
                 'listen': ':8555',
                 'candidates': ['stun:8555']
