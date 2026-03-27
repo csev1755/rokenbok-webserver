@@ -252,7 +252,7 @@ if __name__ == '__main__':
 
         # Configure go2rtc
         go2rtc_streams = {
-            stream: f"ffmpeg:device?video={device}#video=h264"
+            stream: device
             for stream, device in config.items('video_streams')
             if device
         }
@@ -281,7 +281,7 @@ if __name__ == '__main__':
                 data = response.json()
                 print("Available go2rtc Devices:")
                 for source in data.get('sources', []):
-                    print(f" - {source.get('name')}")
+                    print(f" - {source.get('url')}")
                 break
             except: 
                 time.sleep(0.2)
