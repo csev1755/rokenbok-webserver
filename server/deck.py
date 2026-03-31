@@ -1,4 +1,5 @@
-import devices.rokenbok_device as RokenbokDevice
+from devices.vehicle import Vehicle
+from server.controller import Controller
 
 class VirtualCommandDeck:
     """
@@ -6,9 +7,9 @@ class VirtualCommandDeck:
     vehicle control routing.
 
     Attributes:
-        controllers (dict[int, RokenbokDevice.Controller]): Mapping of controller IDs to Controller instances.
+        controllers (dict[int, Controller]): Mapping of controller IDs to Controller instances.
         controller_count (int): Number of usable controllers (default: 12).
-        vehicles (dict[int, RokenbokDevice.Vehicle]): Mapping of vehicle IDs to Vehicle instances.
+        vehicles (dict[int, Vehicle]): Mapping of vehicle IDs to Vehicle instances.
         vehicle_count (int): Number of selectable vehicles.
     """
 
@@ -21,10 +22,10 @@ class VirtualCommandDeck:
         self.logger = logger
         self.config = config
 
-        self.controllers: dict[int, RokenbokDevice.Controller] = {}
+        self.controllers: dict[int, Controller] = {}
         self.controller_count = 12
 
-        self.vehicles: dict[int, RokenbokDevice.Vehicle] = {}
+        self.vehicles: dict[int, Vehicle] = {}
         self.vehicle_count = 0
 
         for section in config.sections():
@@ -35,7 +36,7 @@ class VirtualCommandDeck:
                 
                 for vehicle_id, vehicle_name in device_vehicles:
                     self.vehicle_count += 1
-                    self.vehicles[int(vehicle_id)] = RokenbokDevice.Vehicle.configure(
+                    self.vehicles[int(vehicle_id)] = Vehicle.configure(
                         type=device_name,
                         config=device_config,
                         id=int(vehicle_id),
@@ -44,7 +45,7 @@ class VirtualCommandDeck:
                     )
 
         for controller_id in range(1, self.controller_count + 1):
-            self.controllers[controller_id] = RokenbokDevice.Controller(self, controller_id, self.logger)
+            self.controllers[controller_id] = Controller(self, controller_id, self.logger)
 
     def assign_controller(self, player_id):
         """
@@ -54,7 +55,7 @@ class VirtualCommandDeck:
             player_id (str): Socket.IO session identifier.
 
         Returns:
-            RokenbokDevice.Controller or None: The assigned controller.
+            Controller or None: The assigned controller.
         """
         for controller in self.controllers.values():
             if controller.player_id is None:
@@ -73,7 +74,7 @@ class VirtualCommandDeck:
             player_id (str): Socket.IO session identifier.
 
         Returns:
-            RokenbokDevice.Controller or None: The released controller.
+            Controller or None: The released controller.
         """
         for controller in self.controllers.values():
             if controller.player_id == player_id:
@@ -91,7 +92,7 @@ class VirtualCommandDeck:
             player_id (str): Socket.IO session identifier.
 
         Returns:
-            RokenbokDevice.Controller or None: The matching controller.
+            Controller or None: The matching controller.
         """
         for controller in self.controllers.values():
             if controller.player_id == player_id:
@@ -106,7 +107,7 @@ class VirtualCommandDeck:
             vehicle_id (int or None): The vehicle identifier.
 
         Returns:
-            RokenbokDevice.Vehicle or None: The matching vehicle.
+            Vehicle or None: The matching vehicle.
         """
         for vehicle in self.vehicles.values():
             if vehicle.id == vehicle_id:

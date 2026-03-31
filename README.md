@@ -10,4 +10,4 @@ Currently, the server supports the first generation Rokenbok CommandDeck with th
 
 ### Extending device support
 
-This server was designed to support mulitple types of vehicles behind multiple different control devices all at the same time. Vehicle functionality is exposed via the `Vehicle` abstract class within [rokenbok_device.py](/devices/rokenbok_device.py). See `SmartPortArduino` as an example of implementing the base class methods along with device specific ones.
+This server was designed to support mulitple types of vehicles behind multiple different control devices all at the same time. Functionality is exposed via the [Vehicle](/devices/vehicle.py) abstract class.

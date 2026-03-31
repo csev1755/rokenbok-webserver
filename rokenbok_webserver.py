@@ -9,7 +9,7 @@ import sys
 import yaml
 from flask import Flask, request, send_from_directory, render_template
 from flask_socketio import SocketIO
-from server.command_deck import VirtualCommandDeck
+from server.deck import VirtualCommandDeck
 
 version_string = "rokenbok-webserver (dev)"
 
