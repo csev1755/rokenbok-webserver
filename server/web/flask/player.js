@@ -1,25 +1,15 @@
 const socket = io();
 
-function loop() {
-    pollGamepad();
-    requestAnimationFrame(loop);
-}
-
-socket.on('connect', loop);
-
 const panel = document.querySelector('.ui-panel');
-const videoStream = document.getElementById("stream-iframe");
-const streamSelector = document.getElementById("stream-selector");
+
+const inputDeviceSelect = document.getElementById('input_device');
 const inputElement = document.getElementById('input');
 const inputTemplate = document.getElementById('input-template');
+const mappingBody = document.getElementById('mapping-body');
+
+const playerNameInput = document.getElementById('player_name');
 const playersElement = document.getElementById('players');
 const playerTemplate = document.getElementById('player-template');
-const mappingBody = document.getElementById('mapping-body');
-const playerNameInput = document.getElementById('player_name');
-const inputDeviceSelect = document.getElementById('input_device');
-
-playerNameInput.addEventListener('input', saveSettings);
-inputDeviceSelect.addEventListener('change', saveSettings);
 
 // Get the streams if the HTML elements exist
 const streamLabel = document.getElementById('stream-label');
@@ -27,72 +17,6 @@ const STREAMS = streamLabel
     ? Object.entries(JSON.parse(streamLabel.dataset.streams))
         .map(([name, url]) => ({ name, url }))
     : [];
-
-// Update video stream source
-function updateStream(url) {
-    const iframe = document.getElementById('stream-iframe');
-    if (iframe) iframe.src = url;
-}
-
-let streamIndex = 0;
-
-// Cycle through streams
-function cycleStream(direction) {
-    if (!STREAMS.length) return;
-    streamIndex = (streamIndex + direction + STREAMS.length) % STREAMS.length;
-    streamLabel.textContent = STREAMS[streamIndex].name;
-    updateStream(STREAMS[streamIndex].url);
-}
-
-// Get preferences and send player name on page load
-document.addEventListener("DOMContentLoaded", function() {
-    loadSettings();
-    emitControllerEvent("SEND_NAME", true);
-    if (STREAMS.length) updateStream(STREAMS[0].url);
-});
-
-// Tracks whether the panel is being dragged
-let isDragging = false;
-
-// Mouse X offset from panel edge during drag
-let offsetX = 0;
-
-// Mouse Y offset from panel edge during drag
-let offsetY = 0;
-
-// Grab panel
-panel.addEventListener('mousedown', (e) => {
-    // Don't initiate drag if clicking on interactive elements
-    if (e.target.closest('input, select, button, textarea')) return;
-    
-    isDragging = true;
-    offsetX = e.clientX - panel.offsetLeft;
-    offsetY = e.clientY - panel.offsetTop;
-    document.body.style.userSelect = 'none'; // Prevent text selection during drag
-});
-
-// Update panel position
-document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-    panel.style.left = `${e.clientX - offsetX}px`;
-    panel.style.top  = `${e.clientY - offsetY}px`;
-});
-
-// Release panel
-document.addEventListener('mouseup', () => {
-    isDragging = false;
-    document.body.style.userSelect = ''; // Re-enable text selection
-});
-
-// Get player name from input field
-function getPlayerName() {
-    return playerNameInput.value;
-}
-
-// Get device type from dropdown
-function getSelectedDevice() {
-    return inputDeviceSelect.value;
-}
 
 // Default input maps
 const CONTROLS = [
@@ -114,20 +38,18 @@ const CONTROLS = [
 
 // Save client settings
 function saveSettings() {
-    const settings = {
-        playerName: playerNameInput.value,
-        inputDevice: inputDeviceSelect.value,
-        mappings: {}
-    };
-    
-    CONTROLS.forEach(control => {
-        settings.mappings[control.button] = {
-            keyboard: document.getElementById(`map_kb_${control.button}`).value,
-            gamepad: document.getElementById(`map_gp_${control.button}`).value
+    const mappings = {};
+    CONTROLS.forEach(({ button }) => {
+        mappings[button] = {
+            keyboard: document.getElementById(`map_kb_${button}`).value,
+            gamepad: document.getElementById(`map_gp_${button}`).value,
         };
     });
-    
-    localStorage.setItem('playerSettings', JSON.stringify(settings));
+    localStorage.setItem('playerSettings', JSON.stringify({
+        playerName:  playerNameInput.value,
+        inputDevice: inputDeviceSelect.value,
+        mappings,
+    }));
 }
 
 // Load client settings
@@ -151,26 +73,6 @@ function loadSettings() {
         });
     }
 }
-
-// Control mapping table and fields
-CONTROLS.forEach(control => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-        <td>${control.button}</td>
-        <td>
-            <input id="map_kb_${control.button}" class="map-key" size="6" value="${control.key_default}">
-        </td>
-        <td>
-            <input id="map_gp_${control.button}" class="map-btn" size="1" value="${control.gamepad_default}">
-        </td>
-    `;
-    mappingBody.appendChild(row);
-    row.querySelector('.map-key').addEventListener('change', saveSettings);
-    row.querySelector('.map-btn').addEventListener('change', saveSettings);
-});
-
-// Load saved settings after creating the table
-loadSettings();
 
 /**
  * Update UI with current input state
@@ -198,21 +100,32 @@ function renderInput(button, pressed) {
 function renderPlayers(players) {
     playersElement.replaceChildren();
 
-    players.forEach((player, index) => {
+    players.forEach((player) => {
         const fragment = playerTemplate.content.cloneNode(true);
 
         fragment.querySelector('[data-player-name]').textContent = player.player_name;
         fragment.querySelector('[data-selection]').textContent = player.selection;
         fragment.querySelector('[data-vehicle-name]').textContent = player.selection_name;
-        
+
         playersElement.appendChild(fragment);
     });
 }
 
-// Get player data from server and render it
-socket.on('players', data => {
-    renderPlayers(data.players);
-});
+let streamIndex = 0;
+
+// Update video stream source
+function updateStream(url) {
+    const iframe = document.getElementById('stream-iframe');
+    if (iframe) iframe.src = url;
+}
+
+// Cycle through streams
+function cycleStream(direction) {
+    if (!STREAMS.length) return;
+    streamIndex = (streamIndex + direction + STREAMS.length) % STREAMS.length;
+    streamLabel.textContent = STREAMS[streamIndex].name;
+    updateStream(STREAMS[streamIndex].url);
+}
 
 /**
  * Send a controller event to the server
@@ -220,10 +133,7 @@ socket.on('players', data => {
  * @param {boolean} pressed - Button state
  */
 function emitControllerEvent(button, pressed) {
-    const player_name = getPlayerName();
-    if (button === 'CAM_NEXT' && pressed) { cycleStream(1); }
-    else if (button === 'CAM_PREV' && pressed) { cycleStream(-1); }
-    socket.emit('controller', { button, pressed, player_name });
+    socket.emit('controller', {button, pressed, player_name: playerNameInput.value,});
 }
 
 /** @type {boolean[]} - Previous gamepad button states for change detection */
@@ -231,67 +141,134 @@ let lastGamepadButtons = [];
 
 // Handle gamepad input
 function pollGamepad() {
-    if (getSelectedDevice() !== 'gamepad') return;
+    if (inputDeviceSelect.value !== 'gamepad') return;
 
     // Get first connected gamepad
     const gamepad = navigator.getGamepads()[0];
     if (!gamepad) return;
 
-    // Get button states
-    const buttons = gamepad.buttons.map(b => b.pressed);
+    gamepad.buttons.forEach((btn, index) => {
+        if (btn.pressed === lastGamepadButtons[index]) return;
 
-    // Check each button for state changes
-    buttons.forEach((pressed, index) => {
-        // Map control
         const control = CONTROLS.find(c => 
-            Number(document.getElementById(`map_gp_${c.button}`).value) === index
+                Number(document.getElementById(`map_gp_${c.button}`).value) === index
         );
 
-        // Render input when button is pressed
-        if (pressed !== lastGamepadButtons[index]) {
-            renderInput(index, pressed);
-            // Send event if button is mapped
-            if (control) {
-                emitControllerEvent(control.button, pressed);
-            }
-        }            
+        renderInput(index, btn.pressed);
+
+        if (control) {
+            if (control.button === 'CAM_NEXT' && btn.pressed) cycleStream(1);
+            if (control.button === 'CAM_PREV' && btn.pressed) cycleStream(-1);
+            emitControllerEvent(control.button, btn.pressed);
+        }
     });
 
     // Store state for next comparison
-    lastGamepadButtons = buttons;
+    lastGamepadButtons = gamepad.buttons.map(b => b.pressed);
 }
 
 /** @type {Object.<string, boolean>} - Current keyboard key states */
 const keyboardState = {};
 
 // Handle keyboard key press
-window.addEventListener('keydown', e => {
+function handleKeydown(e) {
     // Make sure key isn't already held
-    if (getSelectedDevice() !== 'keyboard' || keyboardState[e.code]) return;
+    if (inputDeviceSelect.value !== 'keyboard' || keyboardState[e.code]) return;
 
-    // Map key
-    const control = CONTROLS.find(c =>
-        document.getElementById(`map_kb_${c.button}`).value === e.code
+    const control = CONTROLS.find(c => 
+            document.getElementById(`map_kb_${c.button}`).value === e.code
     );
 
-    // Mark key as pressed and send event
     keyboardState[e.code] = true;
     renderInput(e.code, true);
+
+    if (!control) return;
+    if (control.button === 'CAM_NEXT') cycleStream(1);
+    if (control.button === 'CAM_PREV') cycleStream(-1);
+
     emitControllerEvent(control.button, true);
-});
+}
 
 // Handle keyboard key release
-window.addEventListener('keyup', e => {
+function handleKeyup(e) {
     // Only process if keyboard is selected
-    if (getSelectedDevice() !== 'keyboard') return;
-    
-    // Map key
-    const control = CONTROLS.find(c => 
-        document.getElementById(`map_kb_${c.button}`).value === e.code
+    if (inputDeviceSelect.value !== 'keyboard') return;
+
+    const control = CONTROLS.find(
+        c => document.getElementById(`map_kb_${c.button}`).value === e.code
     );
 
-    // Mark key as released and send event
     keyboardState[e.code] = false;
     renderInput(e.code, false);
-    emitControllerEvent(control.button, false);
-});
+
+    if (control) emitControllerEvent(control.button, false);
+}
+
+// Panel dragging functionality
+function initDrag() {
+    let isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    // Grab panel
+    panel.addEventListener('mousedown', (e) => {
+        // Don't initiate drag if clicking on interactive elements
+        if (e.target.closest('input, select, button, textarea')) return;
+        
+        isDragging = true;
+        offsetX = e.clientX - panel.offsetLeft;
+        offsetY = e.clientY - panel.offsetTop;
+        document.body.style.userSelect = 'none'; // Prevent text selection during drag
+    });
+
+    // Update panel position
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        panel.style.left = `${e.clientX - offsetX}px`;
+        panel.style.top  = `${e.clientY - offsetY}px`;
+    });
+
+    // Release panel
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        document.body.style.userSelect = ''; // Re-enable text selection
+    });
+}
+
+// Build the control mapping table and fields
+function buildMappingTable() {
+    CONTROLS.forEach(({ button, key_default, gamepad_default }) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${button}</td>
+            <td><input id="map_kb_${button}" class="map-key" size="6" value="${key_default}"></td>
+            <td><input id="map_gp_${button}" class="map-btn" size="1"  value="${gamepad_default}"></td>
+        `;
+        mappingBody.appendChild(row);
+    });
+    mappingBody.addEventListener('change', saveSettings);
+}
+
+function init() {
+    buildMappingTable();
+    loadSettings();
+
+    playerNameInput.addEventListener('input', saveSettings);
+    inputDeviceSelect.addEventListener('change', saveSettings);
+
+    window.addEventListener('keydown', handleKeydown);
+    window.addEventListener('keyup', handleKeyup);
+
+    socket.on('players', ({ players }) => renderPlayers(players));
+
+    initDrag();
+
+    if (STREAMS.length) updateStream(STREAMS[0].url);
+
+    emitControllerEvent('UPDATE', true);
+
+    const loop = () => { pollGamepad(); requestAnimationFrame(loop); };
+    socket.on('connect', loop);
+}
+
+document.addEventListener('DOMContentLoaded', init);
