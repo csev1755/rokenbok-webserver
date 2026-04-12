@@ -1,15 +1,22 @@
 const socket = io();
 
-const panel = document.querySelector('.ui-panel');
+// Main floating panel
+const panel = document.querySelector('.floating-panel');
+const openSettingsButton = document.getElementById('open-settings');
+const playersElement = document.getElementById('players');
+const playerTemplate = document.getElementById('player-template');
 
+// Settings window
+const settingsWindow = document.getElementById('settings-window');
+
+const playerNameInput = document.getElementById('player_name');
 const inputDeviceSelect = document.getElementById('input_device');
+
 const inputElement = document.getElementById('input');
 const inputTemplate = document.getElementById('input-template');
 const mappingBody = document.getElementById('mapping-body');
-
-const playerNameInput = document.getElementById('player_name');
-const playersElement = document.getElementById('players');
-const playerTemplate = document.getElementById('player-template');
+const saveSettingsButton = document.getElementById('save-settings');
+const cancelSettingsButton = document.getElementById('cancel-settings');
 
 // Get the streams if the HTML elements exist
 const streamLabel = document.getElementById('stream-label');
@@ -50,6 +57,8 @@ function saveSettings() {
         inputDevice: inputDeviceSelect.value,
         mappings,
     }));
+    // Send these settings to the server
+    emitControllerEvent('UPDATE', true);
 }
 
 // Load client settings
@@ -74,8 +83,16 @@ function loadSettings() {
     }
 }
 
+function openSettings() {
+    settingsWindow.classList.remove('hidden');
+}
+
+function closeSettings() {
+    settingsWindow.classList.add('hidden');
+}
+
 /**
- * Update UI with current input state
+ * Update settings window with current input state
  * @param {string} button - Button identifier
  * @param {boolean} pressed - Button state
  */
@@ -159,6 +176,10 @@ function pollGamepad() {
         if (control) {
             if (control.button === 'CAM_NEXT' && btn.pressed) cycleStream(1);
             if (control.button === 'CAM_PREV' && btn.pressed) cycleStream(-1);
+            
+            // Don't send input events if settings window is open
+            if (!settingsWindow.classList.contains('hidden')) return;
+            
             emitControllerEvent(control.button, btn.pressed);
         }
     });
@@ -186,6 +207,9 @@ function handleKeydown(e) {
     if (control.button === 'CAM_NEXT') cycleStream(1);
     if (control.button === 'CAM_PREV') cycleStream(-1);
 
+    // Don't send input events if settings window is open
+    if (!settingsWindow.classList.contains('hidden')) return;
+    
     emitControllerEvent(control.button, true);
 }
 
@@ -200,6 +224,9 @@ function handleKeyup(e) {
 
     keyboardState[e.code] = false;
     renderInput(e.code, false);
+
+    // Don't send input events if settings window is open
+    if (!settingsWindow.classList.contains('hidden')) return;
 
     if (control) emitControllerEvent(control.button, false);
 }
@@ -246,15 +273,22 @@ function buildMappingTable() {
         `;
         mappingBody.appendChild(row);
     });
-    mappingBody.addEventListener('change', saveSettings);
 }
 
 function init() {
     buildMappingTable();
     loadSettings();
 
-    playerNameInput.addEventListener('input', saveSettings);
-    inputDeviceSelect.addEventListener('change', saveSettings);
+    openSettingsButton.addEventListener('click', openSettings);
+    saveSettingsButton.addEventListener('click', () => {
+        saveSettings();
+        closeSettings();
+    });
+    cancelSettingsButton.addEventListener('click', closeSettings);
+
+    settingsWindow.addEventListener('click', (e) => {
+        if (e.target === settingsWindow) closeSettings();
+    });
 
     window.addEventListener('keydown', handleKeydown);
     window.addEventListener('keyup', handleKeyup);

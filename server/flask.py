@@ -67,7 +67,7 @@ def init_webserver(bundle_dir, config, command_deck, server_name):
         """
         controller = command_deck.get_controller(request.sid)
         if controller:
-            controller.player_name = data['player_name']
+            controller.player_name = data.get('player_name', controller.player_name)
             controller.handle_input(data)
             socketio.emit("players", {"players": command_deck.get_players()})
 
