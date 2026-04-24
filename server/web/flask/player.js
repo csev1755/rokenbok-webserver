@@ -262,8 +262,8 @@ function initDrag() {
     });
 }
 
-// Build the control mapping table and fields
-function buildMappingTable() {
+function initUI() {
+    // Build the control mapping table and fields
     CONTROLS.forEach(({ button, key_default, gamepad_default }) => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -273,12 +273,8 @@ function buildMappingTable() {
         `;
         mappingBody.appendChild(row);
     });
-}
 
-function init() {
-    buildMappingTable();
-    loadSettings();
-
+    // Event listeners
     openSettingsButton.addEventListener('click', openSettings);
     saveSettingsButton.addEventListener('click', () => {
         saveSettings();
@@ -290,12 +286,18 @@ function init() {
         if (e.target === settingsWindow) closeSettings();
     });
 
+    initDrag();
+}
+
+function init() {
+    initUI();
+
+    loadSettings();
+
     window.addEventListener('keydown', handleKeydown);
     window.addEventListener('keyup', handleKeyup);
 
     socket.on('players', ({ players }) => renderPlayers(players));
-
-    initDrag();
 
     if (STREAMS.length) updateStream(STREAMS[0].url);
 
