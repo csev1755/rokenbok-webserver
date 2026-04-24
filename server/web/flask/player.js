@@ -47,9 +47,10 @@ const CONTROLS = [
 function saveSettings() {
     const mappings = {};
     CONTROLS.forEach(({ button }) => {
+        const map_elements = document.getElementById(`map_${button}`);
         mappings[button] = {
-            keyboard: document.getElementById(`map_kb_${button}`).value,
-            gamepad: document.getElementById(`map_gp_${button}`).value,
+            keyboard: map_elements.dataset.kb,
+            gamepad: map_elements.dataset.gp,
         };
     });
     localStorage.setItem('playerSettings', JSON.stringify({
@@ -76,8 +77,10 @@ function loadSettings() {
     if (settings.mappings) {
         CONTROLS.forEach(control => {
             if (settings.mappings[control.button]) {
-                document.getElementById(`map_kb_${control.button}`).value = settings.mappings[control.button].keyboard;
-                document.getElementById(`map_gp_${control.button}`).value = settings.mappings[control.button].gamepad;
+                const map_elements = document.getElementById(`map_${control.button}`);
+                map_elements.dataset.kb = settings.mappings[control.button].keyboard;
+                map_elements.dataset.gp = settings.mappings[control.button].gamepad;
+                map_elements.textContent = inputDeviceSelect.value === 'keyboard' ? map_elements.dataset.kb : map_elements.dataset.gp;
             }
         });
     }
@@ -89,18 +92,6 @@ function openSettings() {
 
 function closeSettings() {
     settingsWindow.classList.add('hidden');
-}
-
-/**
- * Update settings window with current input state
- * @param {string} button - Button identifier
- * @param {boolean} pressed - Button state
- */
-function renderInput(button, pressed) {
-    const fragment = inputTemplate.content.cloneNode(true);
-    fragment.querySelector('[data-button]').textContent = button;
-    fragment.querySelector('[data-state]').textContent = pressed ? 'Pressed' : 'Released';
-    inputElement.replaceChildren(fragment);
 }
 
 /**
@@ -156,6 +147,12 @@ function emitControllerEvent(button, pressed) {
 /** @type {boolean[]} - Previous gamepad button states for change detection */
 let lastGamepadButtons = [];
 
+/**
+ * Holds a new desired button map while in the settings window
+ * @type {{button: string, device: 'keyboard'|'gamepad'} | null}
+ */
+let newButtonMap = null;
+
 // Handle gamepad input
 function pollGamepad() {
     if (inputDeviceSelect.value !== 'gamepad') return;
@@ -164,14 +161,27 @@ function pollGamepad() {
     const gamepad = navigator.getGamepads()[0];
     if (!gamepad) return;
 
+    // Store the latest buttonpress if changing a setting
+    if (newButtonMap && newButtonMap.device === 'gamepad') {
+        gamepad.buttons.forEach((btn, index) => {
+            if (btn.pressed && !lastGamepadButtons[index]) {
+                const map_elements = document.getElementById(`map_${newButtonMap.button}`);
+                map_elements.dataset.gp = String(index);
+                if (inputDeviceSelect.value === 'gamepad') map_elements.textContent = map_elements.dataset.gp;
+                const btn = document.getElementById(`set_${newButtonMap.button}`);
+                if (btn) btn.textContent = 'Set';
+                newButtonMap = null;
+            }
+        });
+        return;
+    }
+
     gamepad.buttons.forEach((btn, index) => {
         if (btn.pressed === lastGamepadButtons[index]) return;
 
         const control = CONTROLS.find(c => 
                 Number(document.getElementById(`map_gp_${c.button}`).value) === index
         );
-
-        renderInput(index, btn.pressed);
 
         if (control) {
             if (control.button === 'CAM_NEXT' && btn.pressed) cycleStream(1);
@@ -193,15 +203,27 @@ const keyboardState = {};
 
 // Handle keyboard key press
 function handleKeydown(e) {
+
+    // Store the latest keypress if changing a setting
+    if (newButtonMap && newButtonMap.device === 'keyboard') {
+        const map_elements = document.getElementById(`map_${newButtonMap.button}`);
+        map_elements.dataset.kb = e.code;
+        if (inputDeviceSelect.value === 'keyboard') map_elements.textContent = map_elements.dataset.kb;
+        const btn = document.getElementById(`set_${newButtonMap.button}`);
+        if (btn) btn.textContent = 'Set';
+        newButtonMap = null;
+        e.preventDefault();
+        return;
+    }
+
     // Make sure key isn't already held
     if (inputDeviceSelect.value !== 'keyboard' || keyboardState[e.code]) return;
 
-    const control = CONTROLS.find(c => 
-            document.getElementById(`map_kb_${c.button}`).value === e.code
-    );
+    const control = CONTROLS.find(c =>
+            document.getElementById(`map_${c.button}`).dataset.kb === e.code
+        );
 
     keyboardState[e.code] = true;
-    renderInput(e.code, true);
 
     if (!control) return;
     if (control.button === 'CAM_NEXT') cycleStream(1);
@@ -219,11 +241,10 @@ function handleKeyup(e) {
     if (inputDeviceSelect.value !== 'keyboard') return;
 
     const control = CONTROLS.find(
-        c => document.getElementById(`map_kb_${c.button}`).value === e.code
+        c => document.getElementById(`map_${c.button}`).dataset.kb === e.code
     );
 
     keyboardState[e.code] = false;
-    renderInput(e.code, false);
 
     // Don't send input events if settings window is open
     if (!settingsWindow.classList.contains('hidden')) return;
@@ -263,13 +284,17 @@ function initDrag() {
 }
 
 function initUI() {
+    const headerRow = document.createElement('tr');
+    headerRow.innerHTML = '<th>Control</th><th>Mapping</th><th>Edit</th>';
+    mappingBody.appendChild(headerRow);
+
     // Build the control mapping table and fields
     CONTROLS.forEach(({ button, key_default, gamepad_default }) => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${button}</td>
-            <td><input id="map_kb_${button}" class="map-key" size="6" value="${key_default}"></td>
-            <td><input id="map_gp_${button}" class="map-btn" size="1"  value="${gamepad_default}"></td>
+            <td><span id="map_${button}" data-kb="${key_default}" data-gp="${gamepad_default}">${inputDeviceSelect.value === 'keyboard' ? key_default : gamepad_default}</span></td>
+            <td><button id="set_${button}">Set</button></td>
         `;
         mappingBody.appendChild(row);
     });
@@ -280,12 +305,32 @@ function initUI() {
         saveSettings();
         closeSettings();
     });
-    cancelSettingsButton.addEventListener('click', closeSettings);
-
+    cancelSettingsButton.addEventListener('click', () => {
+        loadSettings();
+        closeSettings();
+    });
     settingsWindow.addEventListener('click', (e) => {
         if (e.target === settingsWindow) closeSettings();
     });
 
+    CONTROLS.forEach(({ button }) => {
+        document.getElementById(`set_${button}`).addEventListener('click', (e) => {
+            const btn = e.currentTarget;
+            const prevText = btn.textContent;
+            btn.textContent = 'Waiting...';
+            newButtonMap = { button, device: inputDeviceSelect.value };
+            setTimeout(() => { if (newButtonMap && newButtonMap.button === button) btn.textContent = prevText; }, 5000);
+        });
+    });
+
+    // Change the mapping table on input device selection
+    inputDeviceSelect.addEventListener('change', () => {
+        CONTROLS.forEach(({ button }) => {
+            const map_elements = document.getElementById(`map_${button}`);
+            if (!map_elements) return;
+            map_elements.textContent = inputDeviceSelect.value === 'keyboard' ? map_elements.dataset.kb : map_elements.dataset.gp;
+        });
+    });
     initDrag();
 }
 
