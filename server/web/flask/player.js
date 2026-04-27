@@ -47,10 +47,9 @@ const CONTROLS = [
 function saveSettings() {
     const mappings = {};
     CONTROLS.forEach(({ button }) => {
-        const map_elements = document.getElementById(`map_${button}`);
         mappings[button] = {
-            keyboard: map_elements.dataset.kb,
-            gamepad: map_elements.dataset.gp,
+            keyboard: getButtonMap(button, 'keyboard'),
+            gamepad: getButtonMap(button, 'gamepad'),
         };
     });
     localStorage.setItem('playerSettings', JSON.stringify({
@@ -77,10 +76,9 @@ function loadSettings() {
     if (settings.mappings) {
         CONTROLS.forEach(control => {
             if (settings.mappings[control.button]) {
-                const map_elements = document.getElementById(`map_${control.button}`);
-                map_elements.dataset.kb = settings.mappings[control.button].keyboard;
-                map_elements.dataset.gp = settings.mappings[control.button].gamepad;
-                map_elements.textContent = inputDeviceSelect.value === 'keyboard' ? map_elements.dataset.kb : map_elements.dataset.gp;
+                setButtonMap(control.button, 'keyboard', settings.mappings[control.button].keyboard);
+                setButtonMap(control.button, 'gamepad', settings.mappings[control.button].gamepad);
+                getButtonMap(control.button);
             }
         });
     }
@@ -92,6 +90,33 @@ function openSettings() {
 
 function closeSettings() {
     settingsWindow.classList.add('hidden');
+}
+
+/**
+ * Get the mapping for a button and device
+ * @param {string} button - Button identifier
+ * @param {string} [device] - 'keyboard' or 'gamepad'
+ * @returns {string} The mapping value
+ */
+function getButtonMap(button, device) {
+    const mapEl = document.getElementById(`map_${button}`);
+    if (!mapEl) return '';
+    device = device || inputDeviceSelect.value;
+    return device === 'keyboard' ? mapEl.dataset.kb : mapEl.dataset.gp;
+}
+
+/**
+ * Set the mapping value for a button and device.
+ * @param {string} button - Button identifier
+ * @param {string} device - 'keyboard' or 'gamepad'
+ * @param {string} value - The mapping value
+ */
+function setButtonMap(button, device, value) {
+    const mapEl = document.getElementById(`map_${button}`);
+    if (!mapEl) return '';
+    const key = device === 'keyboard' ? 'kb' : 'gp';
+    mapEl.dataset[key] = value;
+    if (inputDeviceSelect.value === device) mapEl.textContent = value;
 }
 
 /**
@@ -165,11 +190,9 @@ function pollGamepad() {
     if (newButtonMap && newButtonMap.device === 'gamepad') {
         gamepad.buttons.forEach((btn, index) => {
             if (btn.pressed && !lastGamepadButtons[index]) {
-                const map_elements = document.getElementById(`map_${newButtonMap.button}`);
-                map_elements.dataset.gp = String(index);
-                if (inputDeviceSelect.value === 'gamepad') map_elements.textContent = map_elements.dataset.gp;
-                const btn = document.getElementById(`set_${newButtonMap.button}`);
-                if (btn) btn.textContent = 'Set';
+                setButtonMap(newButtonMap.button, 'gamepad', String(index));
+                const btnEl = document.getElementById(`set_${newButtonMap.button}`);
+                if (btnEl) btnEl.textContent = 'Set';
                 newButtonMap = null;
             }
         });
@@ -180,7 +203,7 @@ function pollGamepad() {
         if (btn.pressed === lastGamepadButtons[index]) return;
 
         const control = CONTROLS.find(c => 
-                Number(document.getElementById(`map_gp_${c.button}`).value) === index
+                Number(getButtonMap(c.button, 'gamepad')) === index
         );
 
         if (control) {
@@ -206,11 +229,9 @@ function handleKeydown(e) {
 
     // Store the latest keypress if changing a setting
     if (newButtonMap && newButtonMap.device === 'keyboard') {
-        const map_elements = document.getElementById(`map_${newButtonMap.button}`);
-        map_elements.dataset.kb = e.code;
-        if (inputDeviceSelect.value === 'keyboard') map_elements.textContent = map_elements.dataset.kb;
-        const btn = document.getElementById(`set_${newButtonMap.button}`);
-        if (btn) btn.textContent = 'Set';
+        setButtonMap(newButtonMap.button, 'keyboard', e.code);
+        const btnEl = document.getElementById(`set_${newButtonMap.button}`);
+        if (btnEl) btnEl.textContent = 'Set';
         newButtonMap = null;
         e.preventDefault();
         return;
@@ -220,8 +241,8 @@ function handleKeydown(e) {
     if (inputDeviceSelect.value !== 'keyboard' || keyboardState[e.code]) return;
 
     const control = CONTROLS.find(c =>
-            document.getElementById(`map_${c.button}`).dataset.kb === e.code
-        );
+            getButtonMap(c.button, 'keyboard') === e.code
+    );
 
     keyboardState[e.code] = true;
 
@@ -240,8 +261,8 @@ function handleKeyup(e) {
     // Only process if keyboard is selected
     if (inputDeviceSelect.value !== 'keyboard') return;
 
-    const control = CONTROLS.find(
-        c => document.getElementById(`map_${c.button}`).dataset.kb === e.code
+    const control = CONTROLS.find(c => 
+            getButtonMap(c.button, 'keyboard') === e.code
     );
 
     keyboardState[e.code] = false;
@@ -298,46 +319,55 @@ function initUI() {
         `;
         mappingBody.appendChild(row);
     });
-
+    
+    loadSettings();
+    
     // Event listeners
     openSettingsButton.addEventListener('click', openSettings);
+
     saveSettingsButton.addEventListener('click', () => {
         saveSettings();
         closeSettings();
     });
+
     cancelSettingsButton.addEventListener('click', () => {
         loadSettings();
         closeSettings();
     });
+
     settingsWindow.addEventListener('click', (e) => {
         if (e.target === settingsWindow) closeSettings();
     });
 
+    // Add event listeners to each set button
     CONTROLS.forEach(({ button }) => {
-        document.getElementById(`set_${button}`).addEventListener('click', (e) => {
+        const setBtn = document.getElementById(`set_${button}`);
+        if (!setBtn) return;
+        setBtn.addEventListener('click', (e) => {
             const btn = e.currentTarget;
             const prevText = btn.textContent;
             btn.textContent = 'Waiting...';
             newButtonMap = { button, device: inputDeviceSelect.value };
-            setTimeout(() => { if (newButtonMap && newButtonMap.button === button) btn.textContent = prevText; }, 5000);
+            setTimeout(() => {
+                if (newButtonMap && newButtonMap.button === button) {
+                    btn.textContent = prevText;
+                    newButtonMap = null;
+                }
+            }, 5000);
         });
     });
 
-    // Change the mapping table on input device selection
+    // Load new settings on input device selection
     inputDeviceSelect.addEventListener('change', () => {
-        CONTROLS.forEach(({ button }) => {
-            const map_elements = document.getElementById(`map_${button}`);
-            if (!map_elements) return;
-            map_elements.textContent = inputDeviceSelect.value === 'keyboard' ? map_elements.dataset.kb : map_elements.dataset.gp;
-        });
+        saveSettings();
+        loadSettings();
     });
+
     initDrag();
 }
 
 function init() {
     initUI();
-
-    loadSettings();
 
     window.addEventListener('keydown', handleKeydown);
     window.addEventListener('keyup', handleKeyup);
