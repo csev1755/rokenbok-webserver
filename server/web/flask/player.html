@@ -131,6 +131,7 @@
 </style>
 </head>
 <body>
+
 <div class="stream-container">
   {% if enable_video %}
   <iframe id="stream-iframe" class="stream" src=""></iframe>
@@ -160,6 +161,14 @@
   </div>
 </div>
 
+<template id="player-template">
+  <div class="player">
+    <div><strong>Player Name:</strong> <span data-player-name></span></div>
+    <div><strong>Selection:</strong> <span data-selection></span></div>
+    <div><strong>Vehicle Name:</strong> <span data-vehicle-name></span></div>
+  </div>
+</template>
+
 <div id="settings-window" class="settings-window hidden">
   <div class="settings-content panel">
     <h2>Player Settings</h2>
@@ -186,23 +195,6 @@
     <button id="cancel-settings" type="button">Cancel</button>
   </div>
 </div>
-
-<template id="input-template">
-  <div class="input-row">
-    <strong>Input:</strong> <span data-button></span>
-  </div>
-  <div class="input-row">
-    <strong>State:</strong> <span data-state></span>
-  </div>
-</template>
-
-<template id="player-template">
-  <div class="player">
-    <div><strong>Player Name:</strong> <span data-player-name></span></div>
-    <div><strong>Selection:</strong> <span data-selection></span></div>
-    <div><strong>Vehicle Name:</strong> <span data-vehicle-name></span></div>
-  </div>
-</template>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
 <script src="/player.js"></script>
