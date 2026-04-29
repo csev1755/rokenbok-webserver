@@ -1,0 +1,124 @@
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    font-family: Arial, sans-serif;
+    background: black;
+}
+
+.stream-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* {% if enable_video %} */
+iframe.stream {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+/* {% endif %} */
+
+.overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.panel {
+    position: relative;
+    width: 360px;
+    max-height: 90%;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 16px;
+    border-radius: 12px;
+    user-select: none;
+}
+
+.floating-panel {
+    pointer-events: auto;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+}
+
+select, button, input {
+    margin: 5px 0;
+    padding: 5px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+h1 {
+    margin-top: 0;
+}
+
+.player {
+    padding: 8px;
+}
+
+#players {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+}
+
+#open-settings {
+    width: auto;
+    display: inline-block;
+    padding: 0;
+    margin: 0 0 0 4px;
+    text-align: center;
+    vertical-align: middle;
+    color: rgb(220, 220, 220);
+    cursor: pointer;
+    line-height: 1;
+    border: none;
+    background: none;
+}
+
+#open-settings:hover {
+    opacity: 0.7;
+}
+
+.settings-window {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.settings-window.hidden {
+    display: none;
+}
+
+.settings-content h2 {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+.mapping-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.mapping-table th,
+.mapping-table td {
+    width: 33.33%;
+    text-align: center;
+    vertical-align: middle;
+    padding: 6px 4px;
+}
+
+.mapping-table button {
+    display: inline-block;
+}

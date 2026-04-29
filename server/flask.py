@@ -34,6 +34,14 @@ def init_webserver(bundle_dir, config, command_deck, server_name):
             Response: The player.js file from the web directory.
         """
         return send_from_directory(flask_dir, 'player.js')
+    
+    @flask.route('/player.css')
+    def stylesheet():
+        """
+        Returns:
+            Response: The style.css file from the web directory.
+        """
+        return send_from_directory(flask_dir, 'player.css')
 
     @socketio.on("connect")
     def handle_connect():
