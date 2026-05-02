@@ -173,10 +173,18 @@ function emitControllerEvent(button, pressed) {
 let lastGamepadButtons = [];
 
 /**
- * Holds a new desired button map while in the settings window
- * @type {{button: string, device: 'keyboard'|'gamepad'} | null}
+ * Holds a new desired button map while in the settings window along with the element and its previous text
+ * @type {{button: string, device: 'keyboard'|'gamepad', btn: HTMLElement, prevText: string} | null}
  */
 let newButtonMap = null;
+
+// Clear the pending button map
+function clearButtonMap() {
+    if (newButtonMap) {
+        newButtonMap.btn.textContent = newButtonMap.prevText;
+        newButtonMap = null;
+    }
+}
 
 // Handle gamepad input
 function pollGamepad() {
@@ -322,22 +330,20 @@ function initUI() {
     }
     
     loadSettings();
-    
+
     // Event listeners
     openSettingsButton.addEventListener('click', openSettings);
 
     saveSettingsButton.addEventListener('click', () => {
         saveSettings();
+        clearButtonMap();
         closeSettings();
     });
 
     cancelSettingsButton.addEventListener('click', () => {
+        clearButtonMap();
         loadSettings();
         closeSettings();
-    });
-
-    settingsWindow.addEventListener('click', (e) => {
-        if (e.target === settingsWindow) closeSettings();
     });
 
     // Add event listeners to each set button
@@ -345,16 +351,11 @@ function initUI() {
         const setBtn = document.getElementById(`set_${button}`);
         if (!setBtn) return;
         setBtn.addEventListener('click', (e) => {
+            clearButtonMap();
             const btn = e.currentTarget;
             const prevText = btn.textContent;
             btn.textContent = 'Waiting...';
-            newButtonMap = { button, device: inputDeviceSelect.value };
-            setTimeout(() => {
-                if (newButtonMap && newButtonMap.button === button) {
-                    btn.textContent = prevText;
-                    newButtonMap = null;
-                }
-            }, 5000);
+            newButtonMap = { button, btn, prevText, device: inputDeviceSelect.value };
         });
     });
 
