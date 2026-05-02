@@ -25,7 +25,6 @@ iframe.stream {
 .overlay {
     position: absolute;
     inset: 0;
-    pointer-events: none;
 }
 
 .panel {
@@ -41,7 +40,6 @@ iframe.stream {
 }
 
 .floating-panel {
-    pointer-events: auto;
     position: absolute;
     top: 20px;
     left: 20px;
