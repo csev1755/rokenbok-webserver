@@ -305,20 +305,21 @@ function initDrag() {
 }
 
 function initUI() {
-    const headerRow = document.createElement('tr');
-    headerRow.innerHTML = '<th>Control</th><th>Mapping</th><th>Edit</th>';
-    mappingBody.appendChild(headerRow);
-
-    // Build the control mapping table and fields
-    CONTROLS.forEach(({ button, key_default, gamepad_default }) => {
+    // Build the control mapping table and fields in two columns
+    for (let i = 0; i < CONTROLS.length; i += 2) {
+        const first = CONTROLS[i];
+        const second = CONTROLS[i + 1];
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${button}</td>
-            <td><span id="map_${button}" data-kb="${key_default}" data-gp="${gamepad_default}">${inputDeviceSelect.value === 'keyboard' ? key_default : gamepad_default}</span></td>
-            <td><button id="set_${button}">Set</button></td>
+            <td>${first.button}</td>
+            <td><span id="map_${first.button}" data-kb="${first.key_default}" data-gp="${first.gamepad_default}">${inputDeviceSelect.value === 'keyboard' ? first.key_default : first.gamepad_default}</span></td>
+            <td><button id="set_${first.button}">Set</button></td>
+            <td>${second ? second.button : ''}</td>
+            <td>${second ? `<span id="map_${second.button}" data-kb="${second.key_default}" data-gp="${second.gamepad_default}">${inputDeviceSelect.value === 'keyboard' ? second.key_default : second.gamepad_default}</span>` : ''}</td>
+            <td>${second ? `<button id="set_${second.button}">Set</button>` : ''}</td>
         `;
         mappingBody.appendChild(row);
-    });
+    }
     
     loadSettings();
     

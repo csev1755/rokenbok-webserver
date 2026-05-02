@@ -12,7 +12,7 @@ html, body {
     height: 100%;
 }
 
-/* {% if enable_video %} */
+{% if enable_video %}
 iframe.stream {
     position: absolute;
     inset: 0;
@@ -20,7 +20,7 @@ iframe.stream {
     height: 100%;
     border: none;
 }
-/* {% endif %} */
+{% endif %}
 
 .overlay {
     position: absolute;
@@ -100,9 +100,55 @@ h1 {
     display: none;
 }
 
+.settings-content {
+    width: 750px;
+    max-width: calc(100vw - 40px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .settings-content h2 {
     margin-top: 0;
     margin-bottom: 12px;
+    text-align: center;
+    width: 100%;
+}
+
+.settings-content > div,
+.mapping-title {
+    width: 100%;
+    max-width: 420px;
+}
+
+.settings-content label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.settings-content label strong {
+    margin-bottom: 4px;
+}
+
+.settings-content input,
+.settings-content select {
+    width: 100%;
+    max-width: 320px;
+}
+
+.settings-content button {
+    width: 25%;
+    min-width: 120px;
+    max-width: 160px;
+    margin: 8px 4px 0;
+}
+
+.mapping-title {
+    text-align: center;
+    margin: 10px auto 4px;
+    font-weight: bold;
 }
 
 .mapping-table {
@@ -111,14 +157,32 @@ h1 {
     border-collapse: collapse;
 }
 
-.mapping-table th,
 .mapping-table td {
-    width: 33.33%;
+    width: 16.66%;
     text-align: center;
     vertical-align: middle;
     padding: 6px 4px;
 }
 
+.mapping-table td:nth-child(3) {
+    padding-right: 18px;
+}
+
+.mapping-table td:nth-child(4) {
+    padding-left: 18px;
+}
+
 .mapping-table button {
     display: inline-block;
+    width: auto;
+    min-width: auto;
+    max-width: none;
+    text-align: center;
+    padding: 5px 10px;
+}
+
+.mapping-table span {
+    display: inline-block;
+    width: auto;
+    text-align: center;
 }
