@@ -1,3 +1,4 @@
+import time
 from devices.vehicle import Vehicle
 from server.controller import Controller
 
@@ -116,6 +117,8 @@ class VirtualCommandDeck:
 
     def get_players(self):
         """
+        Retrieves data about all connected players and times out selections if needed.
+
         Returns:
             list[dict]: A list of player metadata dictionaries:
                 - 'player_name' (str or None): Player display name
@@ -126,6 +129,8 @@ class VirtualCommandDeck:
 
         for controller in self.controllers.values():
             if controller.player_id:
+                if controller.selection and time.time() - controller.last_activity > self.config.getint('webserver', 'player_timeout'):
+                    controller.selection = None
                 players.append({
                     "player_name": controller.player_name,
                     "selection": controller.selection,

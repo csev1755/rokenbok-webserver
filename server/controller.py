@@ -1,3 +1,5 @@
+import time
+
 class Controller:
     """
     A single logical controller assigned to a client.
@@ -9,6 +11,7 @@ class Controller:
         player_name (str or None): Display name of the player using this controller.
         player_id (str or None): Socket.IO session identifier for the connected player.
         buttons (set): Set of currently pressed button identifiers.
+        last_activity (float): Timestamp of the last input.
     """
 
     def __init__(self, command_deck, controller_id, logger=None):
@@ -25,6 +28,7 @@ class Controller:
         self.player_id = None
         self.controller_id = controller_id
         self.buttons = set()
+        self.last_activity = time.time()
         self.logger = logger
 
     def cycle_vehicle_select(self, delta):
@@ -72,3 +76,4 @@ class Controller:
         vehicle = self.command_deck.get_vehicle(self.selection) or None
         if vehicle:
             vehicle.control(self, self.command_deck)
+            self.last_activity = time.time()
