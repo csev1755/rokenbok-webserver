@@ -32,11 +32,11 @@ jobs:
       - name: Build
         env:
           REF_NAME: ${{ github.ref_name }}
-          GO2RTC_VERSION: "1.9.14"
-          GO2RTC_URL: "https://github.com/AlexxIT/go2rtc/releases/download/v${{ env.GO2RTC_VERSION }}/go2rtc_${{ matrix.go2rtc_arch }}.zip"
+          GO2RTC_VERSION: '1.9.14'
+          GO2RTC_ARCH: ${{ matrix.go2rtc_arch }}
         run: | 
           mkdir bin staging
-          curl -L "$GO2RTC_URL" -o go2rtc.zip
+          curl -L "https://github.com/AlexxIT/go2rtc/releases/download/v${GO2RTC_VERSION}/go2rtc_${GO2RTC_ARCH}.zip" -o go2rtc.zip
           unzip -o go2rtc.zip -d bin/
           EXECUTABLE=$(ls bin/go2rtc*)
           mv "$EXECUTABLE" "${EXECUTABLE%.*}"
