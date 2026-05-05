@@ -4,8 +4,7 @@ from flask import Flask, request, send_from_directory, render_template
 from flask_socketio import SocketIO
 
 def init_webserver(bundle_dir, config, command_deck, server_name):
-    web_dir = os.path.join(bundle_dir, "server", "web")
-    flask_dir = os.path.join(web_dir, "flask")
+    flask_dir = os.path.join(bundle_dir, "server", "web")
 
     flask = Flask(server_name, static_folder=flask_dir, template_folder=flask_dir)
     socketio = SocketIO(flask)
