@@ -1,8 +1,8 @@
-# rokenbok-webserver
+# rokenbok-webserver 
 
-A Python Flask application for hosting a Rokenbok multiplayer web interface with video streams.
+[![Download Latest](https://img.shields.io/github/v/release/csev1755/rokenbok-webserver?style=for-the-badge&label=download%20latest&color=green)](https://github.com/csev1755/rokenbok-webserver/releases/latest)
 
-Configuration is done entirely within the [rokenbok_webserver.ini](/rokenbok_webserver.ini) file the server reads on startup. All available options are noted there.
+A Python Flask application that serves a Rokenbok multiplayer web interface with optional live video. Download and extract, edit [rokenbok_webserver.ini,](/rokenbok_webserver.ini) and run the executable!
 
 ## Supported Devices
 
