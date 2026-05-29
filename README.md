@@ -16,7 +16,7 @@ A Python Flask executable that serves a Rokenbok multiplayer web interface with 
 
 2. Download and extract the [latest server files](https://github.com/csev1755/rokenbok-webserver/releases/latest)
 
-3. Review and edit the options within [rokenbok_webserver.ini](/rokenbok_webserver.ini)
+3. Review and edit the options within [settings.ini](/settings.ini)
 
 4. Start the executable!
    - On macOS you will need to [allow the server to run](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac)

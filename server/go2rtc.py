@@ -13,7 +13,7 @@ class Go2RTC:
         self.config = os.path.join(bundle_dir, "bin", "go2rtc.yaml")
         self.ffmpeg = os.path.join(bundle_dir, "bin", "ffmpeg.bin")
 
-        # Get video stream config from rokenbok_webserver.ini
+        # Get video stream config from settings.ini
         streams = {
             stream: device
             for stream, device in config.items('video_streams')

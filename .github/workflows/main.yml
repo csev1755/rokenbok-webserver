@@ -56,8 +56,8 @@ jobs:
           chmod +x bin/ffmpeg.bin
 
           uv sync
-          uv run pyinstaller rokenbok_webserver.spec
-          cp dist/rokenbok_webserver* rokenbok_webserver.ini staging/
+          uv run pyinstaller pyinstaller.spec
+          cp dist/rokenbok_webserver* settings.ini staging/
 
         shell: bash
 

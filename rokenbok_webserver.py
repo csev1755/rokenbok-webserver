@@ -19,7 +19,7 @@ else:
 
 config = configparser.ConfigParser()
 config.optionxform = str
-config_file = os.path.join(app_dir, "rokenbok_webserver.ini")
+config_file = os.path.join(app_dir, "settings.ini")
 
 class LogFormatter(logging.Formatter):
     # https://talyian.github.io/ansicolors/

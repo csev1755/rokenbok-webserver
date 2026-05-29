@@ -15,7 +15,7 @@ An Arduino sketch for communication with the Rokenbok SmartPort via serial comma
 
 2. [Install the sketch with Arduino IDE](https://support.arduino.cc/hc/en-us/articles/4733418441116-Upload-a-sketch-in-Arduino-IDE) and make note of the serial device name/path
 
-3. Modify the following settings in [rokenbok_webserver.ini:](/rokenbok_webserver.ini)
+3. Modify the following in [settings.ini:](/settings.ini)
 
     - Add the serial device name/path you noted earlier as `serial_port` under `[smartport_arduino]`
 
