@@ -1,5 +1,5 @@
 __pycache__
+.venv
+bin
 build
 dist
-venv
-bin
