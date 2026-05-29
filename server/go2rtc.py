@@ -11,6 +11,7 @@ class Go2RTC:
 
         self.bin = os.path.join(bundle_dir, "bin", "go2rtc")
         self.config = os.path.join(bundle_dir, "bin", "go2rtc.yaml")
+        self.ffmpeg = os.path.join(bundle_dir, "bin", "ffmpeg.bin")
 
         # Get video stream config from rokenbok_webserver.ini
         streams = {
@@ -21,7 +22,7 @@ class Go2RTC:
         
         # Construct go2rtc config
         self.go2rtc_config = {
-            'ffmpeg': {'mjpeg': '-c:v mjpeg -q:v 2 -vf "unsharp=5:5:0.5:5:5:0.0"'},
+            'ffmpeg': {'bin': self.ffmpeg, 'mjpeg': '-c:v mjpeg -q:v 2 -vf "unsharp=5:5:0.5:5:5:0.0"'},
             'webrtc': {'listen': ':8555', 'candidates': ['stun:8555']},
             'streams': streams,
             'log': {'format': 'text', 'level': log_level}
