@@ -1,3 +1,4 @@
+import colorlog
 import configparser
 import logging
 import os
@@ -21,27 +22,6 @@ config = configparser.ConfigParser()
 config.optionxform = str
 config_file = os.path.join(app_dir, "settings.ini")
 
-class LogFormatter(logging.Formatter):
-    # https://talyian.github.io/ansicolors/
-    cyan = "\x1b[36m"
-    yellow = "\x1b[33m"
-    red = "\x1b[31m"
-    reset = "\x1b[0m"
-
-    base_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-
-    FORMATS = {
-        logging.DEBUG: base_format,
-        logging.INFO: cyan + base_format + reset,
-        logging.WARNING: yellow + base_format + reset,
-        logging.ERROR: red + base_format + reset
-    }
-
-    def format(self, record):
-        log_format = self.FORMATS.get(record.levelno)
-        formatter = logging.Formatter(log_format)
-        return formatter.format(record)
-
 if __name__ == '__main__':
 
     # Read config file
@@ -53,9 +33,17 @@ if __name__ == '__main__':
     # Set log level and config for main app
     log_level = config['webserver']['log_level']
 
-    console_handler = logging.StreamHandler()
+    console_handler = colorlog.StreamHandler()
     console_handler.setLevel(log_level)
-    console_handler.setFormatter(LogFormatter())
+    console_handler.setFormatter(colorlog.ColoredFormatter(
+        '%(asctime)s - %(log_color)s%(levelname)s%(reset)s - %(name)s - %(message)s',
+        log_colors={
+		'DEBUG':    'cyan',
+		'INFO':     'green',
+		'WARNING':  'yellow',
+		'ERROR':    'red',
+		'CRITICAL': 'red,bg_white',
+	},))
 
     logging.basicConfig(level=log_level, handlers=[console_handler])
     logger = logging.getLogger(version_string)
