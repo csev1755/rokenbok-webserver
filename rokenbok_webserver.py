@@ -1,3 +1,4 @@
+import argparse
 import colorlog
 import configparser
 import logging
@@ -18,13 +19,17 @@ else:
     app_dir = "."
     bundle_dir = "."
 
+argparser = argparse.ArgumentParser()
 config = configparser.ConfigParser()
 config.optionxform = str
-config_file = os.path.join(app_dir, "settings.ini")
 
 if __name__ == '__main__':
 
+    argparser.add_argument("-c", "--config", dest="config_file", help="Name of the config file", default="settings.ini")
+    args = argparser.parse_args()
+
     # Read config file
+    config_file = os.path.join(app_dir, args.config_file)
     if not os.path.exists(config_file):
         input(f"Config file '{config_file}' not found, press Enter to quit ")
         sys.exit(0)
