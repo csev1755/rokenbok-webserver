@@ -72,7 +72,7 @@ class Go2RTC:
             try:
                 devices = self.get_devices("http://127.0.0.1:1984/api/ffmpeg/devices")
                 for device in devices:
-                    self.logger.info(f"Video Device {device['index']} - {device['name']} - {device['url']}")
+                    print(f" * Found go2rtc video device {device['index']} - {device['name']} - {device['url']}")
                 return
             except Exception:
                 time.sleep(0.2)
