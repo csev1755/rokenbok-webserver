@@ -36,10 +36,12 @@ if __name__ == '__main__':
     config.read(config_file)
 
     # Set log level and config for main app
-    log_level = config['webserver']['log_level']
+    main_log_level = config['logging']['main']
+    flask_log_level = config['logging']['flask']
+    go2rtc_log_level = config['logging']['go2rtc']
 
     console_handler = colorlog.StreamHandler()
-    console_handler.setLevel(log_level)
+    console_handler.setLevel(main_log_level)
     console_handler.setFormatter(colorlog.ColoredFormatter(
         '%(asctime)s - %(log_color)s%(levelname)s%(reset)s - %(name)s - %(message)s',
         log_colors={
@@ -50,12 +52,11 @@ if __name__ == '__main__':
 		'CRITICAL': 'red,bg_white',
 	},))
 
-    logging.basicConfig(level=log_level, handlers=[console_handler])
+    logging.basicConfig(level=main_log_level, handlers=[console_handler])
     logger = logging.getLogger(version_string)
 
     # Set log level for Flask
-    if not config['webserver'].getboolean('flask_logs'):
-        logging.getLogger('werkzeug').setLevel(logging.ERROR)
+    logging.getLogger('werkzeug').setLevel(flask_log_level)
 
     # Init command deck and webserver
     command_deck = VirtualCommandDeck(config=config, logger=logger)
@@ -64,7 +65,7 @@ if __name__ == '__main__':
     # Start go2rtc if configured
     go2rtc = None
     if config['webserver'].getboolean('enable_video'):
-        go2rtc = Go2RTC(bundle_dir, config, log_level, logger)
+        go2rtc = Go2RTC(bundle_dir, config, go2rtc_log_level, logger)
         go2rtc.start()
 
     def handle_exit(sig, frame):
