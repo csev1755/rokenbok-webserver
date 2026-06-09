@@ -119,6 +119,12 @@ h1 {
     max-width: 420px;
 }
 
+.settings-content .radio-toggles {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 .settings-content label {
     display: flex;
     flex-direction: column;

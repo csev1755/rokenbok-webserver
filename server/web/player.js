@@ -11,12 +11,15 @@ const settingsWindow = document.getElementById('settings-window');
 
 const playerNameInput = document.getElementById('player_name');
 const inputDeviceSelect = document.getElementById('input_device');
+const videoToggleInputs = document.querySelectorAll('input[name="video_toggle"]');
 
 const inputElement = document.getElementById('input');
 const inputTemplate = document.getElementById('input-template');
 const mappingBody = document.getElementById('mapping-body');
 const saveSettingsButton = document.getElementById('save-settings');
 const cancelSettingsButton = document.getElementById('cancel-settings');
+
+let videoToggle = true;
 
 // Get the streams if the HTML elements exist
 const streamLabel = document.getElementById('stream-label');
@@ -52,8 +55,11 @@ function saveSettings() {
             gamepad: getButtonMap(button, 'gamepad'),
         };
     });
+    const saved = localStorage.getItem('playerSettings');
+    const settings = saved ? JSON.parse(saved) : {};
     localStorage.setItem('playerSettings', JSON.stringify({
-        playerName:  playerNameInput.value,
+        ...settings,
+        playerName: playerNameInput.value,
         inputDevice: inputDeviceSelect.value,
         mappings,
     }));
@@ -64,8 +70,7 @@ function saveSettings() {
 // Load client settings
 function loadSettings() {
     const saved = localStorage.getItem('playerSettings');
-    if (!saved) return;
-    const settings = JSON.parse(saved);
+    const settings = saved ? JSON.parse(saved) : {};
 
     if (settings.playerName) {
         playerNameInput.value = settings.playerName;
@@ -80,6 +85,12 @@ function loadSettings() {
                 setButtonMap(control.button, 'gamepad', settings.mappings[control.button].gamepad);
                 getButtonMap(control.button);
             }
+        });
+    }
+    if (settings.videoToggle !== undefined) {
+        videoToggle = settings.videoToggle;
+        videoToggleInputs.forEach(input => {
+            input.checked = input.value === (videoToggle ? 'on' : 'off');
         });
     }
 }
@@ -149,12 +160,26 @@ let streamIndex = 0;
 // Update video stream source
 function updateStream(url) {
     const iframe = document.getElementById('stream-iframe');
-    if (iframe) iframe.src = url;
+    if (iframe && videoToggle) iframe.src = url;
+}
+
+// Toggle video stream
+function toggleVideo() {
+    const iframe = document.getElementById('stream-iframe');
+    if (!iframe) return;
+
+    if (videoToggle && STREAMS.length) {
+        iframe.src = STREAMS[streamIndex].url;
+        if (streamLabel) streamLabel.textContent = STREAMS[streamIndex].name;
+    } else {
+        iframe.src = '';
+        if (streamLabel) streamLabel.textContent = 'Video Disabled';
+    }
 }
 
 // Cycle through streams
 function cycleStream(direction) {
-    if (!STREAMS.length) return;
+    if (!STREAMS.length || !videoToggle) return;
     streamIndex = (streamIndex + direction + STREAMS.length) % STREAMS.length;
     streamLabel.textContent = STREAMS[streamIndex].name;
     updateStream(STREAMS[streamIndex].url);
@@ -330,6 +355,7 @@ function initUI() {
     }
     
     loadSettings();
+    toggleVideo();
 
     // Event listeners
     openSettingsButton.addEventListener('click', openSettings);
@@ -363,6 +389,19 @@ function initUI() {
     inputDeviceSelect.addEventListener('change', () => {
         saveSettings();
         loadSettings();
+    });
+    videoToggleInputs.forEach(input => {
+        input.addEventListener('change', () => {
+            const value = input.value === 'on';
+            videoToggle = value;
+            const saved = localStorage.getItem('playerSettings');
+            const settings = saved ? JSON.parse(saved) : {};
+            localStorage.setItem('playerSettings', JSON.stringify({
+                ...settings,
+                videoToggle: value,
+            }));
+            toggleVideo();
+        });
     });
 
     initDrag();
