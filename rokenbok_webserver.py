@@ -1,6 +1,7 @@
 import argparse
 import colorlog
 import configparser
+import datetime
 import logging
 import os
 import signal
@@ -25,20 +26,18 @@ config.optionxform = str
 
 if __name__ == '__main__':
 
+    # Read config file
     argparser.add_argument("-c", "--config", dest="config_file", help="Name of the config file", default="settings.ini")
     args = argparser.parse_args()
 
-    # Read config file
     config_file = os.path.join(app_dir, args.config_file)
     if not os.path.exists(config_file):
         input(f"Config file '{config_file}' not found, press Enter to quit ")
         sys.exit(0)
     config.read(config_file)
 
-    # Set log level and config for main app
+    # Configure logging
     main_log_level = config['logging']['main']
-    flask_log_level = config['logging']['flask']
-    go2rtc_log_level = config['logging']['go2rtc']
 
     console_handler = colorlog.StreamHandler()
     console_handler.setLevel(main_log_level)
@@ -52,11 +51,20 @@ if __name__ == '__main__':
 		'CRITICAL': 'red,bg_white',
 	},))
 
-    logging.basicConfig(level=main_log_level, handlers=[console_handler])
-    logger = logging.getLogger(version_string)
+    handlers: list[logging.Handler] = [console_handler]
+    if config['logging'].getboolean('file'):
+        log_filename = f"rokenbok-webserver-{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log"
+        logfile_handler = logging.FileHandler(os.path.join(app_dir, log_filename))
+        logfile_handler.setFormatter(logging.Formatter(
+            '%(asctime)s - %(levelname)s - %(name)s - %(message)s'
+        ))
+        handlers.append(logfile_handler)
+    logging.basicConfig(level=main_log_level, handlers=handlers)
 
-    # Set log level for Flask
+    flask_log_level = config['logging']['flask']
     logging.getLogger('werkzeug').setLevel(flask_log_level)
+
+    logger = logging.getLogger(version_string)
 
     # Init command deck and webserver
     command_deck = VirtualCommandDeck(config=config, logger=logger)
@@ -64,6 +72,7 @@ if __name__ == '__main__':
 
     # Start go2rtc if configured
     go2rtc = None
+    go2rtc_log_level = config['logging']['go2rtc']
     if config['webserver'].getboolean('enable_video'):
         go2rtc = Go2RTC(bundle_dir, config, go2rtc_log_level, logger)
         go2rtc.start()
