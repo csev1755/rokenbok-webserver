@@ -10,17 +10,23 @@ class SmartPortArduino(Vehicle):
 
     def __init__(self, config, id, name, logger=None):
         super().__init__(self, config, id, name, logger)
-        if SmartPortArduino.serial is None:
-            self.connect_serial()
 
     def connect_serial(self):
-        try:
-            SmartPortArduino.serial = serial.Serial(self.config['serial_port'], 1000000)
-            self.logger.info(f"Connected to serial at {self.config['serial_port']}")
-        except:
-            self.logger.error(f"Could not connect to SmartPort Arduino at \"{self.config['serial_port']}\"")
+        """
+        Establishes a serial connection to the SmartPort Arduino if not already connected.
+        """
+        if not SmartPortArduino.serial:
+            try:
+                SmartPortArduino.serial = serial.Serial(self.config['serial_port'], 1000000)
+                print(f" * Connected to SmartPort Arduino at '{self.config['serial_port']}'")
+                return True
+            except Exception as e:
+                self.logger.error(f"Cannot connect to SmartPort Arduino at '{self.config['serial_port']}'")
+                self.logger.debug(e)
+                return False
+        else:
+            return True
 
-    @classmethod
     def encode_controller_state(self, controller):
         """
         Encodes controller button states into two bytes for serial transmission.
@@ -72,6 +78,9 @@ class SmartPortArduino(Vehicle):
         Args:
             packet (bytearray): The packet to transmit.
         """
+        if not self.connect_serial():
+            return
+
         try:
             SmartPortArduino.serial.write(packet)
 
@@ -82,10 +91,19 @@ class SmartPortArduino(Vehicle):
                 if start != -1 and len(raw) >= start + 27 and raw[start + 26] == 255:
                     frame = raw[start:start + 27]
                     if not frame[1]:
-                        self.logger.error(f"SmartPortArduino Status - SmartPort Communication Down")
-                    self.logger.debug(f"SmartPortArduino Controllers - {[x == 1 for x in frame[2:14]]}")
+                        self.logger.debug(f"SmartPortArduino - Invalid packet: {raw}")
+                        self.logger.warning(f"SmartPortArduino - SmartPort communication error")
+
                     self.logger.debug(f"SmartPortArduino Selections - {[None if x == 15 else x + 1 for x in frame[14:26]]}")
-         
-        except:
-            self.logger.error(f"SmartPortArduino Status - Serial Communication Down")
-            self.connect_serial() # try to connect to serial for next time
+                
+                else:
+                    self.logger.debug(f"SmartPortArduino - Invalid packet: {raw}")
+                    self.logger.warning(f"SmartPortArduino - SmartPort communication error")
+            
+            else:
+                self.logger.debug(f"SmartPortArduino - No packet received")
+
+        except Exception as e:
+            self.logger.debug(e)
+            self.logger.error(f"Cannot connect to SmartPort Arduino at '{self.config['serial_port']}'")
+            SmartPortArduino.serial = None
