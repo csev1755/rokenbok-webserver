@@ -8,7 +8,7 @@ class SmartPortArduino(Vehicle):
     type = "smartport_arduino"
     serial = None
 
-    def __init__(self, config, id, name, logger=None):
+    def __init__(self, config, id, name, logger):
         super().__init__(self, config, id, name, logger)
 
     def connect_serial(self):

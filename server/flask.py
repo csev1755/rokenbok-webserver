@@ -48,7 +48,7 @@ def init_webserver(bundle_dir, config, command_deck, server_name):
         Assigns a controller to the connecting player and broadcasts
         the updated player list to all clients.
         """
-        command_deck.assign_controller(request.sid)
+        command_deck.assign_controller(request.sid) # pyright: ignore[reportAttributeAccessIssue]
         socketio.emit("players", {"players": command_deck.get_players()})
 
     @socketio.on("disconnect")
@@ -57,7 +57,7 @@ def init_webserver(bundle_dir, config, command_deck, server_name):
         Releases the controller from the disconnecting player and broadcasts
         the updated player list to all clients.
         """
-        command_deck.release_controller(request.sid)
+        command_deck.release_controller(request.sid) # pyright: ignore[reportAttributeAccessIssue]
         socketio.emit("players", {"players": command_deck.get_players()})
 
     @socketio.on("controller")
@@ -72,7 +72,7 @@ def init_webserver(bundle_dir, config, command_deck, server_name):
                 - 'button' (str): Button identifier
                 - 'pressed' (bool): Button state
         """
-        controller = command_deck.get_controller(request.sid)
+        controller = command_deck.get_controller(request.sid) # pyright: ignore[reportAttributeAccessIssue]
         if controller:
             controller.player_name = data.get('player_name', controller.player_name)
             controller.handle_input(data)

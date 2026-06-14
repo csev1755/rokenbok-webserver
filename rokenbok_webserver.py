@@ -15,14 +15,14 @@ version_string = "rokenbok-webserver (dev)"
 
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     app_dir = os.path.abspath(os.path.dirname(sys.executable))
-    bundle_dir = sys._MEIPASS
+    bundle_dir = getattr(sys, '_MEIPASS') 
 else:
     app_dir = "."
     bundle_dir = "."
 
 argparser = argparse.ArgumentParser()
 config = configparser.ConfigParser()
-config.optionxform = str
+config.optionxform = lambda optionstr: optionstr
 
 if __name__ == '__main__':
 
@@ -85,4 +85,4 @@ if __name__ == '__main__':
 
     signal.signal(signal.SIGINT, handle_exit)
 
-    socketio.run(flask, host=config['webserver']['listen_ip'], port=config['webserver']['listen_port'])
+    socketio.run(flask, host=config['webserver']['listen_ip'], port=config['webserver'].getint('listen_port'))

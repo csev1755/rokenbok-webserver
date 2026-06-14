@@ -129,12 +129,16 @@ class VirtualCommandDeck:
 
         for controller in self.controllers.values():
             if controller.player_id:
+
                 if controller.selection and time.time() - controller.last_activity > self.config.getint('webserver', 'player_timeout'):
                     controller.selection = None
+                
+                player_vehicle = self.get_vehicle(controller.selection) if controller.selection else None
+                
                 players.append({
                     "player_name": controller.player_name,
                     "selection": controller.selection,
-                    "selection_name": self.get_vehicle(controller.selection).name if controller.selection else None
+                    "selection_name": player_vehicle.name if player_vehicle else None
                 })
 
         return players

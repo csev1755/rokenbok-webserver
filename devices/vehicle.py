@@ -23,7 +23,7 @@ class Vehicle(ABC):
         super().__init_subclass__()
         Vehicle.vehicle_types[cls.type] = cls
 
-    def __init__(self, command_deck, config, id, name, logger=None):
+    def __init__(self, command_deck, config, id, name, logger):
         """
         Initializes a vehicle instance.
 
@@ -40,7 +40,7 @@ class Vehicle(ABC):
         self.logger = logger
 
     @classmethod
-    def configure(cls, type, config, id, name, logger=None):
+    def configure(cls, type, config, id, name, logger):
         """
         Factory method to create a vehicle instance of the specified type.
 

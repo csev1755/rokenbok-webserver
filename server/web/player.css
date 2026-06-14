@@ -12,7 +12,6 @@ html, body {
     height: 100%;
 }
 
-{% if enable_video %}
 iframe.stream {
     position: absolute;
     inset: 0;
@@ -20,7 +19,6 @@ iframe.stream {
     height: 100%;
     border: none;
 }
-{% endif %}
 
 .overlay {
     position: absolute;

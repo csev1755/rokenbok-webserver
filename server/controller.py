@@ -14,7 +14,7 @@ class Controller:
         last_activity (float): Timestamp of the last input.
     """
 
-    def __init__(self, command_deck, controller_id, logger=None):
+    def __init__(self, command_deck, controller_id, logger):
         """
         Initializes a controller instance.
 
