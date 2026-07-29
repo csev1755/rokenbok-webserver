@@ -66,7 +66,7 @@ class SmartPortArduino(Vehicle):
         for controller in command_deck.controllers.values():
             p_id = controller.controller_id + 10 or 0
             v_sel = 15 if controller.selection is None else controller.selection - 1
-            byte1, byte2 = self.encode_controller_state(controller)
+            byte1, byte2 = self.encode_controller_state(controller) if controller.selection is not None else (0, 0)
             packet.extend([p_id, v_sel, byte1, byte2])
         packet.append(255)
         self.send_and_receive_packet(packet)
