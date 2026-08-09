@@ -16,6 +16,7 @@ const videoToggleInputs = document.querySelectorAll('input[name="video_toggle"]'
 const inputElement = document.getElementById('input');
 const inputTemplate = document.getElementById('input-template');
 const mappingBody = document.getElementById('mapping-body');
+const buttonFeedbackElement = document.getElementById('button-feedback');
 const saveSettingsButton = document.getElementById('save-settings');
 const cancelSettingsButton = document.getElementById('cancel-settings');
 
@@ -101,6 +102,28 @@ function openSettings() {
 
 function closeSettings() {
     settingsWindow.classList.add('hidden');
+}
+
+// Update button feedback
+function updateButtonFeedback(message) {
+    if (buttonFeedbackElement) {
+        buttonFeedbackElement.textContent = message;
+        buttonFeedbackElement.parentElement.style.visibility = message ? 'visible' : 'hidden';
+    }
+}
+
+// Clear button feedback
+function clearButtonFeedback() {
+    updateButtonFeedback('');
+}
+
+// Update or clear button feedback based on input device
+function getButtonFeedback(value, device) {
+    if (!value || (device && device !== inputDeviceSelect.value)) {
+        clearButtonFeedback();
+        return;
+    }
+    updateButtonFeedback(value);
 }
 
 /**
@@ -232,6 +255,14 @@ function pollGamepad() {
         return;
     }
 
+    // Update button feedback
+    const pressedIndex = gamepad.buttons.findIndex((btn, index) => btn.pressed && !lastGamepadButtons[index]);
+    if (pressedIndex >= 0) {
+        getButtonFeedback(String(pressedIndex), 'gamepad');
+    } else if (!gamepad.buttons.some((btn) => btn.pressed)) {
+        clearButtonFeedback();
+    }
+
     gamepad.buttons.forEach((btn, index) => {
         if (btn.pressed === lastGamepadButtons[index]) return;
 
@@ -270,6 +301,11 @@ function handleKeydown(e) {
         return;
     }
 
+    // Show pressed button feedback
+    if (inputDeviceSelect.value === 'keyboard' && !settingsWindow.classList.contains('hidden')) {
+        getButtonFeedback(e.code, 'keyboard');
+    }
+
     // Make sure key isn't already held
     if (inputDeviceSelect.value !== 'keyboard' || keyboardState[e.code]) return;
 
@@ -299,6 +335,11 @@ function handleKeyup(e) {
     );
 
     keyboardState[e.code] = false;
+
+    // Clear released button feedback
+    if (inputDeviceSelect.value === 'keyboard' && !settingsWindow.classList.contains('hidden')) {
+        clearButtonFeedback();
+    }
 
     // Don't send input events if settings window is open
     if (!settingsWindow.classList.contains('hidden')) return;
@@ -389,7 +430,9 @@ function initUI() {
     inputDeviceSelect.addEventListener('change', () => {
         saveSettings();
         loadSettings();
+        clearButtonFeedback();
     });
+
     videoToggleInputs.forEach(input => {
         input.addEventListener('change', () => {
             const value = input.value === 'on';

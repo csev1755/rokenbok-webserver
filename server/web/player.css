@@ -153,6 +153,14 @@ h1 {
     font-weight: bold;
 }
 
+.button-feedback-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin: 8px auto 0;
+}
+
 .mapping-table {
     width: 100%;
     table-layout: fixed;
