@@ -14,3 +14,9 @@ dependencies = [
     "PyYAML",
     "requests",
 ]
+
+[dependency-groups]
+docs = [
+    "sphinx",
+    "furo"
+]
