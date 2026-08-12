@@ -1,6 +1,9 @@
 name: Build docs with Sphinx
 
-on: push
+on:
+  push:
+    paths:
+      - 'docs/**'
 
 jobs:
   build:
