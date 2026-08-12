@@ -13,6 +13,7 @@ from server.deck import VirtualCommandDeck
 
 version_string = "rokenbok-webserver (dev)"
 
+# Handle paths when bundled via PyInstaller
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     app_dir = os.path.abspath(os.path.dirname(sys.executable))
     bundle_dir = getattr(sys, '_MEIPASS') 

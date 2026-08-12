@@ -6,6 +6,10 @@ import yaml
 from urllib import parse
 
 class Go2RTC:
+    """
+    Manages the go2rtc streamer as a subprocess
+    """
+
     def __init__(self, bundle_dir, config, log_level, logger):
         self.logger = logger
         self.proc = None
@@ -30,28 +34,41 @@ class Go2RTC:
         }
 
     def get_devices(self, url):
+        """
+        Queries the go2rtc API to retrieve and transform video device URLs
+
+        Returns:
+            list: A list of dictionaries containing device information (index, name, url, source_url)
+        """
         response = requests.get(url)
         data = response.json()
-
+        
         devices = []
         video_count = 0
         for source in data.get('sources', []):
             url_str = source.get('url', '')
+            
+            # Skip sources that are missing a URL string
             if not url_str:
                 continue
 
+            # Filter for video devices
             parsed_url = parse.urlparse(url_str)
             query_params = parse.parse_qs(parsed_url.query)
             if 'video' not in query_params:
                 continue
 
+            # Enumerate the devices instead of using their names to handle duplicates
             device_name = query_params['video'][0]
             query_params['video'] = [str(video_count)]
             new_query = parse.urlencode(query_params, doseq=True)
+            
+            # Remove #hardware from the URL string to disable hardware acceleration
             fragment_parts = parsed_url.fragment.split('#')
             clean_fragment = '#'.join(part for part in fragment_parts if 'hardware' not in part)
             modified_url = parse.urlunparse(parsed_url._replace(query=new_query, fragment=clean_fragment))
 
+            # Append to a dictionary to print later
             devices.append({
                 'index': video_count,
                 'name': device_name,
