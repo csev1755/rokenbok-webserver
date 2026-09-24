@@ -33,7 +33,6 @@ jobs:
           REF_NAME: ${{ github.ref_name }}
           GO2RTC_ARCH: ${{ matrix.go2rtc_arch }}
           GO2RTC_VERSION: '1.9.14'
-          FFMPEG_VERSION: '8.1.2'
         run: | 
 
           mkdir bin staging
@@ -42,17 +41,23 @@ jobs:
           unzip -o go2rtc.zip -d bin/
           EXECUTABLE=$(ls bin/go2rtc*)
           mv "$EXECUTABLE" "${EXECUTABLE%.*}"
+
           chmod +x bin/go2rtc
 
-          if [ "${GO2RTC_ARCH}" = "win64" ]; then
-            curl -L "http://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-${FFMPEG_VERSION}-essentials_build.zip" -o ffmpeg.zip
-            unzip -j -o ffmpeg.zip **/ffmpeg.exe -d bin/
-            mv bin/ffmpeg.exe bin/ffmpeg.bin
-          else
-            curl -L "https://deolaha.ca/pub/ffmpeg/ffmpeg-${FFMPEG_VERSION}.zip" -o ffmpeg.zip
-            unzip -o ffmpeg.zip -d bin/
-            mv bin/ffmpeg bin/ffmpeg.bin
-          fi
+          case "${GO2RTC_ARCH}" in
+            win64)
+              curl -L "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" -o ffmpeg.zip
+              unzip -j -o ffmpeg.zip **/ffmpeg.exe -d bin/
+              mv bin/ffmpeg.exe bin/ffmpeg.bin
+              ;;
+            mac_amd64 | mac_arm64)
+              ARCH="${GO2RTC_ARCH#mac_}"
+              curl -L "https://ffmpeg.martin-riedl.de/redirect/latest/macos/${ARCH}/release/ffmpeg.zip" -o ffmpeg.zip
+              unzip -o ffmpeg.zip -d bin/
+              mv bin/ffmpeg bin/ffmpeg.bin
+              ;;
+          esac
+
           chmod +x bin/ffmpeg.bin
 
           uv sync
