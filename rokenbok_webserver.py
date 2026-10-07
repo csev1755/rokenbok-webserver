@@ -14,9 +14,9 @@ from server.deck import VirtualCommandDeck
 version_string = "rokenbok-webserver (dev)"
 
 # Handle paths when bundled via PyInstaller
-if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
     app_dir = os.path.abspath(os.path.dirname(sys.executable))
-    bundle_dir = getattr(sys, '_MEIPASS') 
+    bundle_dir = getattr(sys, "_MEIPASS")
 else:
     app_dir = "."
     bundle_dir = "."
@@ -25,12 +25,17 @@ argparser = argparse.ArgumentParser()
 config = configparser.ConfigParser()
 config.optionxform = lambda optionstr: optionstr
 
-if __name__ == '__main__':
-
-    # Read config file
-    argparser.add_argument("-c", "--config", dest="config_file", help="Name of the config file", default="settings.ini")
+if __name__ == "__main__":
+    argparser.add_argument(
+        "-c",
+        "--config",
+        dest="config_file",
+        help="Name of the config file",
+        default="settings.ini",
+    )
     args = argparser.parse_args()
 
+    # Read config file
     config_file = os.path.join(app_dir, args.config_file)
     if not os.path.exists(config_file):
         input(f"Config file '{config_file}' not found, press Enter to quit ")
@@ -38,32 +43,33 @@ if __name__ == '__main__':
     config.read(config_file)
 
     # Configure logging
-    main_log_level = config['logging']['main']
+    main_log_level = config["logging"]["main"]
 
     console_handler = colorlog.StreamHandler()
     console_handler.setLevel(main_log_level)
-    console_handler.setFormatter(colorlog.ColoredFormatter(
-        '%(asctime)s - %(log_color)s%(levelname)s%(reset)s - %(name)s - %(message)s',
-        log_colors={
-		'DEBUG':    'cyan',
-		'INFO':     'green',
-		'WARNING':  'yellow',
-		'ERROR':    'red',
-		'CRITICAL': 'red,bg_white',
-	},))
+    console_handler.setFormatter(
+        colorlog.ColoredFormatter(
+            "%(asctime)s - %(log_color)s%(levelname)s%(reset)s - %(name)s - %(message)s",
+            log_colors={
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "red,bg_white",
+            },
+        )
+    )
 
     handlers: list[logging.Handler] = [console_handler]
-    if config['logging'].getboolean('file'):
+    if config["logging"].getboolean("file"):
         log_filename = f"rokenbok-webserver-{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log"
         logfile_handler = logging.FileHandler(os.path.join(app_dir, log_filename))
-        logfile_handler.setFormatter(logging.Formatter(
-            '%(asctime)s - %(levelname)s - %(name)s - %(message)s'
-        ))
+        logfile_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(name)s - %(message)s"))
         handlers.append(logfile_handler)
     logging.basicConfig(level=main_log_level, handlers=handlers)
 
-    flask_log_level = config['logging']['flask']
-    logging.getLogger('werkzeug').setLevel(flask_log_level)
+    flask_log_level = config["logging"]["flask"]
+    logging.getLogger("werkzeug").setLevel(flask_log_level)
 
     logger = logging.getLogger(version_string)
 
@@ -73,8 +79,8 @@ if __name__ == '__main__':
 
     # Start go2rtc if configured
     go2rtc = None
-    go2rtc_log_level = config['logging']['go2rtc']
-    if config['webserver'].getboolean('enable_video'):
+    go2rtc_log_level = config["logging"]["go2rtc"]
+    if config["webserver"].getboolean("enable_video"):
         go2rtc = Go2RTC(bundle_dir, config, go2rtc_log_level, logger)
         go2rtc.start()
 
@@ -86,4 +92,8 @@ if __name__ == '__main__':
 
     signal.signal(signal.SIGINT, handle_exit)
 
-    socketio.run(flask, host=config['webserver']['listen_ip'], port=config['webserver'].getint('listen_port'))
+    socketio.run(
+        flask,
+        host=config["webserver"]["listen_ip"],
+        port=config["webserver"].getint("listen_port"),
+    )

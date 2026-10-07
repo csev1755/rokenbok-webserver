@@ -5,6 +5,7 @@ import requests
 import yaml
 from urllib import parse
 
+
 class Go2RTC:
     """
     Manages the go2rtc streamer as a subprocess
@@ -19,18 +20,17 @@ class Go2RTC:
         self.ffmpeg = os.path.join(bundle_dir, "bin", "ffmpeg.bin")
 
         # Get video stream config from settings.ini
-        streams = {
-            stream: device
-            for stream, device in config.items('video_streams')
-            if device
-        }
-        
+        streams = {stream: device for stream, device in config.items("video_streams") if device}
+
         # Construct go2rtc config
         self.go2rtc_config = {
-            'ffmpeg': {'bin': self.ffmpeg, 'mjpeg': '-c:v mjpeg -q:v 2 -vf "unsharp=5:5:0.5:5:5:0.0"'},
-            'webrtc': {'listen': ':8555', 'candidates': ['stun:8555']},
-            'streams': streams,
-            'log': {'format': 'text', 'level': log_level}
+            "ffmpeg": {
+                "bin": self.ffmpeg,
+                "mjpeg": '-c:v mjpeg -q:v 2 -vf "unsharp=5:5:0.5:5:5:0.0"',
+            },
+            "webrtc": {"listen": ":8555", "candidates": ["stun:8555"]},
+            "streams": streams,
+            "log": {"format": "text", "level": log_level},
         }
 
     def get_devices(self, url):
@@ -42,12 +42,12 @@ class Go2RTC:
         """
         response = requests.get(url)
         data = response.json()
-        
+
         devices = []
         video_count = 0
-        for source in data.get('sources', []):
-            url_str = source.get('url', '')
-            
+        for source in data.get("sources", []):
+            url_str = source.get("url", "")
+
             # Skip sources that are missing a URL string
             if not url_str:
                 continue
@@ -55,32 +55,34 @@ class Go2RTC:
             # Filter for video devices
             parsed_url = parse.urlparse(url_str)
             query_params = parse.parse_qs(parsed_url.query)
-            if 'video' not in query_params:
+            if "video" not in query_params:
                 continue
 
             # Enumerate the devices instead of using their names to handle duplicates
-            device_name = query_params['video'][0]
-            query_params['video'] = [str(video_count)]
+            device_name = query_params["video"][0]
+            query_params["video"] = [str(video_count)]
             new_query = parse.urlencode(query_params, doseq=True)
-            
+
             # Remove #hardware from the URL string to disable hardware acceleration
-            fragment_parts = parsed_url.fragment.split('#')
-            clean_fragment = '#'.join(part for part in fragment_parts if 'hardware' not in part)
+            fragment_parts = parsed_url.fragment.split("#")
+            clean_fragment = "#".join(part for part in fragment_parts if "hardware" not in part)
             modified_url = parse.urlunparse(parsed_url._replace(query=new_query, fragment=clean_fragment))
 
             # Append to a dictionary to print later
-            devices.append({
-                'index': video_count,
-                'name': device_name,
-                'url': modified_url,
-                'source_url': url_str,
-            })
+            devices.append(
+                {
+                    "index": video_count,
+                    "name": device_name,
+                    "url": modified_url,
+                    "source_url": url_str,
+                }
+            )
             video_count += 1
 
         return devices
 
     def start(self):
-        with open(self.config, 'w') as f:
+        with open(self.config, "w") as f:
             yaml.dump(self.go2rtc_config, f, default_flow_style=False, sort_keys=False)
 
         self.proc = subprocess.Popen([self.bin, "-c", self.config])

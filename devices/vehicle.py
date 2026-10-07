@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class Vehicle(ABC):
     """
     Abstract base class for controllable vehicles.

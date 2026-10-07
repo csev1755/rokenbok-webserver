@@ -2,6 +2,7 @@ import time
 from devices.vehicle import Vehicle
 from server.controller import Controller
 
+
 class VirtualCommandDeck:
     """
     Manages controllers and vehicles and handles player assignments and
@@ -34,15 +35,11 @@ class VirtualCommandDeck:
                 device_vehicles = config[section].items()
                 device_name = section.replace(".vehicles", "")
                 device_config = config[device_name]
-                
+
                 for vehicle_id, vehicle_name in device_vehicles:
                     self.vehicle_count += 1
                     self.vehicles[int(vehicle_id)] = Vehicle.configure(
-                        type=device_name,
-                        config=device_config,
-                        id=int(vehicle_id),
-                        name=vehicle_name,
-                        logger=self.logger
+                        type=device_name, config=device_config, id=int(vehicle_id), name=vehicle_name, logger=self.logger
                     )
 
         for controller_id in range(1, self.controller_count + 1):
@@ -129,16 +126,16 @@ class VirtualCommandDeck:
 
         for controller in self.controllers.values():
             if controller.player_id:
-
-                if controller.selection and time.time() - controller.last_activity > self.config.getint('webserver', 'player_timeout'):
+                if controller.selection and time.time() - controller.last_activity > self.config.getint("webserver", "player_timeout"):
                     controller.selection = None
-                
+
                 player_vehicle = self.get_vehicle(controller.selection) if controller.selection else None
-                
-                players.append({
-                    "player_name": controller.player_name,
-                    "selection": controller.selection,
-                    "selection_name": player_vehicle.name if player_vehicle else None
-                })
+                players.append(
+                    {
+                        "player_name": controller.player_name,
+                        "selection": controller.selection,
+                        "selection_name": player_vehicle.name if player_vehicle else None,
+                    }
+                )
 
         return players

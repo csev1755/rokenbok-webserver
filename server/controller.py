@@ -1,5 +1,6 @@
 import time
 
+
 class Controller:
     """
     A single logical controller assigned to a client.
@@ -39,11 +40,7 @@ class Controller:
             delta (int): A positive or negative integer that determines the direction and length of each step in the cycle
         """
         new_selection = self.selection if self.selection is not None else 0
-        occupied_selections = {
-            player["selection"]
-            for player in self.command_deck.get_players()
-            if player["selection"] is not None
-        }
+        occupied_selections = {player["selection"] for player in self.command_deck.get_players() if player["selection"] is not None}
 
         for _selection in range(self.command_deck.vehicle_count):
             new_selection = (new_selection + delta) % (self.command_deck.vehicle_count + 1)
@@ -52,7 +49,7 @@ class Controller:
                 return
             if new_selection not in occupied_selections:
                 self.selection = new_selection
-                return      
+                return
 
     def handle_input(self, input):
         """
@@ -63,14 +60,14 @@ class Controller:
                 - 'button' (str): Button identifier
                 - 'pressed' (bool): True if button is pressed, False if released
         """
-        if input['pressed']:
-            if input['button'] in ("SELECT_UP", "SELECT_DOWN"):
-                delta = 1 if input['button'] == "SELECT_UP" else -1
+        if input["pressed"]:
+            if input["button"] in ("SELECT_UP", "SELECT_DOWN"):
+                delta = 1 if input["button"] == "SELECT_UP" else -1
                 self.cycle_vehicle_select(delta)
-            self.buttons.add(input['button'])
+            self.buttons.add(input["button"])
         else:
-            self.buttons.discard(input['button'])
-        
+            self.buttons.discard(input["button"])
+
         self.logger.debug(f"Session {self.player_id} - {self.buttons if len(self.buttons) > 0 else {''}} - {self.selection}")
 
         vehicle = self.command_deck.get_vehicle(self.selection) or None

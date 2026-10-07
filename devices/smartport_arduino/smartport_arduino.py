@@ -1,10 +1,12 @@
 import serial
 from devices.vehicle import Vehicle
 
+
 class SmartPortArduino(Vehicle):
     """
     Device type/vehicle class for the smartport_arduino sketch
     """
+
     type = "smartport_arduino"
     serial = None
 
@@ -17,7 +19,7 @@ class SmartPortArduino(Vehicle):
         """
         if not SmartPortArduino.serial:
             try:
-                SmartPortArduino.serial = serial.Serial(self.config['serial_port'], 1000000)
+                SmartPortArduino.serial = serial.Serial(self.config["serial_port"], 1000000)
                 print(f" * Connected to SmartPort Arduino at '{self.config['serial_port']}'")
                 return True
             except Exception as e:
@@ -40,17 +42,17 @@ class SmartPortArduino(Vehicle):
         Returns:
             tuple[int, int]: Two bytes representing the controller state.
         """
-        up    = 'DPAD_UP' in controller.buttons
-        down  = 'DPAD_DOWN' in controller.buttons
-        right = 'DPAD_RIGHT' in controller.buttons
-        left  = 'DPAD_LEFT' in controller.buttons
+        up = "DPAD_UP" in controller.buttons
+        down = "DPAD_DOWN" in controller.buttons
+        right = "DPAD_RIGHT" in controller.buttons
+        left = "DPAD_LEFT" in controller.buttons
 
-        b_a = 'A_BUTTON' in controller.buttons
-        b_b = 'B_BUTTON' in controller.buttons
-        b_x = 'X_BUTTON' in controller.buttons
-        b_y = 'Y_BUTTON' in controller.buttons
+        b_a = "A_BUTTON" in controller.buttons
+        b_b = "B_BUTTON" in controller.buttons
+        b_x = "X_BUTTON" in controller.buttons
+        b_y = "Y_BUTTON" in controller.buttons
 
-        b_rt = int('LEFT_TRIGGER' in controller.buttons or 'RIGHT_TRIGGER' in controller.buttons)
+        b_rt = int("LEFT_TRIGGER" in controller.buttons or "RIGHT_TRIGGER" in controller.buttons)
 
         byte1 = (up << 3) | (down << 2) | (right << 1) | left
         byte2 = (b_a << 4) | (b_b << 3) | (b_x << 2) | (b_y << 1) | b_rt
@@ -89,17 +91,17 @@ class SmartPortArduino(Vehicle):
                 start = raw.rfind(254)
 
                 if start != -1 and len(raw) >= start + 27 and raw[start + 26] == 255:
-                    frame = raw[start:start + 27]
+                    frame = raw[start : start + 27]
                     if not frame[1]:
                         self.logger.debug(f"SmartPortArduino - Invalid packet: {raw}")
                         self.logger.warning(f"SmartPortArduino - SmartPort communication error")
 
                     self.logger.debug(f"SmartPortArduino Selections - {[None if x == 15 else x + 1 for x in frame[14:26]]}")
-                
+
                 else:
                     self.logger.debug(f"SmartPortArduino - Invalid packet: {raw}")
                     self.logger.warning(f"SmartPortArduino - SmartPort communication error")
-            
+
             else:
                 self.logger.debug(f"SmartPortArduino - No packet received")
 
