@@ -14,7 +14,7 @@ Requirements
 Configuration
 ------------------------------
 
-1. Download the ``smartport_arduino.ino`` sketch from the `release files <https://github.com/csev1755/rokenbok-webserver/releases>`_ of the server version you're using
+1. Download the ``smart_port_arduino.ino`` sketch from the `Smart-Port-Arduino repository <https://github.com/stepstools/Rokenbok-Smart-Port-Arduino>`_
 2. `Install the sketch with Arduino IDE <https://support.arduino.cc/hc/en-us/articles/4733418441116-Upload-a-sketch-in-Arduino-IDE>`_ and make note of the serial device name/path
 3. Modify the following in ``settings.ini``:
 
