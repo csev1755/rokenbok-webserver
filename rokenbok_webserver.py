@@ -4,8 +4,9 @@ import configparser
 import datetime
 import logging
 import os
-import signal
 import sys
+
+from aiohttp import web
 
 from server.flask import init_webserver
 from server.go2rtc import Go2RTC
@@ -68,14 +69,14 @@ if __name__ == "__main__":
         handlers.append(logfile_handler)
     logging.basicConfig(level=main_log_level, handlers=handlers)
 
-    flask_log_level = config["logging"]["flask"]
-    logging.getLogger("werkzeug").setLevel(flask_log_level)
+    aiohttp_log_level = config["logging"]["aiohttp"]
+    logging.getLogger("aiohttp.access").setLevel(aiohttp_log_level)
 
     logger = logging.getLogger(version_string)
 
     # Init command deck and webserver
     command_deck = VirtualCommandDeck(config=config, logger=logger)
-    flask, socketio = init_webserver(bundle_dir, config, command_deck, version_string)
+    aiortc_app = init_webserver(bundle_dir, config, command_deck, version_string)
 
     # Start go2rtc if configured
     go2rtc = None
@@ -84,16 +85,18 @@ if __name__ == "__main__":
         go2rtc = Go2RTC(bundle_dir, config, go2rtc_log_level, logger)
         go2rtc.start()
 
-    def handle_exit(sig, frame):
+    # Start the webserver and handle interrupts
+    try:
+        web.run_app(
+            aiortc_app,
+            host=config["webserver"]["listen_ip"],
+            port=config["webserver"].getint("listen_port"),
+            shutdown_timeout=0.1,
+        )
+    except Exception as e:
+        logger.error(f"Webserver failed to start or crashed: {e}")
+    finally:
         print("Program interrupted, exiting...")
         if go2rtc:
             go2rtc.stop()
         sys.exit(0)
-
-    signal.signal(signal.SIGINT, handle_exit)
-
-    socketio.run(
-        flask,
-        host=config["webserver"]["listen_ip"],
-        port=config["webserver"].getint("listen_port"),
-    )
