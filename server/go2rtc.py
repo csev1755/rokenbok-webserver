@@ -98,4 +98,5 @@ class Go2RTC:
 
     def stop(self):
         if self.proc:
+            print("Stopping go2rtc...")
             self.proc.terminate()
