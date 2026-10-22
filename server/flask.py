@@ -1,82 +1,128 @@
 import os
+import json
+import asyncio
+import aiohttp
+import aiohttp_jinja2
+import jinja2
 
-from flask import Flask, request, send_from_directory, render_template
-from flask_socketio import SocketIO
+from aiohttp import web
 
 
 def init_webserver(bundle_dir, config, command_deck, server_name):
     flask_dir = os.path.join(bundle_dir, "server", "web")
 
-    flask = Flask(server_name, static_folder=flask_dir, template_folder=flask_dir)
-    socketio = SocketIO(flask)
+    app = web.Application()
+    aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(flask_dir))
 
-    @flask.route("/")
-    def index():
+    # Store active WebSocket connections
+    app["websockets"] = set()
+
+    @aiohttp_jinja2.template("player.html")
+    async def index(request):
         """
         Returns:
-            str: Rendered HTML template with video configuration.
+            dict: Video configuration and stream settings to be rendered by the template.
         """
         stream_config = {
             stream: f"http://{request.host.split(':')[0]}:1984/stream.html?src={stream}"
             for stream, device in config.items("video_streams")
             if device
         }
-        return render_template(
-            "player.html",
-            enable_video=config["webserver"].getboolean("enable_video"),
-            video_streams=stream_config,
-        )
+        return {
+            "enable_video": config["webserver"].getboolean("enable_video"),
+            "video_streams": stream_config,
+        }
 
-    @flask.route("/player.js")
-    def script():
+    async def script(request):
         """
         Returns:
             Response: The player.js file from the web directory.
         """
-        return send_from_directory(flask_dir, "player.js")
+        return web.FileResponse(os.path.join(flask_dir, "player.js"))
 
-    @flask.route("/player.css")
-    def stylesheet():
+    async def stylesheet(request):
         """
         Returns:
             Response: The style.css file from the web directory.
         """
-        return send_from_directory(flask_dir, "player.css")
+        return web.FileResponse(os.path.join(flask_dir, "player.css"))
 
-    @socketio.on("connect")
-    def handle_connect():
+    async def broadcast_state(event, data):
+        """
+        Broadcast the player list to all clients.
+        """
+        payload = json.dumps({event: data})
+        for ws in list(app["websockets"]):
+            try:
+                await ws.send_str(payload)
+            except Exception:
+                app["websockets"].remove(ws)
+
+    async def handle_connect(sid):
         """
         Assigns a controller to the connecting player and broadcasts
         the updated player list to all clients.
         """
-        command_deck.assign_controller(request.sid)  # pyright: ignore[reportAttributeAccessIssue]
-        socketio.emit("players", {"players": command_deck.get_players()})
+        command_deck.assign_controller(sid)
+        await broadcast_state("players", command_deck.get_players())
 
-    @socketio.on("disconnect")
-    def handle_disconnect():
+    async def handle_disconnect(sid):
         """
-        Releases the controller from the disconnecting player and broadcasts
-        the updated player list to all clients.
+        Releases the controller from the disconnecting player.
         """
-        command_deck.release_controller(request.sid)  # pyright: ignore[reportAttributeAccessIssue]
-        socketio.emit("players", {"players": command_deck.get_players()})
+        command_deck.release_controller(sid)
+        await broadcast_state("players", command_deck.get_players())
 
-    @socketio.on("controller")
-    def handle_controller(data):
+    async def handle_controller(sid, data):
         """
-        Updates the player name and processes controller input, then broadcasts
-        the updated player list to all clients.
+        Updates the player name and processes controller input.
 
         Args:
+            sid (str): Session identifier
             data (dict): Controller data containing:
                 - 'player_name' (str): Display name of the player
                 - 'button' (str): Button identifier
                 - 'pressed' (bool): Button state
         """
-        controller = command_deck.get_controller(request.sid)  # pyright: ignore[reportAttributeAccessIssue]
+        controller = command_deck.get_controller(sid)
         if controller:
             controller.player_name = data.get("player_name", controller.player_name)
             controller.handle_input(data)
-            socketio.emit("players", {"players": command_deck.get_players()})
+            await broadcast_state("players", command_deck.get_players())
 
-    return flask, socketio
+    async def handle_websocket(request):
+        """
+        Handles player connections, disconnections, and controller input.
+        """
+        ws = web.WebSocketResponse()
+        await ws.prepare(request)
+
+        sid = str(id(ws))
+        request.app["websockets"].add(ws)
+
+        try:
+            await handle_connect(sid)
+            async for msg in ws:
+                if msg.type == aiohttp.WSMsgType.TEXT:
+                    data = json.loads(msg.data)
+                    await handle_controller(sid, data)
+                elif msg.type == aiohttp.WSMsgType.ERROR:
+                    print(f"WebSocket connection closed with exception {ws.exception()}")
+        # Handle interrupts
+        except asyncio.CancelledError:
+            pass
+        finally:
+            request.app["websockets"].remove(ws)
+            try:
+                await handle_disconnect(sid)
+            except Exception:
+                pass
+
+        return ws
+
+    app.router.add_get("/", index)
+    app.router.add_get("/player.js", script)
+    app.router.add_get("/player.css", stylesheet)
+    app.router.add_get("/ws", handle_websocket)
+
+    return app
