@@ -8,7 +8,7 @@ import sys
 
 from aiohttp import web
 
-from server.flask import init_webserver
+from server.web import init_webserver
 from server.go2rtc import Go2RTC
 from server.deck import VirtualCommandDeck
 
