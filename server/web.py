@@ -9,10 +9,10 @@ from aiohttp import web
 
 
 def init_webserver(bundle_dir, config, command_deck, server_name):
-    flask_dir = os.path.join(bundle_dir, "server", "web")
+    web_dir = os.path.join(bundle_dir, "server", "web")
 
     app = web.Application()
-    aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(flask_dir))
+    aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(web_dir))
 
     # Store active WebSocket connections
     app["websockets"] = set()
@@ -38,14 +38,14 @@ def init_webserver(bundle_dir, config, command_deck, server_name):
         Returns:
             Response: The player.js file from the web directory.
         """
-        return web.FileResponse(os.path.join(flask_dir, "player.js"))
+        return web.FileResponse(os.path.join(web_dir, "player.js"))
 
     async def stylesheet(request):
         """
         Returns:
             Response: The style.css file from the web directory.
         """
-        return web.FileResponse(os.path.join(flask_dir, "player.css"))
+        return web.FileResponse(os.path.join(web_dir, "player.css"))
 
     async def broadcast_state(event, data):
         """
