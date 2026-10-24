@@ -4,7 +4,8 @@ from devices.vehicle import Vehicle
 
 class SmartPortArduino(Vehicle):
     """
-    Device type/vehicle class for the smartport_arduino sketch
+    Device type/vehicle class for the smart_port_arduino sketch.
+    https://github.com/stepstools/Rokenbok-Smart-Port-Arduino
     """
 
     type = "smartport_arduino"
@@ -17,7 +18,7 @@ class SmartPortArduino(Vehicle):
         """
         Establishes a serial connection to the SmartPort Arduino if not already connected.
         """
-        if not SmartPortArduino.serial:
+        if SmartPortArduino.serial is None:
             try:
                 SmartPortArduino.serial = serial.Serial(self.config["serial_port"], 1000000)
                 print(f" * Connected to SmartPort Arduino at '{self.config['serial_port']}'")
@@ -62,7 +63,7 @@ class SmartPortArduino(Vehicle):
     def control(self, controller, command_deck):
         """
         Constructs and transmits a packet containing the state of all controllers
-        to the Arduino and receives data representing the command deck's state
+        to the Arduino and receives data representing the command deck's state.
         """
         packet = bytearray([254])
         for controller in command_deck.controllers.values():
@@ -84,26 +85,29 @@ class SmartPortArduino(Vehicle):
             return
 
         try:
-            SmartPortArduino.serial.write(packet)
+            if SmartPortArduino.serial is not None:
+                SmartPortArduino.serial.write(packet)
 
-            if SmartPortArduino.serial.in_waiting >= 27:
-                raw = SmartPortArduino.serial.read(SmartPortArduino.serial.in_waiting)
-                start = raw.rfind(254)
+                if SmartPortArduino.serial.in_waiting >= 27:
+                    raw = SmartPortArduino.serial.read(SmartPortArduino.serial.in_waiting)
+                    start = raw.rfind(254)
 
-                if start != -1 and len(raw) >= start + 27 and raw[start + 26] == 255:
-                    frame = raw[start : start + 27]
-                    if not frame[1]:
+                    if start != -1 and len(raw) >= start + 27 and raw[start + 26] == 255:
+                        frame = raw[start : start + 27]
+                        if not frame[1]:
+                            self.logger.debug(f"SmartPortArduino - Invalid packet: {raw}")
+                            self.logger.warning(f"SmartPortArduino - SmartPort communication error")
+
+                        self.logger.debug(f"SmartPortArduino Selections - {[None if x == 15 else x + 1 for x in frame[14:26]]}")
+
+                    else:
                         self.logger.debug(f"SmartPortArduino - Invalid packet: {raw}")
                         self.logger.warning(f"SmartPortArduino - SmartPort communication error")
 
-                    self.logger.debug(f"SmartPortArduino Selections - {[None if x == 15 else x + 1 for x in frame[14:26]]}")
-
                 else:
-                    self.logger.debug(f"SmartPortArduino - Invalid packet: {raw}")
-                    self.logger.warning(f"SmartPortArduino - SmartPort communication error")
-
+                    self.logger.debug(f"SmartPortArduino - No packet received")
             else:
-                self.logger.debug(f"SmartPortArduino - No packet received")
+                self.logger.error(f"Serial connection to SmartPort Arduino is not established")
 
         except Exception as e:
             self.logger.debug(e)
