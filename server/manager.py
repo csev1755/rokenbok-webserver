@@ -1,6 +1,6 @@
 import time
 from devices.vehicle import Vehicle
-from server.controller import Controller
+from server.player import Controller
 
 
 class VirtualCommandDeck:
