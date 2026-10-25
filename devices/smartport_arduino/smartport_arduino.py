@@ -30,46 +30,46 @@ class SmartPortArduino(Vehicle):
         else:
             return True
 
-    def encode_controller_state(self, controller):
+    def encode_player_state(self, player):
         """
-        Encodes controller button states into two bytes for serial transmission.
+        Encodes player button states into two bytes for serial transmission.
 
         Byte 1: D-pad directions (up, down, right, left)
         Byte 2: Action buttons (A, B, X, Y) and triggers
 
         Args:
-            controller (Controller): A controller object.
+            player (Player): A player object.
 
         Returns:
-            tuple[int, int]: Two bytes representing the controller state.
+            tuple[int, int]: Two bytes representing the player state.
         """
-        up = "DPAD_UP" in controller.buttons
-        down = "DPAD_DOWN" in controller.buttons
-        right = "DPAD_RIGHT" in controller.buttons
-        left = "DPAD_LEFT" in controller.buttons
+        up = "DPAD_UP" in player.buttons
+        down = "DPAD_DOWN" in player.buttons
+        right = "DPAD_RIGHT" in player.buttons
+        left = "DPAD_LEFT" in player.buttons
 
-        b_a = "A_BUTTON" in controller.buttons
-        b_b = "B_BUTTON" in controller.buttons
-        b_x = "X_BUTTON" in controller.buttons
-        b_y = "Y_BUTTON" in controller.buttons
+        b_a = "A_BUTTON" in player.buttons
+        b_b = "B_BUTTON" in player.buttons
+        b_x = "X_BUTTON" in player.buttons
+        b_y = "Y_BUTTON" in player.buttons
 
-        b_rt = int("LEFT_TRIGGER" in controller.buttons or "RIGHT_TRIGGER" in controller.buttons)
+        b_rt = int("LEFT_TRIGGER" in player.buttons or "RIGHT_TRIGGER" in player.buttons)
 
         byte1 = (up << 3) | (down << 2) | (right << 1) | left
         byte2 = (b_a << 4) | (b_b << 3) | (b_x << 2) | (b_y << 1) | b_rt
 
         return byte1, byte2
 
-    def control(self, controller, command_deck):
+    def control(self, player, play_manager):
         """
-        Constructs and transmits a packet containing the state of all controllers
+        Constructs and transmits a packet containing the state of all players
         to the Arduino and receives data representing the command deck's state.
         """
         packet = bytearray([254])
-        for controller in command_deck.controllers.values():
-            p_id = controller.controller_id + 10 or 0
-            v_sel = 15 if controller.selection is None else controller.selection - 1
-            byte1, byte2 = self.encode_controller_state(controller) if controller.selection is not None else (0, 0)
+        for player in play_manager.players.values():
+            p_id = player.player_id + 10 or 0
+            v_sel = 15 if player.selection is None else player.selection - 1
+            byte1, byte2 = self.encode_player_state(player) if player.selection is not None else (0, 0)
             packet.extend([p_id, v_sel, byte1, byte2])
         packet.append(255)
         self.send_and_receive_packet(packet)

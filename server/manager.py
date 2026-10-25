@@ -1,31 +1,30 @@
 import time
 from devices.vehicle import Vehicle
-from server.player import Controller
+from server.player import Player
 
 
-class VirtualCommandDeck:
+class PlayManager:
     """
-    Manages controllers and vehicles and handles player assignments and
-    vehicle control routing.
+    Manages player and vehicle states.
 
     Attributes:
-        controllers (dict[int, Controller]): Mapping of controller IDs to Controller instances.
-        controller_count (int): Number of usable controllers (default: 12).
+        players (dict[int, Player]): Mapping of player IDs to Player instances.
+        player_count (int): Max number of players (default: 12).
         vehicles (dict[int, Vehicle]): Mapping of vehicle IDs to Vehicle instances.
         vehicle_count (int): Number of selectable vehicles.
     """
 
     def __init__(self, config, logger):
         """
-        Initializes the virtual command deck and controllers.
+        Initializes the PlayManager and Player obects.
 
         Reads vehicle/device configurations from the config file and creates vehicle instances.
         """
         self.logger = logger
         self.config = config
 
-        self.controllers: dict[int, Controller] = {}
-        self.controller_count = 12
+        self.players: dict[int, Player] = {}
+        self.player_count = 12
 
         self.vehicles: dict[int, Vehicle] = {}
         self.vehicle_count = 0
@@ -42,59 +41,59 @@ class VirtualCommandDeck:
                         type=device_name, config=device_config, id=int(vehicle_id), name=vehicle_name, logger=self.logger
                     )
 
-        for controller_id in range(1, self.controller_count + 1):
-            self.controllers[controller_id] = Controller(self, controller_id, self.logger)
+        for player_id in range(1, self.player_count + 1):
+            self.players[player_id] = Player(self, player_id, self.logger)
 
-    def assign_controller(self, player_id):
+    def assign_controller(self, socket_id):
         """
-        Assigns an available controller to a client session.
+        Assigns an available Player object to a client session.
 
         Args:
-            player_id (str): Socket.IO session identifier.
+            socket_id (str): Socket.IO session identifier.
 
         Returns:
-            Controller or None: The assigned controller.
+            Player or None: The assigned Player object.
         """
-        for controller in self.controllers.values():
-            if controller.player_id is None:
-                controller.player_id = player_id
-                controller.selection = None
-                self.logger.info(f"Assigned controller {controller.controller_id} to player {player_id}")
-                return controller
-        self.logger.warning(f"No controller available for player {player_id}")
+        for player in self.players.values():
+            if player.socket_id is None:
+                player.socket_id = socket_id
+                player.selection = None
+                self.logger.info(f"Assigned Player object {player.player_id} to player {socket_id}")
+                return player
+        self.logger.warning(f"No Player object available for player {socket_id}")
         return None
 
-    def release_controller(self, player_id):
+    def release_controller(self, socket_id):
         """
-        Releases the controller associated with a client session.
+        Releases the Player object associated with a client session.
 
         Args:
-            player_id (str): Socket.IO session identifier.
+            socket_id (str): Socket.IO session identifier.
 
         Returns:
-            Controller or None: The released controller.
+            Player or None: The released Player object.
         """
-        for controller in self.controllers.values():
-            if controller.player_id == player_id:
-                controller.player_id = None
-                controller.player_name = None
-                self.logger.info(f"Released controller {controller.controller_id} from player {player_id}")
-                return controller
+        for player in self.players.values():
+            if player.socket_id == socket_id:
+                player.socket_id = None
+                player.player_name = None
+                self.logger.info(f"Released Player object {player.player_id} from player {socket_id}")
+                return player
         return None
 
-    def get_controller(self, player_id):
+    def get_controller(self, socket_id):
         """
-        Retrieves the controller associated with a client session.
+        Retrieves the Player object associated with a client session.
 
         Args:
-            player_id (str): Socket.IO session identifier.
+            socket_id (str): Socket.IO session identifier.
 
         Returns:
-            Controller or None: The matching controller.
+            Player or None: The matching Player object.
         """
-        for controller in self.controllers.values():
-            if controller.player_id == player_id:
-                return controller
+        for player in self.players.values():
+            if player.socket_id == socket_id:
+                return player
         return None
 
     def get_vehicle(self, vehicle_id=None):
@@ -112,7 +111,7 @@ class VirtualCommandDeck:
                 return vehicle
         return None
 
-    def get_players(self):
+    def get_player_info(self):
         """
         Retrieves data about all connected players and times out selections if needed.
 
@@ -124,16 +123,16 @@ class VirtualCommandDeck:
         """
         players = []
 
-        for controller in self.controllers.values():
-            if controller.player_id:
-                if controller.selection and time.time() - controller.last_activity > self.config.getint("webserver", "player_timeout"):
-                    controller.selection = None
+        for player in self.players.values():
+            if player.socket_id:
+                if player.selection and time.time() - player.last_activity > self.config.getint("webserver", "player_timeout"):
+                    player.selection = None
 
-                player_vehicle = self.get_vehicle(controller.selection) if controller.selection else None
+                player_vehicle = self.get_vehicle(player.selection) if player.selection else None
                 players.append(
                     {
-                        "player_name": controller.player_name,
-                        "selection": controller.selection,
+                        "player_name": player.player_name,
+                        "selection": player.selection,
                         "selection_name": player_vehicle.name if player_vehicle else None,
                     }
                 )
