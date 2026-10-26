@@ -40,7 +40,7 @@ class Player:
             delta (int): A positive or negative integer that determines the direction and length of each step in the cycle
         """
         new_selection = self.selection if self.selection is not None else 0
-        occupied_selections = {player["selection"] for player in self.play_manager.get_players() if player["selection"] is not None}
+        occupied_selections = {player["selection"] for player in self.play_manager.get_player_info() if player["selection"] is not None}
 
         for _selection in range(self.play_manager.vehicle_count):
             new_selection = (new_selection + delta) % (self.play_manager.vehicle_count + 1)

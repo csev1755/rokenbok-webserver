@@ -4,7 +4,7 @@ from flask import Flask, request, send_from_directory, render_template
 from flask_socketio import SocketIO
 
 
-def init_webserver(bundle_dir, config, command_deck, server_name):
+def init_webserver(bundle_dir, config, play_manager, server_name):
     flask_dir = os.path.join(bundle_dir, "server", "web")
 
     flask = Flask(server_name, static_folder=flask_dir, template_folder=flask_dir)
@@ -49,8 +49,8 @@ def init_webserver(bundle_dir, config, command_deck, server_name):
         Assigns a controller to the connecting player and broadcasts
         the updated player list to all clients.
         """
-        command_deck.assign_controller(request.sid)  # pyright: ignore[reportAttributeAccessIssue]
-        socketio.emit("players", {"players": command_deck.get_players()})
+        play_manager.assign_controller(request.sid)  # pyright: ignore[reportAttributeAccessIssue]
+        socketio.emit("players", {"players": play_manager.get_player_info()})
 
     @socketio.on("disconnect")
     def handle_disconnect():
@@ -58,8 +58,8 @@ def init_webserver(bundle_dir, config, command_deck, server_name):
         Releases the controller from the disconnecting player and broadcasts
         the updated player list to all clients.
         """
-        command_deck.release_controller(request.sid)  # pyright: ignore[reportAttributeAccessIssue]
-        socketio.emit("players", {"players": command_deck.get_players()})
+        play_manager.release_controller(request.sid)  # pyright: ignore[reportAttributeAccessIssue]
+        socketio.emit("players", {"players": play_manager.get_player_info()})
 
     @socketio.on("controller")
     def handle_controller(data):
@@ -73,10 +73,10 @@ def init_webserver(bundle_dir, config, command_deck, server_name):
                 - 'button' (str): Button identifier
                 - 'pressed' (bool): Button state
         """
-        controller = command_deck.get_controller(request.sid)  # pyright: ignore[reportAttributeAccessIssue]
+        controller = play_manager.get_controller(request.sid)  # pyright: ignore[reportAttributeAccessIssue]
         if controller:
             controller.player_name = data.get("player_name", controller.player_name)
             controller.handle_input(data)
-            socketio.emit("players", {"players": command_deck.get_players()})
+            socketio.emit("players", {"players": play_manager.get_player_info()})
 
     return flask, socketio
