@@ -44,7 +44,7 @@ class PlayManager:
         for player_id in range(1, self.player_count + 1):
             self.players[player_id] = Player(self, player_id, self.logger)
 
-    def assign_controller(self, socket_id):
+    def player_join(self, socket_id):
         """
         Assigns an available Player object to a client session.
 
@@ -63,7 +63,7 @@ class PlayManager:
         self.logger.warning(f"No Player object available for player {socket_id}")
         return None
 
-    def release_controller(self, socket_id):
+    def player_quit(self, socket_id):
         """
         Releases the Player object associated with a client session.
 
@@ -81,7 +81,7 @@ class PlayManager:
                 return player
         return None
 
-    def get_controller(self, socket_id):
+    def get_player_from_socket_id(self, socket_id):
         """
         Retrieves the Player object associated with a client session.
 
@@ -96,7 +96,7 @@ class PlayManager:
                 return player
         return None
 
-    def get_vehicle(self, vehicle_id=None):
+    def get_vehicle_from_id(self, vehicle_id=None):
         """
         Retrieves a vehicle by its ID.
 
@@ -128,7 +128,7 @@ class PlayManager:
                 if player.selection and time.time() - player.last_activity > self.config.getint("webserver", "player_timeout"):
                     player.selection = None
 
-                player_vehicle = self.get_vehicle(player.selection) if player.selection else None
+                player_vehicle = self.get_vehicle_from_id(player.selection) if player.selection else None
                 players.append(
                     {
                         "player_name": player.player_name,

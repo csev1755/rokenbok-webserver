@@ -70,7 +70,7 @@ class Player:
 
         self.logger.debug(f"Session {self.socket_id} - {self.buttons if len(self.buttons) > 0 else {''}} - {self.selection}")
 
-        vehicle = self.play_manager.get_vehicle(self.selection) or None
+        vehicle = self.play_manager.get_vehicle_from_id(self.selection) or None
         if vehicle:
             vehicle.control(self, self.play_manager)
             self.last_activity = time.time()
