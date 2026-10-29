@@ -9,7 +9,7 @@ import sys
 
 from server.flask import init_webserver
 from server.go2rtc import Go2RTC
-from server.deck import VirtualCommandDeck
+from server.manager import PlayManager
 
 version_string = "rokenbok-webserver (dev)"
 
@@ -73,9 +73,9 @@ if __name__ == "__main__":
 
     logger = logging.getLogger(version_string)
 
-    # Init command deck and webserver
-    command_deck = VirtualCommandDeck(config=config, logger=logger)
-    flask, socketio = init_webserver(bundle_dir, config, command_deck, version_string)
+    # Init manager and webserver
+    play_manager = PlayManager(config=config, logger=logger)
+    flask, socketio = init_webserver(bundle_dir, config, play_manager, version_string)
 
     # Start go2rtc if configured
     go2rtc = None
