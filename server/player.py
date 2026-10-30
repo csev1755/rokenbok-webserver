@@ -53,7 +53,7 @@ class Player:
 
     def handle_input(self, input):
         """
-        Processes input from a connected gamepad and updates player button states.
+        Processes player input, updates button states, and controls a selected vehicle.
 
         Args:
             input (dict): A dictionary containing:
