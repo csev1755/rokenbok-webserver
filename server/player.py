@@ -9,7 +9,7 @@ class Player:
         play_manager (PlayManager): Parent PlayManager instance.
         player_id (int): Player object identifier.
         selection (int or None): Current vehicle selection (1-indexed), or None if no vehicle selected.
-        player_name (str or None): Display name of the player using this controller.
+        player_name (str or None): Display name of the player.
         socket_id (str or None): Socket.IO session identifier for the connected player.
         buttons (set): Set of currently pressed button identifiers.
         last_activity (float): Timestamp of the last input.
