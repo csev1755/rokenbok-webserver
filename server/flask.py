@@ -46,7 +46,7 @@ def init_webserver(bundle_dir, config, play_manager, server_name):
     @socketio.on("connect")
     def handle_connect():
         """
-        Assigns a controller to the connecting player and broadcasts
+        Directs the play manager to handle the connected player and broadcasts
         the updated player list to all clients.
         """
         play_manager.player_join(request.sid)  # pyright: ignore[reportAttributeAccessIssue]
@@ -55,28 +55,28 @@ def init_webserver(bundle_dir, config, play_manager, server_name):
     @socketio.on("disconnect")
     def handle_disconnect():
         """
-        Releases the controller from the disconnecting player and broadcasts
+        Directs the play manager to handle the disconnected player and broadcasts
         the updated player list to all clients.
         """
         play_manager.player_quit(request.sid)  # pyright: ignore[reportAttributeAccessIssue]
         socketio.emit("players", {"players": play_manager.get_player_info()})
 
-    @socketio.on("controller")
-    def handle_controller(data):
+    @socketio.on("input")
+    def handle_input(data):
         """
-        Updates the player name and processes controller input, then broadcasts
+        Updates the player name and processes player inputs, then broadcasts
         the updated player list to all clients.
 
         Args:
-            data (dict): Controller data containing:
+            data (dict): Player data containing:
                 - 'player_name' (str): Display name of the player
                 - 'button' (str): Button identifier
                 - 'pressed' (bool): Button state
         """
-        controller = play_manager.get_player_from_socket_id(request.sid)  # pyright: ignore[reportAttributeAccessIssue]
-        if controller:
-            controller.player_name = data.get("player_name", controller.player_name)
-            controller.handle_input(data)
+        player = play_manager.get_player_from_socket_id(request.sid)  # pyright: ignore[reportAttributeAccessIssue]
+        if player:
+            player.player_name = data.get("player_name", player.player_name)
+            player.handle_input(data)
             socketio.emit("players", {"players": play_manager.get_player_info()})
 
     return flask, socketio
