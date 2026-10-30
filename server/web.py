@@ -8,7 +8,7 @@ import jinja2
 from aiohttp import web
 
 
-def init_webserver(bundle_dir, config, command_deck, server_name):
+def init_webserver(bundle_dir, config, play_manager, server_name):
     web_dir = os.path.join(bundle_dir, "server", "web")
 
     app = web.Application()
@@ -60,39 +60,41 @@ def init_webserver(bundle_dir, config, command_deck, server_name):
 
     async def handle_connect(sid):
         """
-        Assigns a controller to the connecting player and broadcasts
+        Directs the play manager to handle the connected player and broadcasts
         the updated player list to all clients.
         """
-        command_deck.assign_controller(sid)
-        await broadcast_state("players", command_deck.get_players())
+        play_manager.player_join(sid)
+        await broadcast_state("players", play_manager.get_player_info())
 
     async def handle_disconnect(sid):
         """
-        Releases the controller from the disconnecting player.
+        Directs the play manager to handle the disconnected player and broadcasts
+        the updated player list to all clients.
         """
-        command_deck.release_controller(sid)
-        await broadcast_state("players", command_deck.get_players())
+        play_manager.player_quit(sid)
+        await broadcast_state("players", play_manager.get_player_info())
 
-    async def handle_controller(sid, data):
+    async def handle_input(sid, data):
         """
-        Updates the player name and processes controller input.
+        Updates the player name and processes player inputs, then broadcasts
+        the updated player list to all clients.
 
         Args:
             sid (str): Session identifier
-            data (dict): Controller data containing:
+            data (dict): Player data containing:
                 - 'player_name' (str): Display name of the player
                 - 'button' (str): Button identifier
                 - 'pressed' (bool): Button state
         """
-        controller = command_deck.get_controller(sid)
-        if controller:
-            controller.player_name = data.get("player_name", controller.player_name)
-            controller.handle_input(data)
-            await broadcast_state("players", command_deck.get_players())
+        player = play_manager.get_player_from_socket_id(sid)
+        if player:
+            player.player_name = data.get("player_name", player.player_name)
+            player.handle_input(data)
+            await broadcast_state("players", play_manager.get_player_info())
 
     async def handle_websocket(request):
         """
-        Handles player connections, disconnections, and controller input.
+        Handles player connections, disconnections, and player input.
         """
         ws = web.WebSocketResponse()
         await ws.prepare(request)
@@ -105,7 +107,7 @@ def init_webserver(bundle_dir, config, command_deck, server_name):
             async for msg in ws:
                 if msg.type == aiohttp.WSMsgType.TEXT:
                     data = json.loads(msg.data)
-                    await handle_controller(sid, data)
+                    await handle_input(sid, data)
                 elif msg.type == aiohttp.WSMsgType.ERROR:
                     print(f"WebSocket connection closed with exception {ws.exception()}")
         # Handle interrupts
