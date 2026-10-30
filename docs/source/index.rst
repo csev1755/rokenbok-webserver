@@ -6,7 +6,7 @@
 Rokenbok Webserver
 ==================
 
-A simple Python Flask server that runs a Rokenbok multiplayer web interface with optional live video.
+A Python webserver with a Rokenbok multiplayer interface and optional live video
 
 Download the latest version `here! <https://github.com/csev1755/rokenbok-webserver/releases/latest>`_
 

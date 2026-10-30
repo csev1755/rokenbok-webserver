@@ -1,4 +1,5 @@
-const socket = io();
+const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const socket = new WebSocket(`${protocol}//${window.location.host}/ws`);
 
 // Main floating panel
 const panel = document.querySelector('.floating-panel');
@@ -214,7 +215,9 @@ function cycleStream(direction) {
  * @param {boolean} pressed - Button state
  */
 function emitInputEvent(button, pressed) {
-    socket.emit('input', {button, pressed, player_name: playerNameInput.value,});
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ button, pressed, player_name: playerNameInput.value }));
+    }
 }
 
 /** @type {boolean[]} - Previous gamepad button states for change detection */
@@ -456,14 +459,20 @@ function init() {
     window.addEventListener('keydown', handleKeydown);
     window.addEventListener('keyup', handleKeyup);
 
-    socket.on('players', ({ players }) => renderPlayers(players));
+    socket.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        if (message.players) {
+            renderPlayers(message.players);
+        }
+    };
 
     if (STREAMS.length) updateStream(STREAMS[0].url);
 
-    emitInputEvent('UPDATE', true);
-
-    const loop = () => { pollGamepad(); requestAnimationFrame(loop); };
-    socket.on('connect', loop);
+    socket.onopen = () => {
+        emitInputEvent('UPDATE', true);
+        const loop = () => { pollGamepad(); requestAnimationFrame(loop); };
+        loop();
+    };
 }
 
 document.addEventListener('DOMContentLoaded', init);
