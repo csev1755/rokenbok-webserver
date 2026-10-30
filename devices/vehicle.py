@@ -9,7 +9,7 @@ class Vehicle(ABC):
         id (int): The numeric identifier for selection.
         name (str): The display name of the vehicle.
         type (str or None): The unique name of the control device type.
-        command_deck (VirtualCommandDeck): Reference to the parent command deck class.
+        play_manager (PlayManager): Reference to the parent PlayManager class.
         config (dict): Configuration for the vehicle's device type.
         vehicle_types (dict): Mapping of type names to device-specific vehicle classes.
     """
@@ -24,17 +24,17 @@ class Vehicle(ABC):
         super().__init_subclass__()
         Vehicle.vehicle_types[cls.type] = cls
 
-    def __init__(self, command_deck, config, id, name, logger):
+    def __init__(self, play_manager, config, id, name, logger):
         """
         Initializes a vehicle instance.
 
         Args:
-            command_deck (VirtualCommandDeck): Parent command deck instance.
+            play_manager (PlayManager): Parent PlayManager instance.
             config (dict): Configuration parameters for this vehicle.
             id (int): Unique numeric identifier for vehicle selection.
             name (str): Display name of the vehicle.
         """
-        self.command_deck = command_deck
+        self.play_manager = play_manager
         self.id = id
         self.name = name
         self.config = config
@@ -66,12 +66,12 @@ class Vehicle(ABC):
         return device(config, id, name, logger)
 
     @abstractmethod
-    def control(self, controller, command_deck):
+    def control(self, player, play_manager):
         """
-        Abstract method to control the vehicle based on controller input.
+        Abstract method to control the vehicle based on player input.
 
         Args:
-            controller (Controller): The controller issuing commands.
-            command_deck (VirtualCommandDeck): The parent command deck instance.
+            player (Player): The player issuing commands.
+            play_manager (PlayManager): The parent command deck instance.
         """
         pass

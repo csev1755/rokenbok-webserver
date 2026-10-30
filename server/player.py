@@ -1,33 +1,33 @@
 import time
 
 
-class Controller:
+class Player:
     """
-    A single logical controller assigned to a client.
+    A single Player object assigned to a client.
 
     Attributes:
-        command_deck (VirtualCommandDeck): Parent command deck instance.
-        controller_id (int): Controller identifier.
+        play_manager (PlayManager): Parent PlayManager instance.
+        player_id (int): Player object identifier.
         selection (int or None): Current vehicle selection (1-indexed), or None if no vehicle selected.
-        player_name (str or None): Display name of the player using this controller.
-        player_id (str or None): Socket.IO session identifier for the connected player.
+        player_name (str or None): Display name of the player.
+        socket_id (str or None): Socket.IO session identifier for the connected player.
         buttons (set): Set of currently pressed button identifiers.
         last_activity (float): Timestamp of the last input.
     """
 
-    def __init__(self, command_deck, controller_id, logger):
+    def __init__(self, play_manager, player_id, logger):
         """
-        Initializes a controller instance.
+        Initializes a Player instance.
 
         Args:
-            command_deck (VirtualCommandDeck): Parent command deck.
-            controller_id (int): Controller identifier.
+            play_manager (PlayManager): Parent PlayManager.
+            player_id (int): Player identifier.
         """
-        self.command_deck = command_deck
+        self.play_manager = play_manager
         self.selection = None
         self.player_name = None
-        self.player_id = None
-        self.controller_id = controller_id
+        self.socket_id = None
+        self.player_id = player_id
         self.buttons = set()
         self.last_activity = time.time()
         self.logger = logger
@@ -40,10 +40,10 @@ class Controller:
             delta (int): A positive or negative integer that determines the direction and length of each step in the cycle
         """
         new_selection = self.selection if self.selection is not None else 0
-        occupied_selections = {player["selection"] for player in self.command_deck.get_players() if player["selection"] is not None}
+        occupied_selections = {player["selection"] for player in self.play_manager.get_player_info() if player["selection"] is not None}
 
-        for _selection in range(self.command_deck.vehicle_count):
-            new_selection = (new_selection + delta) % (self.command_deck.vehicle_count + 1)
+        for _selection in range(self.play_manager.vehicle_count):
+            new_selection = (new_selection + delta) % (self.play_manager.vehicle_count + 1)
             if new_selection == 0:
                 self.selection = None
                 return
@@ -53,7 +53,7 @@ class Controller:
 
     def handle_input(self, input):
         """
-        Processes input from a gamepad and updates controller state.
+        Processes player input, updates button states, and controls a selected vehicle.
 
         Args:
             input (dict): A dictionary containing:
@@ -68,9 +68,9 @@ class Controller:
         else:
             self.buttons.discard(input["button"])
 
-        self.logger.debug(f"Session {self.player_id} - {self.buttons if len(self.buttons) > 0 else {''}} - {self.selection}")
+        self.logger.debug(f"Session {self.socket_id} - {self.buttons if len(self.buttons) > 0 else {''}} - {self.selection}")
 
-        vehicle = self.command_deck.get_vehicle(self.selection) or None
+        vehicle = self.play_manager.get_vehicle_from_id(self.selection) or None
         if vehicle:
-            vehicle.control(self, self.command_deck)
+            vehicle.control(self, self.play_manager)
             self.last_activity = time.time()

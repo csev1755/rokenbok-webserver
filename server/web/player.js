@@ -66,7 +66,7 @@ function saveSettings() {
         mappings,
     }));
     // Send these settings to the server
-    emitControllerEvent('UPDATE', true);
+    emitInputEvent('UPDATE', true);
 }
 
 // Load client settings
@@ -210,11 +210,11 @@ function cycleStream(direction) {
 }
 
 /**
- * Send a controller event to the server
+ * Send an input event to the server
  * @param {string} button - Button identifier
  * @param {boolean} pressed - Button state
  */
-function emitControllerEvent(button, pressed) {
+function emitInputEvent(button, pressed) {
     if (socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ button, pressed, player_name: playerNameInput.value }));
     }
@@ -280,7 +280,7 @@ function pollGamepad() {
             // Don't send input events if settings window is open
             if (!settingsWindow.classList.contains('hidden')) return;
             
-            emitControllerEvent(control.button, btn.pressed);
+            emitInputEvent(control.button, btn.pressed);
         }
     });
 
@@ -325,7 +325,7 @@ function handleKeydown(e) {
     // Don't send input events if settings window is open
     if (!settingsWindow.classList.contains('hidden')) return;
     
-    emitControllerEvent(control.button, true);
+    emitInputEvent(control.button, true);
 }
 
 // Handle keyboard key release
@@ -347,7 +347,7 @@ function handleKeyup(e) {
     // Don't send input events if settings window is open
     if (!settingsWindow.classList.contains('hidden')) return;
 
-    if (control) emitControllerEvent(control.button, false);
+    if (control) emitInputEvent(control.button, false);
 }
 
 // Panel dragging functionality
@@ -469,7 +469,7 @@ function init() {
     if (STREAMS.length) updateStream(STREAMS[0].url);
 
     socket.onopen = () => {
-        emitControllerEvent('UPDATE', true);
+        emitInputEvent('UPDATE', true);
         const loop = () => { pollGamepad(); requestAnimationFrame(loop); };
         loop();
     };
