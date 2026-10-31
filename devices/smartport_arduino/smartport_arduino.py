@@ -1,4 +1,5 @@
 import serial
+import serial.tools.list_ports
 from devices.vehicle import Vehicle
 
 
@@ -20,11 +21,23 @@ class SmartPortArduino(Vehicle):
         """
         if SmartPortArduino.serial is None:
             try:
-                SmartPortArduino.serial = serial.Serial(self.config["serial_port"], 1000000)
-                print(f" * Connected to SmartPort Arduino at '{self.config['serial_port']}'")
+                if self.config["serial_port"] == "auto":
+                    arduino_found = False
+                    for port in serial.tools.list_ports.comports():
+                        if port.vid in [0x2341, 0x1A86, 0x239A, 0x1B4F]: # Common Arduino VIDs.
+                            SmartPortArduino.serial = serial.Serial(port.device, 1000000)
+                            print(f" * Auto detected and connected to Arduino at '{port.device}'")
+                            arduino_found = True;
+                            break;
+                    if not arduino_found:
+                        self.logger.error("Failed to auto detect Arduino")
+                        return False
+                else:
+                    SmartPortArduino.serial = serial.Serial(self.config["serial_port"], 1000000)
+                    print(f" * Connected to Arduino at '{self.config['serial_port']}'")
                 return True
             except Exception as e:
-                self.logger.error(f"Cannot connect to SmartPort Arduino at '{self.config['serial_port']}'")
+                self.logger.error(f"Cannot connect to Arduino at '{self.config['serial_port']}'")
                 self.logger.debug(e)
                 return False
         else:
