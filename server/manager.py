@@ -17,7 +17,7 @@ class PlayManager:
     def __init__(self, config, logger):
         """
         Initializes the PlayManager from the config.
-        Creates empty Player obects according to the max_players value from the config.
+        Creates empty Player objects according to the max_players value from the config.
         Reads vehicle/device configurations from the config file and creates vehicle instances.
         """
         self.logger = logger
