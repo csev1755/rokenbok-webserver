@@ -1,4 +1,5 @@
 import serial
+import serial.tools.list_ports
 from devices.vehicle import Vehicle
 
 
@@ -20,11 +21,23 @@ class SmartPortArduino(Vehicle):
         """
         if SmartPortArduino.serial is None:
             try:
-                SmartPortArduino.serial = serial.Serial(self.config["serial_port"], 1000000)
-                print(f" * Connected to SmartPort Arduino at '{self.config['serial_port']}'")
+                if self.config["serial_port"] == "auto":
+                    arduino_found = False
+                    for port in serial.tools.list_ports.comports():
+                        if port.vid in [0x2341, 0x1A86, 0x239A, 0x1B4F]: # Common Arduino VIDs.
+                            SmartPortArduino.serial = serial.Serial(port.device, 1000000)
+                            print(f" * Auto detected and connected to Arduino at '{port.device}'")
+                            arduino_found = True;
+                            break;
+                    if not arduino_found:
+                        self.logger.error("Failed to auto detect Arduino")
+                        return False
+                else:
+                    SmartPortArduino.serial = serial.Serial(self.config["serial_port"], 1000000)
+                    print(f" * Connected to Arduino at '{self.config['serial_port']}'")
                 return True
             except Exception as e:
-                self.logger.error(f"Cannot connect to SmartPort Arduino at '{self.config['serial_port']}'")
+                self.logger.error(f"Cannot connect to Arduino at '{self.config['serial_port']}'")
                 self.logger.debug(e)
                 return False
         else:
@@ -67,10 +80,11 @@ class SmartPortArduino(Vehicle):
         """
         packet = bytearray([254])
         for player in play_manager.players.values():
-            p_id = player.player_id + 10 or 0
-            v_sel = 15 if player.selection is None else player.selection - 1
-            byte1, byte2 = self.encode_player_state(player) if player.selection is not None else (0, 0)
-            packet.extend([p_id, v_sel, byte1, byte2])
+            if player.socket_id and player.selection and play_manager.get_vehicle_from_id(player.selection).type == "smartport_arduino":
+                p_id = player.player_id + 10 or 0
+                v_sel = player.selection - 1
+                byte1, byte2 = self.encode_player_state(player) if player.selection is not None else (0, 0)
+                packet.extend([p_id, v_sel, byte1, byte2])
         packet.append(255)
         self.send_and_receive_packet(packet)
 
@@ -87,6 +101,7 @@ class SmartPortArduino(Vehicle):
         try:
             if SmartPortArduino.serial is not None:
                 SmartPortArduino.serial.write(packet)
+                self.logger.debug(f"SmartPortArduino - Sent: {packet}")
 
                 if SmartPortArduino.serial.in_waiting >= 27:
                     raw = SmartPortArduino.serial.read(SmartPortArduino.serial.in_waiting)
@@ -95,17 +110,16 @@ class SmartPortArduino(Vehicle):
                     if start != -1 and len(raw) >= start + 27 and raw[start + 26] == 255:
                         frame = raw[start : start + 27]
                         if not frame[1]:
-                            self.logger.debug(f"SmartPortArduino - Invalid packet: {raw}")
-                            self.logger.warning(f"SmartPortArduino - SmartPort communication error")
+                            self.logger.warning(f"SmartPortArduino - SmartPort Connection to Command Deck Not Established")
 
                         self.logger.debug(f"SmartPortArduino Selections - {[None if x == 15 else x + 1 for x in frame[14:26]]}")
 
                     else:
-                        self.logger.debug(f"SmartPortArduino - Invalid packet: {raw}")
-                        self.logger.warning(f"SmartPortArduino - SmartPort communication error")
+                        self.logger.debug(f"SmartPortArduino - Invalid Response: {raw}")
+                        self.logger.warning(f"SmartPortArduino - SmartPort Communication Error")
 
                 else:
-                    self.logger.debug(f"SmartPortArduino - No packet received")
+                    self.logger.debug(f"SmartPortArduino - No Response Received")
             else:
                 self.logger.error(f"Serial connection to SmartPort Arduino is not established")
 

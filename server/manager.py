@@ -9,22 +9,22 @@ class PlayManager:
 
     Attributes:
         players (dict[int, Player]): Mapping of player IDs to Player instances.
-        player_count (int): Max number of players (default: 12).
+        max_player_count (int): Max number of players from config.
         vehicles (dict[int, Vehicle]): Mapping of vehicle IDs to Vehicle instances.
         vehicle_count (int): Number of selectable vehicles.
     """
 
     def __init__(self, config, logger):
         """
-        Initializes the PlayManager and Player obects.
-
+        Initializes the PlayManager from the config.
+        Creates empty Player objects according to the max_players value from the config.
         Reads vehicle/device configurations from the config file and creates vehicle instances.
         """
         self.logger = logger
         self.config = config
 
         self.players: dict[int, Player] = {}
-        self.player_count = 12
+        self.max_player_count = self.config.getint("webserver", "max_players")
 
         self.vehicles: dict[int, Vehicle] = {}
         self.vehicle_count = 0
@@ -41,7 +41,7 @@ class PlayManager:
                         type=device_name, config=device_config, id=int(vehicle_id), name=vehicle_name, logger=self.logger
                     )
 
-        for player_id in range(1, self.player_count + 1):
+        for player_id in range(1, self.max_player_count + 1):
             self.players[player_id] = Player(self, player_id, self.logger)
 
     def player_join(self, socket_id):
