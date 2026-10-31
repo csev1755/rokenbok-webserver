@@ -87,6 +87,7 @@ class SmartPortArduino(Vehicle):
         try:
             if SmartPortArduino.serial is not None:
                 SmartPortArduino.serial.write(packet)
+                self.logger.debug(f"SmartPortArduino - Sent: {packet}")
 
                 if SmartPortArduino.serial.in_waiting >= 27:
                     raw = SmartPortArduino.serial.read(SmartPortArduino.serial.in_waiting)
@@ -95,17 +96,16 @@ class SmartPortArduino(Vehicle):
                     if start != -1 and len(raw) >= start + 27 and raw[start + 26] == 255:
                         frame = raw[start : start + 27]
                         if not frame[1]:
-                            self.logger.debug(f"SmartPortArduino - Invalid packet: {raw}")
-                            self.logger.warning(f"SmartPortArduino - SmartPort communication error")
+                            self.logger.warning(f"SmartPortArduino - SmartPort Connection to Command Deck Not Established")
 
                         self.logger.debug(f"SmartPortArduino Selections - {[None if x == 15 else x + 1 for x in frame[14:26]]}")
 
                     else:
-                        self.logger.debug(f"SmartPortArduino - Invalid packet: {raw}")
-                        self.logger.warning(f"SmartPortArduino - SmartPort communication error")
+                        self.logger.debug(f"SmartPortArduino - Invalid Response: {raw}")
+                        self.logger.warning(f"SmartPortArduino - SmartPort Communication Error")
 
                 else:
-                    self.logger.debug(f"SmartPortArduino - No packet received")
+                    self.logger.debug(f"SmartPortArduino - No Response Received")
             else:
                 self.logger.error(f"Serial connection to SmartPort Arduino is not established")
 
