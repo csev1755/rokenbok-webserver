@@ -11,9 +11,12 @@ class SmartPortArduino(Vehicle):
 
     type = "smartport_arduino"
     serial = None
+    smart_port_vids = []
 
     def __init__(self, config, id, name, logger):
         super().__init__(self, config, id, name, logger)
+        if id in range(0, 15):
+            self.smart_port_vids.append(id)
 
     def connect_serial(self):
         """
@@ -80,10 +83,11 @@ class SmartPortArduino(Vehicle):
         """
         packet = bytearray([254])
         for player in play_manager.players.values():
-            p_id = player.player_id + 10 or 0
-            v_sel = 15 if player.selection is None else player.selection - 1
-            byte1, byte2 = self.encode_player_state(player) if player.selection is not None else (0, 0)
-            packet.extend([p_id, v_sel, byte1, byte2])
+            if player.socket_id and player.selection and player.selection in self.smart_port_vids:
+                p_id = player.player_id + 10 or 0
+                v_sel = player.selection - 1
+                byte1, byte2 = self.encode_player_state(player) if player.selection is not None else (0, 0)
+                packet.extend([p_id, v_sel, byte1, byte2])
         packet.append(255)
         self.send_and_receive_packet(packet)
 
