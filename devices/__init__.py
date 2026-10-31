@@ -1,1 +1,2 @@
 from devices.smartport_arduino import smartport_arduino
+from devices.test_device import test_device
