@@ -1,0 +1,26 @@
+name: Check PR formatting with ruff and clang
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - name: Setup uv
+      uses: astral-sh/setup-uv@v1
+      with:
+        version: latest
+
+    - name: Install dependencies
+      run: uv sync --group dev
+
+    - name: Run formatting pre-commit hooks
+      run: |
+          pre-commit run ruff-format --from-ref origin/${{ github.base_ref }} --to-ref HEAD --show-diff-on-failure
+          pre-commit run clang-format --from-ref origin/${{ github.base_ref }} --to-ref HEAD --show-diff-on-failure

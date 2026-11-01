@@ -19,6 +19,7 @@ dependencies = [
 dev = [
     "pre-commit>=4.6.2",
     "ruff>=0.16.10",
+    "clang-format>=21.1.3",
 ]
 docs = [
     "sphinx",

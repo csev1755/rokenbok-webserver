@@ -1,0 +1,5 @@
+---
+BasedOnStyle: Microsoft
+---
+Language: JavaScript
+ColumnLimit: 140

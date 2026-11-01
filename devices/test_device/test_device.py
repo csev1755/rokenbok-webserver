@@ -15,4 +15,6 @@ class TestDevice(Vehicle):
         """
         Prints player inputs for players that have this vehicle selected.
         """
-        print(f"Player {player.player_id} controlled test_vehicle {player.selection} with input {player.buttons if len(player.buttons) > 0 else {''}}")
+        print(
+            f"Player {player.player_id} controlled test_vehicle {player.selection} with input {player.buttons if len(player.buttons) > 0 else {''}}"
+        )

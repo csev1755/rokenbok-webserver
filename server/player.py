@@ -66,7 +66,7 @@ class Player:
                 delta = 1 if input["button"] == "SELECT_UP" else -1
                 self.cycle_vehicle_select(delta)
                 if old_vehicle:
-                    old_vehicle.control(self, self.play_manager) # Old vehicle must be controlled to release inputs.
+                    old_vehicle.control(self, self.play_manager)  # Old vehicle must be controlled to release inputs.
             self.buttons.add(input["button"])
         else:
             self.buttons.discard(input["button"])

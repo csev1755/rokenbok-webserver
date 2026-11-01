@@ -9,7 +9,13 @@ repos:
         files: 'pyproject\.toml|uv\.lock'
 
       - id: ruff-format
-        name: ruff-format
+        name: ruff format
         entry: ruff format
         language: system
         types: [python]
+
+      - id: clang-format
+        name: clang format
+        entry: clang-format -i
+        language: system
+        types: [javascript]
