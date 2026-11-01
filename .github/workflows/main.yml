@@ -7,67 +7,23 @@ jobs:
   build:
     strategy:
       matrix:
-        include:
-          - os: windows-latest
-            download_name: win
-            go2rtc_arch: win64
-          - os: macos-latest
-            download_name: mac
-            go2rtc_arch: mac_arm64
-          - os: macos-15-intel
-            download_name: mac_intel
-            go2rtc_arch: mac_amd64
+        os: [windows-latest, macos-latest, macos-15-intel]
 
     runs-on: ${{ matrix.os }}
     
     steps:
       - uses: actions/checkout@v6
 
-      - name: Setup
+      - name: Setup uv
         uses: astral-sh/setup-uv@v1
         with:
           version: latest
 
-      - name: Build
-        env:
-          REF_NAME: ${{ github.ref_name }}
-          GO2RTC_ARCH: ${{ matrix.go2rtc_arch }}
-          GO2RTC_VERSION: '1.9.14'
-        run: | 
-
-          mkdir bin staging
-
-          curl -L "https://github.com/AlexxIT/go2rtc/releases/download/v${GO2RTC_VERSION}/go2rtc_${GO2RTC_ARCH}.zip" -o go2rtc.zip
-          unzip -o go2rtc.zip -d bin/
-          EXECUTABLE=$(ls bin/go2rtc*)
-          mv "$EXECUTABLE" "${EXECUTABLE%.*}"
-
-          chmod +x bin/go2rtc
-
-          case "${GO2RTC_ARCH}" in
-            win64)
-              curl -L "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" -o ffmpeg.zip
-              unzip -j -o ffmpeg.zip **/ffmpeg.exe -d bin/
-              mv bin/ffmpeg.exe bin/ffmpeg.bin
-              ;;
-            mac_amd64 | mac_arm64)
-              ARCH="${GO2RTC_ARCH#mac_}"
-              curl -L "https://ffmpeg.martin-riedl.de/redirect/latest/macos/${ARCH}/release/ffmpeg.zip" -o ffmpeg.zip
-              unzip -o ffmpeg.zip -d bin/
-              mv bin/ffmpeg bin/ffmpeg.bin
-              ;;
-          esac
-
-          chmod +x bin/ffmpeg.bin
-
-          uv sync
-          uv run pyinstaller pyinstaller.spec
-          cp dist/rokenbok_webserver* settings.ini staging/
-
-        shell: bash
+      - name: Run build.py
+        run: uv run build.py
 
       - name: Upload
         uses: actions/upload-artifact@v6
         with:
-          name: rokenbok_webserver_${{ env.BUILD_STRING }}_${{ matrix.download_name }}
-          path: staging/
+          name: ${{ env.ARTIFACT_NAME }}
+          path: dist/
