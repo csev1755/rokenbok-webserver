@@ -1,15 +1,15 @@
 import argparse
 import os
 import platform
+import requests
 import shutil
-import ssl
 import subprocess
 import sys
 import tempfile
 import tomllib
-import urllib.request
 import zipfile
 from pathlib import Path
+
 
 ROOT = Path(__file__).resolve().parent
 GO2RTC_VERSION = "1.9.14"
@@ -30,10 +30,12 @@ def detect_target():
 
 def download(url, destination):
     print(f"Downloading {url}")
-    # Create an unverified context to bypass certificate expiration/verification errors
-    context = ssl._create_unverified_context()
-    with urllib.request.urlopen(url, context=context) as response, open(destination, "wb") as out_file:
-        shutil.copyfileobj(response, out_file)
+    with requests.get(url, stream=True) as response:
+        response.raise_for_status()
+        with open(destination, "wb") as out_file:
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    out_file.write(chunk)
 
 
 def extract_binary(archive_path, destination, member_name):
