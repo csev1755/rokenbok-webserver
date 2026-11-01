@@ -22,5 +22,5 @@ jobs:
 
     - name: Run formatting pre-commit hooks
       run: |
-          pre-commit run ruff-format --from-ref origin/${{ github.base_ref }} --to-ref HEAD --show-diff-on-failure
-          pre-commit run clang-format --from-ref origin/${{ github.base_ref }} --to-ref HEAD --show-diff-on-failure
+          uv run pre-commit run ruff-format --from-ref origin/${{ github.base_ref }} --to-ref HEAD --show-diff-on-failure
+          uv run pre-commit run clang-format --from-ref origin/${{ github.base_ref }} --to-ref HEAD --show-diff-on-failure
