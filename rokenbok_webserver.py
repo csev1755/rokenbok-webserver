@@ -74,6 +74,8 @@ if __name__ == "__main__":
 
     logger = logging.getLogger(version_string)
 
+    print(f"{version_string}")
+
     # Init manager and webserver
     play_manager = PlayManager(config=config, logger=logger)
     aiortc_app = init_webserver(bundle_dir, config, play_manager, version_string)

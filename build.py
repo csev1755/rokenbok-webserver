@@ -124,8 +124,6 @@ def build(download_name):
     if github_env:
         with open(github_env, "a", encoding="utf-8") as environment_file:
             environment_file.write(f"ARTIFACT_NAME={artifact_name}\n")
-    print(f"rokenbok-webserver version: {version_string}")
-    print(f"Commit hash: {commit_hash}")
     print(f"Artifact name: {artifact_name}")
 
 
