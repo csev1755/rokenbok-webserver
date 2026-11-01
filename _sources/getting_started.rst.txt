@@ -33,10 +33,12 @@ These are the main configuration settings for the server:
    listen_port = 5001
    enable_video = false
    player_timeout = 30
+   max_players = 12
 
 Generally, you shouldn't need to change the ``listen_ip`` or ``listen_port`` unless you have a specific reason to do so. 
 The ``enable_video`` option can be set to ``true`` if you want to enable the video stream feature, and ``player_timeout`` 
-sets the number of seconds a player can be idle before their vehicle selection is released for others to use.
+sets the number of seconds a player can be idle before their vehicle selection is released for others to use. ``max_players``
+sets the maximum amount of players that can control vehicles simultaneously.
 
 Devices
 ^^^^^^^

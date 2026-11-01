@@ -18,7 +18,7 @@ Configuration
 2. `Install the sketch with Arduino IDE <https://support.arduino.cc/hc/en-us/articles/4733418441116-Upload-a-sketch-in-Arduino-IDE>`_ and make note of the serial device name/path
 3. Modify the following in ``settings.ini``:
 
-   - Add the serial device name/path you noted earlier as ``serial_port`` under the ``[smartport_arduino]`` section:
+   - Add the serial device name/path you noted earlier as ``serial_port`` under the ``[smartport_arduino]`` section or leave it as ``auto``:
 
    .. code-block:: ini
 
