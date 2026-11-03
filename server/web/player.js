@@ -24,11 +24,17 @@ const defaultSettingsButton = document.getElementById('default-settings');
 
 let videoToggle = true;
 
-// Get the streams if the HTML elements exist
+/**
+ * Get the streams if the HTML elements exist
+ * @type {Array<{name: string, url: string}>}
+ */
 const streamLabel = document.getElementById('stream-label');
 const STREAMS = streamLabel ? Object.entries(JSON.parse(streamLabel.dataset.streams)).map(([ name, url ]) => ({name, url})) : [];
 
-// Default input maps
+/**
+ * Default input maps
+ * @type {Array<{button: string, key_default: string, gamepad_default: number}>}
+ */
 const CONTROLS = [
     {button : 'A_BUTTON', key_default : 'KeyF', gamepad_default : 0},
     {button : 'B_BUTTON', key_default : 'KeyG', gamepad_default : 1},
@@ -110,7 +116,10 @@ function closeSettings()
     settingsWindow.classList.add('hidden');
 }
 
-// Update button feedback
+/**
+ * Update the text content and visibility of the button feedback element
+ * @param {string} message - The feedback message to display
+ */
 function updateButtonFeedback(message)
 {
     if (buttonFeedbackElement)
@@ -126,7 +135,11 @@ function clearButtonFeedback()
     updateButtonFeedback('');
 }
 
-// Update or clear button feedback based on input device
+/**
+ * // Update or clear button feedback based on input device
+ * @param {string} value - The button mapping value
+ * @param {string} [device] - The target input device ('keyboard' or 'gamepad')
+ */
 function getButtonFeedback(value, device)
 {
     if (!value || (device && device !== inputDeviceSelect.value))
@@ -157,6 +170,7 @@ function getButtonMap(button, device)
  * @param {string} button - Button identifier
  * @param {string} device - 'keyboard' or 'gamepad'
  * @param {string} value - The mapping value
+ * @returns {string|void}
  */
 function setButtonMap(button, device, value)
 {
@@ -170,6 +184,7 @@ function setButtonMap(button, device, value)
 }
 
 /**
+ * Player data from the server
  * @typedef {Object} PlayerData
  * @property {string} player_name - Player name
  * @property {number} selection - Selected vehicle ID
@@ -226,7 +241,10 @@ function toggleVideo()
     }
 }
 
-// Cycle through streams
+/**
+ * Cycle through streams
+ * @param {number} direction - Direction step value (e.g., 1 or -1)
+ */
 function cycleStream(direction)
 {
     if (!STREAMS.length || !videoToggle)
@@ -278,10 +296,10 @@ function clearButtonMap()
 function resolveMappingConflicts(targetButton, device, value)
 {
     CONTROLS.forEach(control => {
-        if (control.button !== targetButton)
-        { // Don't evaluate for the targetButton
-            if (getButtonMap(control.button, device) === value)
-            {                                             // Check for conflict
+        if (control.button !== targetButton) // Don't evaluate for the targetButton
+        {
+            if (getButtonMap(control.button, device) === value) // Check for conflict
+            {
                 setButtonMap(control.button, device, ''); // Clear mapping on detected conflict
             }
         }
@@ -355,7 +373,10 @@ function pollGamepad()
 /** @type {Object.<string, boolean>} - Current keyboard key states */
 const keyboardState = {};
 
-// Handle keyboard key press
+/**
+ * Handle keyboard key press
+ * @param {KeyboardEvent} e - Keyboard event object
+ */
 function handleKeydown(e)
 {
 
@@ -400,7 +421,10 @@ function handleKeydown(e)
     emitInputEvent(control.button, true);
 }
 
-// Handle keyboard key release
+/**
+ * Handle keyboard key release
+ * @param {KeyboardEvent} e - Keyboard event object
+ */
 function handleKeyup(e)
 {
     // Only process if keyboard is selected
