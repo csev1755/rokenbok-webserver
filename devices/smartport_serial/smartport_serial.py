@@ -19,6 +19,7 @@ class SmartPortSerial(Vehicle):
     def connect_serial(self):
         """
         Establishes a serial connection to the Smart Port serial device if not already connected.
+        Sends the configuration packet using send_configuration() once the connection is established.
         """
         if SmartPortSerial.serial is None:
             try:
@@ -36,6 +37,7 @@ class SmartPortSerial(Vehicle):
                 else:
                     SmartPortSerial.serial = serial.Serial(self.config["serial_port"], 1000000)
                     print(f" * Connected to SmartPort serial device at '{self.config['serial_port']}'")
+                self.send_configuration()
                 return True
             except Exception as e:
                 self.logger.error(f"Cannot connect to SmartPort serial device at '{self.config['serial_port']}'")
@@ -43,6 +45,33 @@ class SmartPortSerial(Vehicle):
                 return False
         else:
             return True
+
+    def send_configuration(self):
+        """
+        Sends configuration bytes to the serial device.
+        """
+        if not self.connect_serial():
+            return
+
+        try:
+            if SmartPortSerial.serial is not None:
+                packet = bytearray([
+                    253,
+                    int(self.play_manager.config["webserver"].getboolean("allow_share")),
+                    int(sum(1 for v in self.play_manager.vehicles.values() if v.type == "smartport_serial") > 8),
+                    int(self.config.getboolean("device_config_1")),
+                    int(self.config.getboolean("device_config_2")),
+                    255
+                ])
+                SmartPortSerial.serial.write(packet)
+                self.logger.debug(f"SmartPortSerial - Sent Config: {packet}")
+            else:
+                self.logger.error(f"Connection to SmartPort serial device is not established")
+
+        except Exception as e:
+            self.logger.debug(e)
+            self.logger.error(f"Cannot connect to SmartPort serial device at '{self.config['serial_port']}'")
+            SmartPortSerial.serial = None
 
     def encode_player_state(self, player):
         """
