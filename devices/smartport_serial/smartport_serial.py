@@ -25,7 +25,7 @@ class SmartPortSerial(Vehicle):
                 if self.config["serial_port"] == "auto":
                     device_found = False
                     for port in serial.tools.list_ports.comports():
-                        if port.vid in [0x2341, 0x1A86, 0x239A, 0x1B4F]:  # Common Arduino VIDs.
+                        if port.vid in [0x2341, 0x1A86, 0x239A, 0x1B4F, 0x303A]:  # Common Arduino and ESP32 VIDs.
                             SmartPortSerial.serial = serial.Serial(port.device, 1000000)
                             print(f" * Auto detected and connected to SmartPort serial device at '{port.device}'")
                             device_found = True
