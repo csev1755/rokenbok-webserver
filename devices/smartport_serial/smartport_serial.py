@@ -82,7 +82,7 @@ class SmartPortSerial(Vehicle):
         packet = bytearray([254])
         for player in play_manager.players.values():
             if player.socket_id and player.selection and play_manager.get_vehicle_from_id(player.selection).type == "smartport_serial":
-                p_id = player.player_id + 10 or 0
+                p_id = player.player_id + 1 or 0
                 v_sel = player.selection - 1
                 byte1, byte2 = self.encode_player_state(player) if player.selection is not None else (0, 0)
                 packet.extend([p_id, v_sel, byte1, byte2])
