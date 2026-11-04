@@ -3,13 +3,14 @@ import serial.tools.list_ports
 from devices.vehicle import Vehicle
 
 
-class SmartPortArduino(Vehicle):
+class SmartPortSerial(Vehicle):
     """
-    Device type/vehicle class for the smart_port_arduino sketch.
+    Device type/vehicle class for Smart Port devices that are controlled over serial.
     https://github.com/stepstools/Rokenbok-Smart-Port-Arduino
+    https://github.com/stepstools/Rokenbok-Smart-Port-WiFi
     """
 
-    type = "smartport_arduino"
+    type = "smartport_serial"
     serial = None
 
     def __init__(self, config, id, name, logger):
@@ -17,27 +18,27 @@ class SmartPortArduino(Vehicle):
 
     def connect_serial(self):
         """
-        Establishes a serial connection to the SmartPort Arduino if not already connected.
+        Establishes a serial connection to the Smart Port serial device if not already connected.
         """
-        if SmartPortArduino.serial is None:
+        if SmartPortSerial.serial is None:
             try:
                 if self.config["serial_port"] == "auto":
-                    arduino_found = False
+                    device_found = False
                     for port in serial.tools.list_ports.comports():
                         if port.vid in [0x2341, 0x1A86, 0x239A, 0x1B4F]:  # Common Arduino VIDs.
-                            SmartPortArduino.serial = serial.Serial(port.device, 1000000)
-                            print(f" * Auto detected and connected to Arduino at '{port.device}'")
-                            arduino_found = True
+                            SmartPortSerial.serial = serial.Serial(port.device, 1000000)
+                            print(f" * Auto detected and connected to SmartPort serial device at '{port.device}'")
+                            device_found = True
                             break
-                    if not arduino_found:
-                        self.logger.error("Failed to auto detect Arduino")
+                    if not device_found:
+                        self.logger.error("Failed to auto detect SmartPort serial device")
                         return False
                 else:
-                    SmartPortArduino.serial = serial.Serial(self.config["serial_port"], 1000000)
-                    print(f" * Connected to Arduino at '{self.config['serial_port']}'")
+                    SmartPortSerial.serial = serial.Serial(self.config["serial_port"], 1000000)
+                    print(f" * Connected to SmartPort serial device at '{self.config['serial_port']}'")
                 return True
             except Exception as e:
-                self.logger.error(f"Cannot connect to Arduino at '{self.config['serial_port']}'")
+                self.logger.error(f"Cannot connect to SmartPort serial device at '{self.config['serial_port']}'")
                 self.logger.debug(e)
                 return False
         else:
@@ -76,11 +77,11 @@ class SmartPortArduino(Vehicle):
     def control(self, player, play_manager):
         """
         Constructs and transmits a packet containing the state of all players
-        to the Arduino and receives data representing the command deck's state.
+        to the serial device and receives data representing the command deck's state.
         """
         packet = bytearray([254])
         for player in play_manager.players.values():
-            if player.socket_id and player.selection and play_manager.get_vehicle_from_id(player.selection).type == "smartport_arduino":
+            if player.socket_id and player.selection and play_manager.get_vehicle_from_id(player.selection).type == "smartport_serial":
                 p_id = player.player_id + 10 or 0
                 v_sel = player.selection - 1
                 byte1, byte2 = self.encode_player_state(player) if player.selection is not None else (0, 0)
@@ -99,31 +100,31 @@ class SmartPortArduino(Vehicle):
             return
 
         try:
-            if SmartPortArduino.serial is not None:
-                SmartPortArduino.serial.write(packet)
-                self.logger.debug(f"SmartPortArduino - Sent: {packet}")
+            if SmartPortSerial.serial is not None:
+                SmartPortSerial.serial.write(packet)
+                self.logger.debug(f"SmartPortSerial - Sent: {packet}")
 
-                if SmartPortArduino.serial.in_waiting >= 27:
-                    raw = SmartPortArduino.serial.read(SmartPortArduino.serial.in_waiting)
+                if SmartPortSerial.serial.in_waiting >= 27:
+                    raw = SmartPortSerial.serial.read(SmartPortSerial.serial.in_waiting)
                     start = raw.rfind(254)
 
                     if start != -1 and len(raw) >= start + 27 and raw[start + 26] == 255:
                         frame = raw[start : start + 27]
                         if not frame[1]:
-                            self.logger.warning(f"SmartPortArduino - SmartPort Connection to Command Deck Not Established")
+                            self.logger.warning(f"SmartPortSerial - SmartPort Connection to Command Deck Not Established")
 
-                        self.logger.debug(f"SmartPortArduino Selections - {[None if x == 15 else x + 1 for x in frame[14:26]]}")
+                        self.logger.debug(f"SmartPortSerial Selections - {[None if x == 15 else x + 1 for x in frame[14:26]]}")
 
                     else:
-                        self.logger.debug(f"SmartPortArduino - Invalid Response: {raw}")
-                        self.logger.warning(f"SmartPortArduino - SmartPort Communication Error")
+                        self.logger.debug(f"SmartPortSerial - Invalid Response: {raw}")
+                        self.logger.warning(f"SmartPortSerial - SmartPort Communication Error")
 
                 else:
-                    self.logger.debug(f"SmartPortArduino - No Response Received")
+                    self.logger.debug(f"SmartPortSerial - No Response Received")
             else:
-                self.logger.error(f"Serial connection to SmartPort Arduino is not established")
+                self.logger.error(f"Connection to SmartPort serial device is not established")
 
         except Exception as e:
             self.logger.debug(e)
-            self.logger.error(f"Cannot connect to SmartPort Arduino at '{self.config['serial_port']}'")
-            SmartPortArduino.serial = None
+            self.logger.error(f"Cannot connect to SmartPort serial device at '{self.config['serial_port']}'")
+            SmartPortSerial.serial = None
