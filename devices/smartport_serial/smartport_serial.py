@@ -57,7 +57,7 @@ class SmartPortSerial(Vehicle):
             if SmartPortSerial.serial is not None:
                 packet = bytearray([
                     253,
-                    int(self.play_manager.config["webserver"].getboolean("allow_share")),
+                    int(self.play_manager.allow_share),
                     int(sum(1 for v in self.play_manager.vehicles.values() if v.type == "smartport_serial") > 8),
                     int(self.config.getboolean("device_config_1")),
                     int(self.config.getboolean("device_config_2")),

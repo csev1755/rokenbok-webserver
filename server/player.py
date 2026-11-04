@@ -47,7 +47,7 @@ class Player:
             if new_selection == 0:
                 self.selection = None
                 return
-            if new_selection not in occupied_selections:
+            if (self.play_manager.allow_share or (new_selection not in occupied_selections)):
                 self.selection = new_selection
                 return
 

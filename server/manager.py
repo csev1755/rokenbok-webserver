@@ -23,6 +23,8 @@ class PlayManager:
         self.logger = logger
         self.config = config
 
+        self.allow_share = self.config["webserver"].getboolean("allow_share")
+
         self.players: dict[int, Player] = {}
         self.max_player_count = self.config.getint("webserver", "max_players")
 
