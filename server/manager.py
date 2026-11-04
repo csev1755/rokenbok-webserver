@@ -38,7 +38,12 @@ class PlayManager:
                 for vehicle_id, vehicle_name in device_vehicles:
                     self.vehicle_count += 1
                     self.vehicles[int(vehicle_id)] = Vehicle.configure(
-                        type=device_name, config=device_config, id=int(vehicle_id), name=vehicle_name, logger=self.logger
+                        play_manager=self,
+                        type=device_name,
+                        config=device_config,
+                        id=int(vehicle_id),
+                        name=vehicle_name,
+                        logger=self.logger,
                     )
 
         for player_id in range(1, self.max_player_count + 1):

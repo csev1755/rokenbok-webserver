@@ -41,11 +41,12 @@ class Vehicle(ABC):
         self.logger = logger
 
     @classmethod
-    def configure(cls, type, config, id, name, logger):
+    def configure(cls, play_manager, type, config, id, name, logger):
         """
         Factory method to create a vehicle instance of the specified type.
 
         Args:
+            play_manager (PlayManager): Parent PlayManager instance.
             type (str): Vehicle type identifier.
             config (dict): Configuration parameters for the vehicle's contrtol device.
             id (int): Unique numeric identifier for vehicle selection.
@@ -63,7 +64,7 @@ class Vehicle(ABC):
             raise ValueError(f"Unknown vehicle type: {type}")
 
         logger.info(f"Configured <{type}> vehicle <{name}> with id <{id}>")
-        return device(config, id, name, logger)
+        return device(play_manager, config, id, name, logger)
 
     @abstractmethod
     def control(self, player, play_manager):
