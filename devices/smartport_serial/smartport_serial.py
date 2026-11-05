@@ -55,18 +55,20 @@ class SmartPortSerial(Vehicle):
 
         try:
             if SmartPortSerial.serial is not None:
-                packet = bytearray([
-                    253,
-                    int(self.play_manager.allow_share),
-                    int(sum(1 for v in self.play_manager.vehicles.values() if v.type == "smartport_serial") > 8),
-                    int(self.config.getboolean("enable_wifi")),
-                    0,  # Reserved for future use.
-                    255
-                ])
+                packet = bytearray(
+                    [
+                        253,
+                        int(self.play_manager.allow_share),
+                        int(sum(1 for v in self.play_manager.vehicles.values() if v.type == "smartport_serial") > 8),
+                        int(self.config.getboolean("enable_wifi")),
+                        0,  # Reserved for future use.
+                        255,
+                    ]
+                )
                 SmartPortSerial.serial.write(packet)
                 self.logger.debug(f"SmartPortSerial - Sent Config: {packet}")
             else:
-                self.logger.error(f"Connection to SmartPort serial device is not established")
+                self.logger.error("Connection to SmartPort serial device is not established")
 
         except Exception as e:
             self.logger.debug(e)
@@ -140,18 +142,18 @@ class SmartPortSerial(Vehicle):
                     if start != -1 and len(raw) >= start + 27 and raw[start + 26] == 255:
                         frame = raw[start : start + 27]
                         if not frame[1]:
-                            self.logger.warning(f"SmartPortSerial - SmartPort Connection to Command Deck Not Established")
+                            self.logger.warning("SmartPortSerial - SmartPort Connection to Command Deck Not Established")
 
                         self.logger.debug(f"SmartPortSerial Selections - {[None if x == 15 else x + 1 for x in frame[14:26]]}")
 
                     else:
                         self.logger.debug(f"SmartPortSerial - Invalid Response: {raw}")
-                        self.logger.warning(f"SmartPortSerial - SmartPort Communication Error")
+                        self.logger.warning("SmartPortSerial - SmartPort Communication Error")
 
                 else:
-                    self.logger.debug(f"SmartPortSerial - No Response Received")
+                    self.logger.debug("SmartPortSerial - No Response Received")
             else:
-                self.logger.error(f"Connection to SmartPort serial device is not established")
+                self.logger.error("Connection to SmartPort serial device is not established")
 
         except Exception as e:
             self.logger.debug(e)
