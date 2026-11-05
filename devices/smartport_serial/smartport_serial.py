@@ -1,5 +1,6 @@
 import serial
 import serial.tools.list_ports
+
 from devices.vehicle import Vehicle
 
 
