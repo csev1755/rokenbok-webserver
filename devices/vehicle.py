@@ -75,4 +75,3 @@ class Vehicle(ABC):
             player (Player): The player issuing commands.
             play_manager (PlayManager): The parent command deck instance.
         """
-        pass
