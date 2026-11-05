@@ -112,11 +112,11 @@ class SmartPortSerial(Vehicle):
         to the serial device and receives data representing the command deck's state.
         """
         packet = bytearray([254])
-        for player in play_manager.players.values():
-            if player.socket_id and player.selection and play_manager.get_vehicle_from_id(player.selection).type == "smartport_serial":
-                p_id = player.player_id + 1 or 0
-                v_sel = player.selection - 1
-                byte1, byte2 = self.encode_player_state(player) if player.selection is not None else (0, 0)
+        for p in play_manager.players.values():
+            if p.socket_id and p.selection and play_manager.get_vehicle_from_id(p.selection).type == "smartport_serial":
+                p_id = p.player_id + 1 or 0
+                v_sel = p.selection - 1
+                byte1, byte2 = self.encode_player_state(p) if p.selection is not None else (0, 0)
                 packet.extend([p_id, v_sel, byte1, byte2])
         packet.append(255)
         self.send_and_receive_packet(packet)
