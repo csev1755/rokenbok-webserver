@@ -1,16 +1,16 @@
 import argparse
-import colorlog
 import configparser
 import datetime
 import logging
 import os
 import sys
 
+import colorlog
 from aiohttp import web
 
-from server.web import init_webserver
 from server.go2rtc import Go2RTC
 from server.manager import PlayManager
+from server.web import init_webserver
 
 version_string = "rokenbok-webserver (dev)"
 

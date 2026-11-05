@@ -1,4 +1,5 @@
 import time
+
 from devices.vehicle import Vehicle
 from server.player import Player
 
@@ -23,6 +24,8 @@ class PlayManager:
         self.logger = logger
         self.config = config
 
+        self.allow_share = self.config["webserver"].getboolean("allow_share")
+
         self.players: dict[int, Player] = {}
         self.max_player_count = self.config.getint("webserver", "max_players")
 
@@ -38,7 +41,12 @@ class PlayManager:
                 for vehicle_id, vehicle_name in device_vehicles:
                     self.vehicle_count += 1
                     self.vehicles[int(vehicle_id)] = Vehicle.configure(
-                        type=device_name, config=device_config, id=int(vehicle_id), name=vehicle_name, logger=self.logger
+                        play_manager=self,
+                        type=device_name,
+                        config=device_config,
+                        id=int(vehicle_id),
+                        name=vehicle_name,
+                        logger=self.logger,
                     )
 
         for player_id in range(1, self.max_player_count + 1):
