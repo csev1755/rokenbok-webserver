@@ -40,7 +40,7 @@ class SmartPortSerial(Vehicle):
                     print(f" * Connected to SmartPort serial device at '{self.config['serial_port']}'")
                 self.send_configuration()
                 return True
-            except Exception as e:
+            except serial.SerialException as e:
                 self.logger.error(f"Cannot connect to SmartPort serial device at '{self.config['serial_port']}'")
                 self.logger.debug(e)
                 return False
@@ -71,7 +71,7 @@ class SmartPortSerial(Vehicle):
             else:
                 self.logger.error("Connection to SmartPort serial device is not established")
 
-        except Exception as e:
+        except serial.SerialException as e:
             self.logger.debug(e)
             self.logger.error(f"Cannot connect to SmartPort serial device at '{self.config['serial_port']}'")
             SmartPortSerial.serial = None
@@ -156,7 +156,7 @@ class SmartPortSerial(Vehicle):
             else:
                 self.logger.error("Connection to SmartPort serial device is not established")
 
-        except Exception as e:
+        except serial.SerialException as e:
             self.logger.debug(e)
             self.logger.error(f"Cannot connect to SmartPort serial device at '{self.config['serial_port']}'")
             SmartPortSerial.serial = None
