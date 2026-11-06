@@ -11,6 +11,11 @@ from aiohttp import web
 def init_webserver(bundle_dir, config, play_manager, server_name):
     web_dir = os.path.join(bundle_dir, "server", "web")
 
+    max_player_name_length = config["webserver"].getint(
+    "max_player_name_length", 
+    fallback=20
+    )
+
     app = web.Application()
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(web_dir))
 
@@ -31,6 +36,7 @@ def init_webserver(bundle_dir, config, play_manager, server_name):
         return {
             "enable_video": config["webserver"].getboolean("enable_video"),
             "video_streams": stream_config,
+            "max_player_name_length": max_player_name_length,
         }
 
     async def script(request):
@@ -88,7 +94,11 @@ def init_webserver(bundle_dir, config, play_manager, server_name):
         """
         player = play_manager.get_player_from_socket_id(sid)
         if player:
-            player.player_name = data.get("player_name", player.player_name)
+            player_name = data.get("player_name")
+
+            if isinstance(player_name, str) and len(player_name) <= max_player_name_length:
+                player.player_name = player_name
+            
             player.handle_input(data)
             await broadcast_state("players", play_manager.get_player_info())
 
