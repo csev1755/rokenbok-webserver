@@ -7,6 +7,7 @@ import jinja2
 
 from aiohttp import web
 
+MAX_PLAYER_NAME_LENGTH = 20
 
 def init_webserver(bundle_dir, config, play_manager, server_name):
     web_dir = os.path.join(bundle_dir, "server", "web")
@@ -88,7 +89,10 @@ def init_webserver(bundle_dir, config, play_manager, server_name):
         """
         player = play_manager.get_player_from_socket_id(sid)
         if player:
-            player.player_name = data.get("player_name", player.player_name)
+            player.player_name = data.get("player_name")
+            if isinstance(player_name, str) and len(player_name) <= MAX_PLAYER_NAME_LENGTH:
+                player.player_name = player_name
+            
             player.handle_input(data)
             await broadcast_state("players", play_manager.get_player_info())
 
