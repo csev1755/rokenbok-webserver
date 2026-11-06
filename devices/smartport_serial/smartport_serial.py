@@ -145,6 +145,7 @@ class SmartPortSerial(Vehicle):
                         if not frame[1]:
                             self.logger.warning("SmartPortSerial - SmartPort Connection to Command Deck Not Established")
 
+                        self.logger.debug(f"SmartPortSerial Player IDs - {[int(x) for x in frame[2:14]]}")
                         self.logger.debug(f"SmartPortSerial Selections - {[None if x == 15 else x + 1 for x in frame[14:26]]}")
 
                     else:
