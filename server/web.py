@@ -1,20 +1,17 @@
-import os
-import json
 import asyncio
+import json
+import os
+
 import aiohttp
 import aiohttp_jinja2
 import jinja2
-
 from aiohttp import web
 
 
 def init_webserver(bundle_dir, config, play_manager, server_name):
     web_dir = os.path.join(bundle_dir, "server", "web")
 
-    max_player_name_length = config["webserver"].getint(
-    "max_player_name_length", 
-    fallback=20
-    )
+    max_player_name_length = config["webserver"].getint("max_player_name_length")
 
     app = web.Application()
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(web_dir))
@@ -98,7 +95,7 @@ def init_webserver(bundle_dir, config, play_manager, server_name):
 
             if isinstance(player_name, str) and len(player_name) <= max_player_name_length:
                 player.player_name = player_name
-            
+
             player.handle_input(data)
             await broadcast_state("players", play_manager.get_player_info())
 
