@@ -17,9 +17,6 @@ jobs:
       with:
         version: latest
 
-    - name: Install dependencies
-      run: uv sync --group dev
-
     - name: Run formatting pre-commit hooks
       run: |
           uv run pre-commit run ruff-format --from-ref origin/${{ github.base_ref }} --to-ref HEAD --show-diff-on-failure
