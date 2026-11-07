@@ -19,8 +19,8 @@ jobs:
         with:
           version: latest
 
-      - name: Run build.py
-        run: uv run build.py
+      - name: Run build.py --exe
+        run: uv run build.py --exe
 
       - name: Upload
         uses: actions/upload-artifact@v6
