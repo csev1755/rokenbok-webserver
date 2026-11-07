@@ -12,8 +12,14 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent
+
 GO2RTC_VERSION = "1.9.14"
 VERSION_MARKER = b'version_string = "rokenbok-webserver (dev)"'
+
+SPHINXBUILD = "uv run sphinx-build"
+SOURCEDIR = "docs/source"
+BUILDDIR = "docs/build"
+SPHINX_TARGET = "html"
 
 
 def detect_target():
@@ -81,7 +87,7 @@ def download_binaries(go2rtc_arch):
         ffmpeg_path.chmod(ffmpeg_path.stat().st_mode | 0o111)
 
 
-def build(download_name):
+def build_exe(download_name):
     with (ROOT / "pyproject.toml").open("rb") as project_file:
         version = tomllib.load(project_file)["project"]["version"]
     commit_hash = subprocess.run(
@@ -127,13 +133,39 @@ def build(download_name):
     print(f"Artifact name: {artifact_name}")
 
 
+def build_docs():
+    sourcedir = ROOT / SOURCEDIR
+    builddir = ROOT / BUILDDIR
+
+    subprocess.run(["uv", "sync", "--group", "docs"], cwd=ROOT, check=True)
+    subprocess.run(SPHINXBUILD.split() + ["-M", "clean", str(sourcedir), str(builddir)], cwd=ROOT, check=True)
+    result = subprocess.run(SPHINXBUILD.split() + ["-M", SPHINX_TARGET, str(sourcedir), str(builddir)], cwd=ROOT)
+    sys.exit(result.returncode)
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Download build dependencies and package rokenbok-webserver.")
-    parser.parse_args()
-    go2rtc_arch, download_name = detect_target()
-    print(f"Building {download_name} target ({go2rtc_arch})")
-    download_binaries(go2rtc_arch)
-    build(download_name)
+    parser = argparse.ArgumentParser(description="Manage build tasks for rokenbok-webserver")
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "--docs",
+        action="store_true",
+        help="Clean and build Sphinx documentation",
+    )
+    group.add_argument(
+        "--exe",
+        action="store_true",
+        help="Download binary dependencies and package rokenbok-webserver",
+    )
+
+    args = parser.parse_args()
+
+    if args.docs:
+        build_docs()
+    elif args.exe:
+        go2rtc_arch, download_name = detect_target()
+        print(f"Building {download_name} target ({go2rtc_arch})")
+        download_binaries(go2rtc_arch)
+        build_exe(download_name)
 
 
 if __name__ == "__main__":

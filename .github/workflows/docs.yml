@@ -12,24 +12,20 @@ jobs:
       contents: write
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7.0.1
       with:
         persist-credentials: false
 
     - name: Setup uv
-      uses: astral-sh/setup-uv@v1
+      uses: astral-sh/setup-uv@v10.3.3
       with:
         version: latest
 
-    - name: Install docs dependencies
-      run: uv sync --group docs
-
-    - name: Build HTML docs
-      working-directory: docs
-      run: make html
+    - name: Run build.py --docs
+      run: uv run build.py --docs
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: html-docs
         path: docs/build/html/

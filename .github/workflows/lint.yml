@@ -4,21 +4,19 @@ on:
   pull_request:
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7.0.1
       with:
         fetch-depth: 0
+        persist-credentials: false
 
     - name: Setup uv
-      uses: astral-sh/setup-uv@v1
+      uses: astral-sh/setup-uv@v10.3.3
       with:
         version: latest
-
-    - name: Install dependencies
-      run: uv sync --group dev
 
     - name: Run formatting pre-commit hooks
       run: |
