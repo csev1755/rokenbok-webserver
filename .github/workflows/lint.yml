@@ -18,4 +18,4 @@ jobs:
       with:
         version: latest
 
-    - run: "uv run --locked pre-commit run --from-ref origin/${{ github.base_ref }} --to-ref HEAD --show-diff-on-failure"
+    - run: uv run --locked pre-commit run --from-ref origin/${{ github.base_ref }} --to-ref HEAD --show-diff-on-failure
