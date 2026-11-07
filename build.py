@@ -154,7 +154,7 @@ def main():
     group.add_argument(
         "--exe",
         action="store_true",
-        help="Download build dependencies and package rokenbok-webserver",
+        help="Download binary dependencies and package rokenbok-webserver",
     )
 
     args = parser.parse_args()
