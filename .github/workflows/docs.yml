@@ -1,17 +1,29 @@
-name: Build docs with Sphinx
+name: Build docs with Sphinx and deploy to GitHub Pages
 
 on:
   push:
     paths:
       - 'docs/**'
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  build:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
+  
     - uses: actions/checkout@v7.0.1
       with:
         persist-credentials: false
@@ -30,9 +42,6 @@ jobs:
         name: html-docs
         path: docs/build/html/
     
-    - name: Deploy
-      uses: peaceiris/actions-gh-pages@v3
-      if: github.ref == 'refs/heads/main'
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: docs/build/html
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v5.0.1
