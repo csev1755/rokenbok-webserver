@@ -18,7 +18,7 @@ Requirements
 
 .. toctree::
    :caption: Contents
-   :maxdepth: 1
+   :maxdepth: 2
 
    getting_started
    devices

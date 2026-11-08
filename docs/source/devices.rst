@@ -5,6 +5,6 @@ This server was designed to support mulitple types of vehicles behind multiple d
 The following devices are currently supported:
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    smart_port_serial

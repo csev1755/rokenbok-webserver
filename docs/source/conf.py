@@ -14,7 +14,7 @@ html_title = "Rokenbok Webserver"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = []
+extensions = ["sphinx_design"]
 
 templates_path = []
 exclude_patterns = []

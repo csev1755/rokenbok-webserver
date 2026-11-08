@@ -29,19 +29,19 @@ class SmartPortSerial(Vehicle):
                     for port in serial.tools.list_ports.comports():
                         if port.vid in [0x2341, 0x1A86, 0x239A, 0x1B4F, 0x303A]:  # Common Arduino and ESP32 VIDs.
                             SmartPortSerial.serial = serial.Serial(port.device, 1000000)
-                            print(f" * Auto detected and connected to SmartPort serial device at '{port.device}'")
+                            print(f" * Auto detected and connected to Smart Port serial device at '{port.device}'")
                             device_found = True
                             break
                     if not device_found:
-                        self.logger.error("Failed to auto detect SmartPort serial device")
+                        self.logger.error("Failed to auto detect Smart Port serial device")
                         return False
                 else:
                     SmartPortSerial.serial = serial.Serial(self.config["serial_port"], 1000000)
-                    print(f" * Connected to SmartPort serial device at '{self.config['serial_port']}'")
+                    print(f" * Connected to Smart Port serial device at '{self.config['serial_port']}'")
                 self.send_configuration()
                 return True
             except serial.SerialException as e:
-                self.logger.error(f"Cannot connect to SmartPort serial device at '{self.config['serial_port']}'")
+                self.logger.error(f"Cannot connect to Smart Port serial device at '{self.config['serial_port']}'")
                 self.logger.debug(e)
                 return False
         else:
@@ -69,11 +69,11 @@ class SmartPortSerial(Vehicle):
                 SmartPortSerial.serial.write(packet)
                 self.logger.debug(f"SmartPortSerial - Sent Config: {packet}")
             else:
-                self.logger.error("Connection to SmartPort serial device is not established")
+                self.logger.error("Connection to Smart Port serial device is not established")
 
         except serial.SerialException as e:
             self.logger.debug(e)
-            self.logger.error(f"Cannot connect to SmartPort serial device at '{self.config['serial_port']}'")
+            self.logger.error(f"Cannot connect to Smart Port serial device at '{self.config['serial_port']}'")
             SmartPortSerial.serial = None
 
     def encode_player_state(self, player):
@@ -143,21 +143,21 @@ class SmartPortSerial(Vehicle):
                     if start != -1 and len(raw) >= start + 27 and raw[start + 26] == 255:
                         frame = raw[start : start + 27]
                         if not frame[1]:
-                            self.logger.warning("SmartPortSerial - SmartPort Connection to Command Deck Not Established")
+                            self.logger.warning("SmartPortSerial - Smart Port Connection to Command Deck Not Established")
 
                         self.logger.debug(f"SmartPortSerial Player IDs - {[int(x) for x in frame[2:14]]}")
                         self.logger.debug(f"SmartPortSerial Selections - {[None if x == 15 else x + 1 for x in frame[14:26]]}")
 
                     else:
                         self.logger.debug(f"SmartPortSerial - Invalid Response: {raw}")
-                        self.logger.warning("SmartPortSerial - SmartPort Communication Error")
+                        self.logger.warning("SmartPortSerial - Smart Port Communication Error")
 
                 else:
                     self.logger.debug("SmartPortSerial - No Response Received")
             else:
-                self.logger.error("Connection to SmartPort serial device is not established")
+                self.logger.error("Connection to Smart Port serial device is not established")
 
         except serial.SerialException as e:
             self.logger.debug(e)
-            self.logger.error(f"Cannot connect to SmartPort serial device at '{self.config['serial_port']}'")
+            self.logger.error(f"Cannot connect to Smart Port serial device at '{self.config['serial_port']}'")
             SmartPortSerial.serial = None

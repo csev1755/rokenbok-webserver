@@ -1,4 +1,4 @@
-Rokenbok Smart Port
+Smart Port Serial
 ===================
 
 Rokenbok vehicles can be controlled via a device connected to the Smart Port on a Command Deck. This allows for up to 15 vehicles to be controlled by up to 12 simultaneous players.
@@ -6,13 +6,15 @@ Rokenbok vehicles can be controlled via a device connected to the Smart Port on 
 Smart Port Arduino
 ------------------
 
+An Arduino sketch to control Rokenbok vehicles over the Smart Port via serial USB.
+
 Requirements
 ~~~~~~~~~~~~
 
 - Arduino IDE (for installation on the Arduino)
 - Rokenbok Command Deck (Gen 1)
 - 5V logic Arduino with USB-over-serial support (Uno recommended)
-- Mini-DIN 6 cable (the Smartport connector)
+- Mini-DIN 6 cable (the Smart Port connector)
 
 Configuration
 ~~~~~~~~~~~~~
@@ -44,48 +46,69 @@ Wiring the Arduino to the Command Deck
 An easy way to get set up is buying a screw terminal HAT or adapter along with a Mini-DIN 6 breakout cable to make a solid connection without any soldering needed as shown below:
 
 .. image:: static/smart_port_arduino.jpg
-   :alt: An Arduino connected to the SmartPort
-   :width: 50%
+   :alt: An Arduino connected to the Smart Port
+   :width: 75%
+   :align: center
 
 Smart Port pinout
 +++++++++++++++++
 
-.. image:: static/smart_port_pinout.jpg
-   :alt: A diagram of the SmartPort pinout
-   :width: 50%
+.. grid:: 1 1 2 2
 
-.. list-table::
-   :header-rows: 1
-   :align: left
+   .. grid-item::
+      :child-align: start
 
-   * - SmartPort pin
-     - Arduino pin
-     - Function
-   * - 1
-     - 12
-     - MISO
-   * - 2
-     - 13
-     - Serial clock
-   * - 3
-     - `-`
-     - Frame end
-   * - 4
-     - 11
-     - MOSI
-   * - 5
-     - GND
-     - Ground
-   * - 6
-     - 8
-     - Slave ready
-   * - `-`
-     - 9 *
-     - Slave ready (virtual)
-   * - `-`
-     - 10 *
-     - Slave select
+      .. list-table::
+         :header-rows: 1
 
-\* Pins 9 and 10 are connected to each other instead of the SmartPort. This can be done with a breadboard jumper wire or even a paperclip.
+         * - Smart Port pin
+           - Arduino pin
+           - Function
+         * - 1
+           - 12
+           - MISO
+         * - 2
+           - 13
+           - Serial clock
+         * - 3
+           - \-
+           - Frame end
+         * - 4
+           - 11
+           - MOSI
+         * - 5
+           - GND
+           - Ground
+         * - 6
+           - 8
+           - Slave ready
+         * - \-
+           - 9 \*
+           - Slave ready (virtual)
+         * - \-
+           - 10 \*
+           - Slave select
+   .. grid-item::
+      :child-align: center
+      :padding: 5
+
+      .. image:: static/smart_port_pinout.jpg
+         :alt: A diagram of the Smart Port pinout
+         :width: 100%
+
+\* Pins 9 and 10 are connected to each other instead of the Smart Port. This can be done with a breadboard jumper wire or even a paperclip.
 
 \*\*  Many diagrams will flip the orientation of these pins horizontally. The image above is looking at the face of the port
+
+Smart Port WiFi
+----------------
+
+If you have a `Smart Port Wifi <https://github.com/stepstools/Rokenbok-Smart-Port-WiFi>`_ device with version 0.3.0 or higher,
+you can connect it through USB to get the same funcitonality as a Smart Port Arduino. There is one more configuration option available:
+
+   .. code-block:: ini
+
+      [smartport_serial]
+      enable_wifi = false
+
+Set to ``true`` to keep the WiFi features enabled, even when connected via USB.
