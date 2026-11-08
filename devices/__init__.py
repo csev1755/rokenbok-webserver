@@ -1,2 +1,2 @@
-from devices.smartport_serial import smartport_serial
+from devices.smart_port_serial import smart_port_serial
 from devices.test_device import test_device

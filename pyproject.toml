@@ -23,6 +23,7 @@ dev = [
 ]
 docs = [
     "sphinx",
+    "sphinx_design",
     "furo"
 ]
 
