@@ -61,12 +61,15 @@ def init_webserver(bundle_dir, config, play_manager, server_name):
             except Exception:
                 app["websockets"].remove(ws)
 
-    async def handle_connect(sid):
+    async def handle_connect(sid, ws):
         """
         Directs the play manager to handle the connected player and broadcasts
         the updated player list to all clients.
         """
-        play_manager.player_join(sid)
+        player = play_manager.player_join(sid)
+
+        if player:
+            await ws.send_str(json.dumps({"player_id": player.player_id}))
         await broadcast_state("players", play_manager.get_player_info())
 
     async def handle_disconnect(sid):
@@ -110,7 +113,7 @@ def init_webserver(bundle_dir, config, play_manager, server_name):
         request.app["websockets"].add(ws)
 
         try:
-            await handle_connect(sid)
+            await handle_connect(sid, ws)
             async for msg in ws:
                 if msg.type == aiohttp.WSMsgType.TEXT:
                     data = json.loads(msg.data)
