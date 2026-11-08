@@ -11,7 +11,7 @@ class SmartPortSerial(Vehicle):
     https://github.com/stepstools/Rokenbok-Smart-Port-WiFi
     """
 
-    type = "smartport_serial"
+    type = "smart_port_serial"
     serial = None
 
     def __init__(self, play_manager, config, id, name, logger):
@@ -60,7 +60,7 @@ class SmartPortSerial(Vehicle):
                     [
                         253,
                         int(self.play_manager.allow_share),
-                        int(sum(1 for v in self.play_manager.vehicles.values() if v.type == "smartport_serial") > 8),
+                        int(sum(1 for v in self.play_manager.vehicles.values() if v.type == self.type) > 8),
                         int(self.config.getboolean("enable_wifi")),
                         0,  # Reserved for future use.
                         255,
@@ -113,7 +113,7 @@ class SmartPortSerial(Vehicle):
         """
         packet = bytearray([254])
         for p in play_manager.players.values():
-            if p.socket_id and p.selection and play_manager.get_vehicle_from_id(p.selection).type == "smartport_serial":
+            if p.socket_id and p.selection and play_manager.get_vehicle_from_id(p.selection).type == self.type:
                 p_id = p.player_id + 1 or 0
                 v_sel = p.selection - 1
                 byte1, byte2 = self.encode_player_state(p) if p.selection is not None else (0, 0)
