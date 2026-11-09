@@ -577,6 +577,41 @@ function init()
     window.addEventListener('keydown', handleKeydown);
     window.addEventListener('keyup', handleKeyup);
 
+    // Release all keyboard controls when focus is lost
+    window.addEventListener('blur', () => {
+        if (inputDeviceSelect.value === 'keyboard')
+        {
+            Object.entries(keyboardState).forEach(([ code, isPressed ]) => {
+                if (isPressed)
+                {
+                    const control = CONTROLS.find(c => getButtonMap(c.button, 'keyboard') === code);
+                    if (control)
+                    {
+                        emitInputEvent(control.button, false);
+                    }
+                    keyboardState[code] = false;
+                }
+            });
+        }
+    });
+
+    // Release all gamepad controls when the window is not visible
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden' && inputDeviceSelect.value === 'gamepad')
+        {
+            lastGamepadButtons.forEach((isPressed, index) => {
+                if (isPressed)
+                {
+                    const control = CONTROLS.find(c => Number(getButtonMap(c.button, 'gamepad')) === index);
+                    if (control)
+                    {
+                        emitInputEvent(control.button, false);
+                    }
+                }
+            });
+        }
+    });
+
     socket.onmessage = (event) => {
         const message = JSON.parse(event.data);
         if (message.players)
