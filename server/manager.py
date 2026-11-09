@@ -83,8 +83,13 @@ class PlayManager:
         """
         for player in self.players.values():
             if player.socket_id == socket_id:
+                old_vehicle =  self.get_vehicle_from_id(player.selection)
                 player.socket_id = None
                 player.player_name = None
+                player.selection = None
+                player.buttons = set()
+                if old_vehicle:
+                    old_vehicle.control(player, self)
                 self.logger.info(f"Released Player object {player.player_id} from player {socket_id}")
                 return player
         return None
