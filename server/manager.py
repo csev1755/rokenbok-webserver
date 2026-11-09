@@ -83,7 +83,7 @@ class PlayManager:
         """
         for player in self.players.values():
             if player.socket_id == socket_id:
-                old_vehicle =  self.get_vehicle_from_id(player.selection)
+                old_vehicle = self.get_vehicle_from_id(player.selection)
                 player.socket_id = None
                 player.player_name = None
                 player.selection = None
