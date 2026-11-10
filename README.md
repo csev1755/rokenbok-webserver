@@ -1,5 +1,5 @@
-# rokenbok-webserver 
+# MultiRok 
 
-A Python webserver with a Rokenbok multiplayer interface and optional live video
+A Python webserver for controlling multiple R/C vehicles with optional live video
 
-Visit https://csev1755.github.io/rokenbok-webserver/ for documentation
+Visit https://csev1755.github.io/MultiRok/ for documentation

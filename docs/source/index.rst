@@ -1,14 +1,14 @@
-.. Rokenbok Webserver documentation master file, created by
+.. MultiRok documentation master file, created by
    sphinx-quickstart on Mon Aug 10 19:06:36 2026.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Rokenbok Webserver
+MultiRok
 ==================
 
-A Python webserver with a Rokenbok multiplayer interface and optional live video
+A Python webserver for controlling multiple R/C vehicles with optional live video
 
-Download the latest version `here! <https://github.com/csev1755/rokenbok-webserver/releases/latest>`_
+Download the latest version `here! <https://github.com/csev1755/MultiRok/releases/latest>`_
 
 Requirements
 ------------

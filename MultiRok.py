@@ -12,7 +12,7 @@ from server.go2rtc import Go2RTC
 from server.manager import PlayManager
 from server.web import init_webserver
 
-version_string = "rokenbok-webserver (dev)"
+version_string = "MultiRok (dev)"
 
 # Handle paths when bundled via PyInstaller
 if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     handlers: list[logging.Handler] = [console_handler]
     if config["logging"].getboolean("file"):
-        log_filename = f"rokenbok-webserver-{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log"
+        log_filename = f"MultiRok-{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log"
         logfile_handler = logging.FileHandler(os.path.join(app_dir, log_filename))
         logfile_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(name)s - %(message)s"))
         handlers.append(logfile_handler)
