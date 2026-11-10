@@ -3,7 +3,7 @@ Getting started
 
 This server doesn't require installation, all of its files are self-contained.
 Just download the latest server files from the `project
-releases page <https://github.com/csev1755/rokenbok-webserver/releases/latest>`_ 
+releases page <https://github.com/csev1755/MultiRok/releases/latest>`_ 
 and extract it to a folder of your choice. Keep in mind the executable and
 ``settings.ini`` need to stay together in the same folder for the server to
 read its configuration.

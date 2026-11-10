@@ -6,10 +6,10 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "Rokenbok Webserver"
+project = "MultiRok"
 copyright = "2026, csev1755"
 author = "csev1755"
-html_title = "Rokenbok Webserver"
+html_title = "MultiRok"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

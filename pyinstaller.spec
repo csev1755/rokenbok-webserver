@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 a = Analysis(
-    ['rokenbok_webserver.py'],
+    ['MultiRok.py'],
     pathex=[],
     binaries=[('bin', 'bin')],
     datas=[('server', 'server')],
@@ -21,7 +21,8 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='rokenbok_webserver',
+    name='MultiRok',
+    icon='server/web/favicon.ico',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

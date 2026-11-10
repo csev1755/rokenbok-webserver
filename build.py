@@ -14,7 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 
 GO2RTC_VERSION = "1.9.14"
-VERSION_MARKER = b'version_string = "rokenbok-webserver (dev)"'
+VERSION_MARKER = b'version_string = "MultiRok (dev)"'
 
 SPHINXBUILD = "uv run sphinx-build"
 SOURCEDIR = "docs/source"
@@ -98,11 +98,11 @@ def build_exe(download_name):
         text=True,
     ).stdout.strip()[:6]
 
-    source_path = ROOT / "rokenbok_webserver.py"
+    source_path = ROOT / "MultiRok.py"
     original_source = source_path.read_bytes()
     if original_source.count(VERSION_MARKER) != 1:
         raise RuntimeError(f"Expected one version marker in {source_path.name}")
-    version_string = f"rokenbok-webserver {version}+{commit_hash}"
+    version_string = f"MultiRok {version}+{commit_hash}"
     source_path.write_bytes(
         original_source.replace(
             VERSION_MARKER,
@@ -114,7 +114,7 @@ def build_exe(download_name):
     try:
         dist_dir = ROOT / "dist"
         dist_dir.mkdir(exist_ok=True)
-        executable = dist_dir / ("rokenbok_webserver.exe" if sys.platform == "win32" else "rokenbok_webserver")
+        executable = dist_dir / ("MultiRok.exe" if sys.platform == "win32" else "MultiRok")
         executable.unlink(missing_ok=True)
         subprocess.run(["uv", "sync"], cwd=ROOT, check=True)
         subprocess.run(["uv", "run", "pyinstaller", "pyinstaller.spec"], cwd=ROOT, check=True)
@@ -125,7 +125,7 @@ def build_exe(download_name):
         raise RuntimeError(f"PyInstaller did not produce {executable.name}")
     shutil.copy2(ROOT / "settings.ini", dist_dir / "settings.ini")
 
-    artifact_name = f"rokenbok_webserver_{version}_{commit_hash}_{download_name}"
+    artifact_name = f"MultiRok_{version}_{commit_hash}_{download_name}"
     github_env = os.environ.get("GITHUB_ENV")
     if github_env:
         with open(github_env, "a", encoding="utf-8") as environment_file:
@@ -144,27 +144,37 @@ def build_docs():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Manage build tasks for rokenbok-webserver")
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument(
+    parser = argparse.ArgumentParser(description="Manage build tasks for MultiRok")
+
+    parser.add_argument(
         "--docs",
         action="store_true",
         help="Clean and build Sphinx documentation",
     )
-    group.add_argument(
+    parser.add_argument(
+        "--download",
+        action="store_true",
+        help="Download binary dependencies",
+    )
+    parser.add_argument(
         "--exe",
         action="store_true",
-        help="Download binary dependencies and package rokenbok-webserver",
+        help="Package MultiRok executable",
     )
 
     args = parser.parse_args()
 
     if args.docs:
+        print("Building Sphinx documentation")
         build_docs()
-    elif args.exe:
+
+    if args.download:
+        go2rtc_arch, _ = detect_target()
+        download_binaries(go2rtc_arch)
+
+    if args.exe:
         go2rtc_arch, download_name = detect_target()
         print(f"Building {download_name} target ({go2rtc_arch})")
-        download_binaries(go2rtc_arch)
         build_exe(download_name)
 
 
