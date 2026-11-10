@@ -36,6 +36,13 @@ def init_webserver(bundle_dir, config, play_manager, server_name):
             "max_player_name_length": max_player_name_length,
         }
 
+    async def favicon(request):
+        """
+        Returns:
+            Response: The favicon.ico file from the web directory.
+        """
+        return web.FileResponse(os.path.join(web_dir, "favicon.ico"))
+
     async def script(request):
         """
         Returns:
@@ -130,6 +137,7 @@ def init_webserver(bundle_dir, config, play_manager, server_name):
         return ws
 
     app.router.add_get("/", index)
+    app.router.add_get("/favicon.ico", favicon)
     app.router.add_get("/player.js", script)
     app.router.add_get("/player.css", stylesheet)
     app.router.add_get("/ws", handle_websocket)
