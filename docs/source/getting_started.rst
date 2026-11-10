@@ -24,7 +24,7 @@ edit the ``settings.ini`` file, and then run the server again.
 Webserver
 ^^^^^^^^^^
 
-These are the main configuration settings for the server:
+These are the main configuration settings for the server and their defaults:
 
 .. code-block:: ini
 
@@ -34,11 +34,16 @@ These are the main configuration settings for the server:
    enable_video = false
    player_timeout = 30
    max_players = 12
+   max_player_name_length = 20
+   allow_share = false
 
-Generally, you shouldn't need to change the ``listen_ip`` or ``listen_port`` unless you have a specific reason to do so. 
-The ``enable_video`` option can be set to ``true`` if you want to enable the video stream feature, and ``player_timeout`` 
-sets the number of seconds a player can be idle before their vehicle selection is released for others to use. ``max_players``
-sets the maximum amount of players that can control vehicles simultaneously.
+- ``listen_ip``: The IP address the server will listen on
+- ``listen_port``: The port the server will listen on
+- ``enable_video``: Whether to enable the video streams
+- ``player_timeout``: The number of seconds a player can be idle before their vehicle selection is released for others to use
+- ``max_players``: The maximum number of players that can control vehicles simultaneously
+- ``max_player_name_length``: The maximum number of characters allowed in a player's name
+- ``allow_share``: Whether to allow users to select the same vehicle as another player
 
 Devices
 ^^^^^^^
