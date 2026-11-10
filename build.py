@@ -145,7 +145,7 @@ def build_docs():
 
 def main():
     parser = argparse.ArgumentParser(description="Manage build tasks for MultiRok")
-    
+
     parser.add_argument(
         "--docs",
         action="store_true",
