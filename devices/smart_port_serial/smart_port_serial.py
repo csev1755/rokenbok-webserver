@@ -14,6 +14,10 @@ class SmartPortSerial(Vehicle):
     type = "smart_port_serial"
     serial = None
 
+    sp_status = 0  # 0 = SP Not Connected, 1 = SP Connected
+    sp_player_ids = []  # [V1, V2, V3, V4, P1, P2, P3, P4, D1, D2, D3, D4]
+    sp_selects = []  # [V1, V2, V3, V4, P1, P2, P3, P4, D1, D2, D3, D4]
+
     def __init__(self, play_manager, config, id, name, logger):
         super().__init__(play_manager, config, id, name, logger)
 
@@ -111,13 +115,15 @@ class SmartPortSerial(Vehicle):
         Constructs and transmits a packet containing the state of all players
         to the serial device and receives data representing the command deck's state.
         """
+        available_controllers = 12 - SmartPortSerial.sp_player_ids.count(1)
         packet = bytearray([254])
         for p in play_manager.players.values():
-            if p.socket_id and p.selection and play_manager.get_vehicle_from_id(p.selection).type == self.type:
+            if p.socket_id and available_controllers and p.selection and play_manager.get_vehicle_from_id(p.selection).type == self.type:
                 p_id = p.player_id + 1 or 0
                 v_sel = p.selection - 1
                 byte1, byte2 = self.encode_player_state(p) if p.selection is not None else (0, 0)
                 packet.extend([p_id, v_sel, byte1, byte2])
+                available_controllers -= 1
         packet.append(255)
         self.send_and_receive_packet(packet)
 
@@ -142,11 +148,15 @@ class SmartPortSerial(Vehicle):
 
                     if start != -1 and len(raw) >= start + 27 and raw[start + 26] == 255:
                         frame = raw[start : start + 27]
-                        if not frame[1]:
+
+                        SmartPortSerial.sp_status = frame[1]
+                        if not SmartPortSerial.sp_status:
                             self.logger.warning("SmartPortSerial - Smart Port Connection to Command Deck Not Established")
 
-                        self.logger.debug(f"SmartPortSerial Player IDs - {[int(x) for x in frame[2:14]]}")
-                        self.logger.debug(f"SmartPortSerial Selections - {[None if x == 15 else x + 1 for x in frame[14:26]]}")
+                        SmartPortSerial.sp_player_ids = [int(x) for x in frame[2:14]]
+                        self.logger.debug(f"SmartPortSerial Player IDs - {SmartPortSerial.sp_player_ids}")
+                        SmartPortSerial.sp_selects = [None if x == 15 else x + 1 for x in frame[14:26]]
+                        self.logger.debug(f"SmartPortSerial Selections - {SmartPortSerial.sp_selects}")
 
                     else:
                         self.logger.debug(f"SmartPortSerial - Invalid Response: {raw}")
