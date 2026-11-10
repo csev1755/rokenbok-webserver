@@ -187,6 +187,7 @@ function setButtonMap(button, device, value)
 /**
  * Player data from the server
  * @typedef {Object} PlayerData
+ * @property {number} player_id - Unique player identifier
  * @property {string} player_name - Player name
  * @property {number} selection - Selected vehicle ID
  * @property {string} selection_name - Selected vehicle name
@@ -214,9 +215,9 @@ function renderPlayers(players)
         fragment.querySelector('[data-player-name-label]').textContent =
             player.player_id === currentPlayerId ? 'Your Name:' : 'Player Name:';
 
-        fragment.querySelector('[data-player-name]').textContent = player.player_name ?? '';
-        fragment.querySelector('[data-selection]').textContent = player.selection ?? '';
-        fragment.querySelector('[data-vehicle-name]').textContent = player.selection_name ?? '';
+        fragment.querySelector('[data-player-name]').textContent = player.player_name;
+        fragment.querySelector('[data-selection]').textContent = player.selection;
+        fragment.querySelector('[data-vehicle-name]').textContent = player.selection_name;
 
         playersElement.appendChild(fragment);
     });
