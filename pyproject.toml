@@ -10,6 +10,7 @@ dependencies = [
     "colorlog",
     "jinja2",
     "pyinstaller",
+    "pyqt6>=6.12.0",
     "pyserial",
     "PyYAML",
     "requests",

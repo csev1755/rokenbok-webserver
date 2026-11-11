@@ -4,11 +4,14 @@ import datetime
 import logging
 import os
 import sys
+import threading
 
 import colorlog
 from aiohttp import web
+from PyQt6.QtWidgets import QApplication
 
 from server.go2rtc import Go2RTC
+from server.gui import MultiRokGUI
 from server.manager import PlayManager
 from server.web import init_webserver
 
@@ -87,16 +90,27 @@ if __name__ == "__main__":
         go2rtc = Go2RTC(bundle_dir, config, go2rtc_log_level, logger)
         go2rtc.start()
 
-    # Start the webserver and handle interrupts
+    # Start the webserver in a background thread
+    def start_webserver():
+        try:
+            web.run_app(
+                aiortc_app, host=config["webserver"]["listen_ip"], port=config["webserver"].getint("listen_port"), shutdown_timeout=0.1
+            )
+        except Exception as e:
+            logger.error(f"Webserver failed to start or crashed: {e}")
+
+    web_thread = threading.Thread(target=start_webserver, daemon=True)
+    web_thread.start()
+
+    # Start PyQt Application on the main thread
     try:
-        web.run_app(
-            aiortc_app,
-            host=config["webserver"]["listen_ip"],
-            port=config["webserver"].getint("listen_port"),
-            shutdown_timeout=0.1,
-        )
+        app = QApplication(sys.argv)
+        gui = MultiRokGUI(play_manager, go2rtc, bundle_dir)
+        logging.getLogger().addHandler(gui.log_handler)
+        gui.show()
+        sys.exit(app.exec())
     except Exception as e:
-        logger.error(f"Webserver failed to start or crashed: {e}")
+        logger.error(f"GUI failed to start or crashed: {e}")
     finally:
         print("Program interrupted, exiting...")
         if go2rtc:
