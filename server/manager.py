@@ -144,6 +144,7 @@ class PlayManager:
                 player_vehicle = self.get_vehicle_from_id(player.selection) if player.selection else None
                 players.append(
                     {
+                        "player_id": player.player_id,
                         "player_name": player.player_name,
                         "selection": player.selection,
                         "selection_name": player_vehicle.name if player_vehicle else None,

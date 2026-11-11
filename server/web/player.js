@@ -23,6 +23,7 @@ const cancelSettingsButton = document.getElementById('cancel-settings');
 const defaultSettingsButton = document.getElementById('default-settings');
 
 let videoToggle = true;
+let currentPlayerId = null;
 
 /**
  * Get the streams if the HTML elements exist
@@ -186,6 +187,7 @@ function setButtonMap(button, device, value)
 /**
  * Player data from the server
  * @typedef {Object} PlayerData
+ * @property {number} player_id - Unique player identifier
  * @property {string} player_name - Player name
  * @property {number} selection - Selected vehicle ID
  * @property {string} selection_name - Selected vehicle name
@@ -199,8 +201,19 @@ function renderPlayers(players)
 {
     playersElement.replaceChildren();
 
-    players.forEach((player) => {
+    const sortedPlayers = [...players ].sort((a, b) => {
+        if (a.player_id === currentPlayerId)
+            return -1;
+        if (b.player_id === currentPlayerId)
+            return 1;
+        return 0;
+    });
+
+    sortedPlayers.forEach((player) => {
         const fragment = playerTemplate.content.cloneNode(true);
+
+        fragment.querySelector('[data-player-name-label]').textContent =
+            player.player_id === currentPlayerId ? 'Your Name:' : 'Player Name:';
 
         fragment.querySelector('[data-player-name]').textContent = player.player_name;
         fragment.querySelector('[data-selection]').textContent = player.selection;
@@ -614,6 +627,11 @@ function init()
 
     socket.onmessage = (event) => {
         const message = JSON.parse(event.data);
+        if (message.player_id !== undefined)
+        {
+            currentPlayerId = message.player_id;
+        }
+
         if (message.players)
         {
             renderPlayers(message.players);
