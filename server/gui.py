@@ -2,9 +2,10 @@ import datetime
 import logging
 import os
 import queue
+import time
 
 from PyQt6.QtCore import QTimer
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QColor, QBrush
 from PyQt6.QtWidgets import QGroupBox, QHeaderView, QLabel, QMainWindow, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
 
 
@@ -27,6 +28,14 @@ class GUILogHandler(logging.Handler):
 
 
 class MultiRokGUI(QMainWindow):
+    LOG_COLORS = {
+        "DEBUG": QColor("#888888"),
+        "INFO": QColor("#FFFFFF"),
+        "WARNING": QColor("#FFF000"),
+        "ERROR": QColor("#FF5555"),
+        "CRITICAL": QColor("#FF0000"),
+    }
+
     def __init__(self, play_manager, go2rtc=None, bundle_dir="."):
         super().__init__()
         self.play_manager = play_manager
@@ -48,17 +57,17 @@ class MultiRokGUI(QMainWindow):
         # Status Summary Group
         status_group = QGroupBox("Status")
         status_layout = QVBoxLayout(status_group)
-        self.players_label = QLabel("Connected Players: 0 / 0")
-        status_layout.addWidget(self.players_label)
+        self.uptime_label = QLabel("Uptime: 00:00:00")
+        status_layout.addWidget(self.uptime_label)
         main_layout.addWidget(status_group)
 
         # Connected Players List Group
-        list_group = QGroupBox("Connected Players List")
-        list_layout = QVBoxLayout(list_group)
+        self.list_group = QGroupBox("Connected Players:")
+        list_layout = QVBoxLayout(self.list_group)
 
         self.tree = QTreeWidget()
         self.tree.setColumnCount(4)
-        self.tree.setHeaderLabels(["ID", "Player Name", "Selection ID", "Vehicle Name"])
+        self.tree.setHeaderLabels(["Player ID", "Player Name", "Vehicle ID", "Vehicle Name"])
         self.tree.setFixedHeight(220)
         self.tree.setRootIsDecorated(False)
         self.tree.setIndentation(0)
@@ -70,12 +79,12 @@ class MultiRokGUI(QMainWindow):
             header.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)
             header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
 
-        self.tree.setColumnWidth(0, 45)
-        self.tree.setColumnWidth(1, 130)
-        self.tree.setColumnWidth(2, 90)
+        self.tree.setColumnWidth(0, 65)
+        self.tree.setColumnWidth(1, 150)
+        self.tree.setColumnWidth(2, 65)
 
         list_layout.addWidget(self.tree)
-        main_layout.addWidget(list_group)
+        main_layout.addWidget(self.list_group)
 
         # Server Logs Group
         log_group = QGroupBox("Server Logs")
@@ -94,15 +103,18 @@ class MultiRokGUI(QMainWindow):
             log_header.setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)
             log_header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
 
-        self.log_tree.setColumnWidth(0, 85)
-        self.log_tree.setColumnWidth(1, 75)
-        self.log_tree.setColumnWidth(2, 110)
+        self.log_tree.setColumnWidth(0, 65)
+        self.log_tree.setColumnWidth(1, 70)
+        self.log_tree.setColumnWidth(2, 100)
 
         log_layout.addWidget(self.log_tree)
         main_layout.addWidget(log_group, stretch=1)
 
         # Logging Handler Setup
         self.log_handler = GUILogHandler()
+
+        # Track start time for uptime calculation
+        self.start_time = time.time()
 
         # UI & Log Timers
         self.ui_timer = QTimer(self)
@@ -119,6 +131,12 @@ class MultiRokGUI(QMainWindow):
             self.setWindowIcon(QIcon(icon_path))
 
     def update_ui(self):
+        elapsed_seconds = int(time.time() - self.start_time)
+        hours, remainder = divmod(elapsed_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        uptime_str = f"Uptime: {hours:02d}:{minutes:02d}:{seconds:02d}"
+        self.uptime_label.setText(uptime_str)
+
         if not self.play_manager:
             return
 
@@ -141,21 +159,37 @@ class MultiRokGUI(QMainWindow):
 
                 self.tree.addTopLevelItem(QTreeWidgetItem([str(player_id), name, selection_id_text, vehicle_name_text]))
 
-        self.players_label.setText(f"Connected Players: {connected_count} / {self.play_manager.max_player_count}")
+        self.list_group.setTitle(f"Connected Players: {connected_count} / {self.play_manager.max_player_count}")
 
     def poll_logs(self):
-        while not self.log_handler.queue.empty():
+        new_logs = []
+        while True:
             try:
-                time_str, level, name, msg = self.log_handler.queue.get_nowait()
-                item = QTreeWidgetItem([time_str, level, name, msg])
-
-                self.log_tree.addTopLevelItem(item)
-                self.log_tree.scrollToItem(item)
+                new_logs.append(self.log_handler.queue.get_nowait())
             except queue.Empty:
                 break
+
+        if not new_logs:
+            return
+
+        colored_new_logs = []
+        for log_entry in new_logs:
+            item = QTreeWidgetItem(log_entry)
+            item.setForeground(0, QBrush(QColor("#888888")))
+            color = self.LOG_COLORS.get(log_entry[1], QColor("#FFFFFF"))
+            brush = QBrush(color)
+            for col in (1, 2, 3):
+                item.setForeground(col, brush)
+            colored_new_logs.append(item)
+
+        self.log_tree.addTopLevelItems(colored_new_logs)
+
+        while self.log_tree.topLevelItemCount() > 256:
+            self.log_tree.takeTopLevelItem(0)
+
+        self.log_tree.scrollToBottom()
 
     def closeEvent(self, event):
         if self.go2rtc:
             self.go2rtc.stop()
         event.accept()
-        os._exit(0)
