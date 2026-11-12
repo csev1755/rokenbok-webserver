@@ -3,10 +3,21 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-MultiRok
-==================
+.. |logo-light| image:: static/logo-black.svg
+   :class: only-light
+   :alt: MultiRok
+
+.. |logo-dark| image:: static/logo-white.svg
+   :class: only-dark
+   :alt: MultiRok
+
+|logo-light| |logo-dark|
 
 A Python webserver for controlling multiple R/C vehicles with optional live video
+
+.. image:: static/screenshot.png
+   :alt: A screenshot of the MultiRok web interface
+   :width: 100%
 
 Download the latest version `here! <https://github.com/csev1755/MultiRok/releases/latest>`_
 
