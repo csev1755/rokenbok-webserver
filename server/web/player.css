@@ -64,6 +64,44 @@ h1 {
     gap: 6px;
 }
 
+.splash-window {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.splash-window.hidden {
+    display: none;
+}
+
+.splash-content {
+    width: 500px;
+    max-width: calc(100vw - 40px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    border: 2px solid #FFFFFF;
+    padding: 20px;
+}
+
+.splash-content h2 {
+    margin-bottom: 0px;
+}
+
+.splash-content svg {
+    width: 100%;
+}
+
+.splash-content button {
+    width: 30%;
+    font-size: 18px;
+}
+
 #open-settings {
     width: auto;
     display: inline-block;
@@ -102,6 +140,7 @@ h1 {
     display: flex;
     flex-direction: column;
     align-items: center;
+    border: 2px solid #FFFFFF;
 }
 
 .settings-content h2 {
