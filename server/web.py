@@ -34,6 +34,8 @@ def init_webserver(bundle_dir, config, play_manager, server_name):
             "enable_video": config["webserver"].getboolean("enable_video"),
             "video_streams": stream_config,
             "max_player_name_length": max_player_name_length,
+            "motd": config["webserver"]["motd"].strip('"'),
+            "ws_timeout": config["webserver"]["ws_timeout"],
         }
 
     async def favicon(request):

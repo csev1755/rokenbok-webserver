@@ -1,11 +1,15 @@
-const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-const socket = new WebSocket(`${protocol}//${window.location.host}/ws`);
+let socket = null;
 
 // Main floating panel
 const panel = document.querySelector('.floating-panel');
 const openSettingsButton = document.getElementById('open-settings');
 const playersElement = document.getElementById('players');
 const playerTemplate = document.getElementById('player-template');
+
+// Splash window
+const splashWindow = document.getElementById('splash-window');
+const splashWelcomeTitle = document.getElementById('splash-welcome-title');
+const splashConnectButton = document.getElementById('splash-connect-btn');
 
 // Settings window
 const settingsWindow = document.getElementById('settings-window');
@@ -24,6 +28,9 @@ const defaultSettingsButton = document.getElementById('default-settings');
 
 let videoToggle = true;
 let currentPlayerId = null;
+
+let inactivityTimer = null;
+const INACTIVITY_TIMEOUT = parseInt(splashWindow.dataset.wsTimeout, 10) * 1000;
 
 /**
  * Get the streams if the HTML elements exist
@@ -274,7 +281,7 @@ function cycleStream(direction)
  */
 function emitInputEvent(button, pressed)
 {
-    if (socket.readyState === WebSocket.OPEN)
+    if (socket && socket.readyState === WebSocket.OPEN)
     {
         socket.send(JSON.stringify({button, pressed, player_name : playerNameInput.value}));
     }
@@ -322,7 +329,7 @@ function resolveMappingConflicts(targetButton, device, value)
 // Handle gamepad input
 function pollGamepad()
 {
-    if (inputDeviceSelect.value !== 'gamepad')
+    if (!socket || socket.readyState !== WebSocket.OPEN || inputDeviceSelect.value !== 'gamepad')
         return;
 
     // Get first connected gamepad
@@ -358,7 +365,17 @@ function pollGamepad()
         clearButtonFeedback();
     }
 
+    if (gamepad.axes && gamepad.axes.some(axis => Math.abs(axis) > 0.1))
+    {
+        resetInactivityTimer();
+    }
+
     gamepad.buttons.forEach((btn, index) => {
+        if (btn.pressed)
+        {
+            resetInactivityTimer();
+        }
+
         if (btn.pressed === lastGamepadButtons[index])
             return;
 
@@ -392,7 +409,6 @@ const keyboardState = {};
  */
 function handleKeydown(e)
 {
-
     // Store the latest keypress if changing a setting
     if (newButtonMap && newButtonMap.device === 'keyboard')
     {
@@ -431,6 +447,7 @@ function handleKeydown(e)
     if (!settingsWindow.classList.contains('hidden'))
         return;
 
+    resetInactivityTimer();
     emitInputEvent(control.button, true);
 }
 
@@ -460,6 +477,76 @@ function handleKeyup(e)
 
     if (control)
         emitInputEvent(control.button, false);
+}
+
+// Initialize WS and bind appropriate handlers
+function connectWebSocket()
+{
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    socket = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+    socket.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        if (message.player_id !== undefined)
+        {
+            currentPlayerId = message.player_id;
+        }
+
+        if (message.players)
+        {
+            renderPlayers(message.players);
+        }
+    };
+
+    socket.onopen = () => {
+        emitInputEvent('UPDATE', true);
+        resetInactivityTimer();
+    };
+}
+
+// When called, resets the WS inactivity timer
+function resetInactivityTimer()
+{
+    if (!socket || socket.readyState !== WebSocket.OPEN)
+        return;
+    clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(() => { inactivityTimeout(); }, INACTIVITY_TIMEOUT);
+}
+
+// Closes socket and opens splash when inactivityTimer elapses
+function inactivityTimeout()
+{
+    if (socket)
+    {
+        socket.close();
+        socket = null;
+    }
+
+    clearTimeout(inactivityTimer);
+
+    closeSettings();
+    splashWindow.classList.remove('hidden');
+}
+
+// Initialize UI elements on the splash panel
+function initSplash()
+{
+    const saved = localStorage.getItem('playerSettings');
+    const settings = saved ? JSON.parse(saved) : {};
+
+    if (settings.playerName && settings.playerName.trim() !== '')
+    {
+        splashWelcomeTitle.textContent = `Welcome back ${settings.playerName}!`;
+    }
+    else
+    {
+        splashWelcomeTitle.textContent = 'Welcome!';
+    }
+
+    splashConnectButton.addEventListener('click', () => {
+        splashWindow.classList.add('hidden');
+        connectWebSocket();
+    });
 }
 
 // Panel dragging functionality
@@ -496,7 +583,7 @@ function initDrag()
     });
 }
 
-function initUI()
+function initSettings()
 {
     // Build the control mapping table and fields in two columns
     for (let i = 0; i < CONTROLS.length; i += 2)
@@ -579,13 +666,19 @@ function initUI()
             toggleVideo();
         });
     });
-
-    initDrag();
 }
 
 function init()
 {
-    initUI();
+    initSettings();
+    initDrag();
+    initSplash();
+
+    const pollingLoop = () => {
+        pollGamepad();
+        requestAnimationFrame(pollingLoop);
+    };
+    pollingLoop();
 
     window.addEventListener('keydown', handleKeydown);
     window.addEventListener('keyup', handleKeyup);
@@ -625,30 +718,8 @@ function init()
         }
     });
 
-    socket.onmessage = (event) => {
-        const message = JSON.parse(event.data);
-        if (message.player_id !== undefined)
-        {
-            currentPlayerId = message.player_id;
-        }
-
-        if (message.players)
-        {
-            renderPlayers(message.players);
-        }
-    };
-
     if (STREAMS.length)
         updateStream(STREAMS[0].url);
-
-    socket.onopen = () => {
-        emitInputEvent('UPDATE', true);
-        const loop = () => {
-            pollGamepad();
-            requestAnimationFrame(loop);
-        };
-        loop();
-    };
 }
 
 document.addEventListener('DOMContentLoaded', init);
